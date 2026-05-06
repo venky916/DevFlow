@@ -1,0 +1,237 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  LEAD
+  DEVELOPER
+  VIEWER
+}
+
+enum ProjectRole {
+  LEAD
+  DEVELOPER
+  VIEWER
+}
+
+enum IssueStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+}
+
+enum IssuePriority {
+  NO_PRIORITY
+  URGENT
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum SprintStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+}
+
+
+model User {
+  id          String   @id @default(cuid())
+  firebaseUid String   @unique
+  email       String   @unique
+  name        String?
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspaces   WorkspaceMember[]
+  projects     ProjectMember[]
+  comments     Comment[]
+  activities   ActivityLog[]
+  notifications Notification[]
+  attachments  Attachment[] 
+  createdIssues Issue[] @relation("createdIssues")
+  assignedIssues Issue[] @relation("assignedIssues")
+
+  @@map("users")
+}
+
+
+model Workspace{
+  id          String   @id @default(cuid())
+  name        String
+  slug       String   @unique
+  logoUrl     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members     WorkspaceMember[]
+  projects     Project[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String   @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        WorkspaceRole @default(DEVELOPER)
+  joinedAt   DateTime @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@map("workspace_members")
+  @@unique([workspaceId, userId])
+}
+
+
+model Project{
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  workspaceId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  members     ProjectMember[]
+  sprints      Sprint[]
+  issues        Issue[]
+  activities   ActivityLog[]
+
+  @@map("projects")
+}
+
+model ProjectMember {
+  id          String   @id @default(cuid())
+  projectId   String
+  userId      String
+  role        ProjectRole @default(DEVELOPER)
+  joinedAt   DateTime @default(now())
+
+
+  project     Project   @relation(fields: [projectId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@unique([projectId, userId])
+  @@map("project_members")
+}
+
+
+model Sprint{
+  id          String   @id @default(cuid())
+  name        String
+  projectId   String
+  status      SprintStatus @default(PLANNED)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project   @relation(fields: [projectId], references: [id])
+  issues        Issue[]
+
+  @@map("sprints")
+}
+
+
+model Issue{
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  sprintId    String?
+  status      IssueStatus @default(BACKLOG)
+  priority    IssuePriority @default(NO_PRIORITY)
+  position    Float         @default(0)
+  projectId   String
+  assigneeId  String?
+  creatorId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  comments    Comment[]
+  attachments Attachment[]
+  activities   ActivityLog[]
+
+  sprint      Sprint?   @relation(fields: [sprintId], references: [id])
+  project     Project   @relation(fields: [projectId], references: [id])
+  creator     User      @relation("createdIssues",fields: [creatorId], references: [id])
+  assignee    User?     @relation("assignedIssues",fields: [assigneeId], references: [id])
+  @@map("issues")
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  content     String
+  issueId     String
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  issue      Issue     @relation(fields: [issueId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@map("comments")
+}
+
+model ActivityLog{
+  id          String   @id @default(cuid())
+  action      String
+  meta        Json?
+  userId      String
+  issueId     String?
+  projectId   String
+  createdAt   DateTime @default(now())
+
+  user        User      @relation(fields: [userId], references: [id])
+  project     Project   @relation(fields: [projectId], references: [id])
+  issues      Issue?   @relation(fields: [issueId], references: [id])
+
+  @@map("activity_logs")
+}
+
+
+
+model Attachment {
+  id          String   @id @default(cuid())
+  url         String
+  fileKey     String  
+  fileName    String   
+  fileSize    Int?     
+  mimeType    String?  
+  issueId     String
+  uploadedBy  String
+  createdAt   DateTime @default(now())
+
+  issue      Issue     @relation(fields: [issueId], references: [id])
+  uploader   User      @relation(fields: [uploadedBy], references: [id])
+
+  @@map("attachments")
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  content     String
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
