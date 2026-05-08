@@ -9,4 +9,14 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/User.js'
+export type * from './models/Workspace.js'
+export type * from './models/WorkspaceMember.js'
+export type * from './models/Project.js'
+export type * from './models/ProjectMember.js'
+export type * from './models/Sprint.js'
+export type * from './models/Issue.js'
+export type * from './models/Comment.js'
+export type * from './models/ActivityLog.js'
+export type * from './models/Attachment.js'
+export type * from './models/Notification.js'
 export type * from './commonInputTypes.js'

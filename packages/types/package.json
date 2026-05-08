@@ -1,0 +1,15 @@
+{
+  "name": "@devflow/types",
+  "version": "1.0.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "keywords": [],
+  "devDependencies": {
+    "@devflow/config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "^5.9.2"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

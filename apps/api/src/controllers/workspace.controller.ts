@@ -1,0 +1,309 @@
+import { prisma } from "@devflow/db"
+import { asyncHandler } from "../lib/asyncHandler"
+import { Request, Response } from "express"
+import { ApiError } from "../lib/ApiError"
+import { sendCreated, sendNoContent, sendSuccess } from "../lib/apiResponse"
+
+const getMember = async (workspaceId: string, userId: string) => {
+    const member = await prisma.workspaceMember.findFirst({
+        where: {
+            workspaceId,
+            userId
+        }
+    })
+    return member
+}
+
+// ─── POST /workspaces ─────────────────────────────────────────────
+export const createWorkspace = asyncHandler(async (req: Request, res: Response) => {
+    const { name, slug, logoUrl } = req.body
+    const userId = req.user!.id
+
+    if (!name || !slug) {
+        throw ApiError.badRequest('Name and slug are required')
+    }
+
+    const existing = await prisma.workspace.findFirst({
+        where: {
+            slug
+        }
+    })
+
+    if (existing) {
+        throw ApiError.conflict(`Slug already taken`)
+    }
+
+    // Create workspace + add creator as OWNER in one transaction
+    const workspace = await prisma.$transaction(async (tx) => {
+        const ws = await tx.workspace.create({
+            data: {
+                name,
+                slug,
+                logoUrl
+            }
+        })
+
+        await tx.workspaceMember.create({
+            data: {
+                workspaceId: ws.id,
+                userId,
+                role: 'OWNER'
+            }
+        })
+
+        return ws
+    })
+
+    sendCreated(res, workspace, 'Workspace created successfully')
+
+})
+
+export const getMyWorkspaces = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user!.id
+    const workspaces = await prisma.workspace.findMany({
+        where: {
+            members: {
+                some: {
+                    userId
+                }
+            }
+        },
+        include: {
+            members: {
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            email: true,
+                            name: true,
+                            avatarUrl: true
+                        }
+                    }
+                }
+            },
+            _count: {
+                select: {
+                    projects: true
+                }
+            }
+        },
+        orderBy: {
+            createdAt: 'desc'
+        }
+    })
+    sendSuccess(res, workspaces, 'Workspaces fetched successfully')
+})
+
+// ─── GET /workspaces/:id ──────────────────────────────────────────
+export const getWorkspaceById = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params
+    const userId = req.user!.id
+
+
+    const member = await getMember(id as string, userId)
+
+    if (!member) {
+        throw ApiError.forbidden('You are not a member of this workspace')
+    }
+
+    const workspace = await prisma.workspace.findUnique({
+        where: {
+            id: id as string
+        },
+        include: {
+            members: {
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            email: true,
+                            name: true,
+                            avatarUrl: true
+                        }
+                    }
+                }
+            },
+            projects: {
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    description: true,
+                    createdAt: true,
+                }
+            },
+            _count: {
+                select: {
+                    projects: true,
+                    members: true
+                }
+            }
+        }
+    })
+
+    if (!workspace) {
+        throw ApiError.notFound(`Workspace not found`)
+    }
+    sendSuccess(res, workspace, 'Workspace fetched successfully')
+
+})
+
+// ─── PATCH /workspaces/: id ────────────────────────────────────────
+export const updateWorkspace = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params
+    const { name, logoUrl } = req.body
+    const userId = req.user!.id
+
+    const member = await getMember(id as string, userId)
+
+    if (!member || !["OWNER", "ADMIN"].includes(member.role)) {
+        throw ApiError.forbidden('Only OWNER or ADMIN can update workspace')
+    }
+
+    const workspace = await prisma.workspace.update({
+        where: {
+            id: id as string
+        },
+        data: {
+            ...(name && { name }),
+            ...(logoUrl && { logoUrl })
+        }
+    })
+
+    sendSuccess(res, workspace, 'Workspace updated successfully')
+})
+
+// ─── DELETE /workspaces/:id ───────────────────────────────────────
+export const deleteWorkspace = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params
+    const userId = req.user!.id
+
+    const member = await getMember(id as string, userId)
+
+    if (!member || member.role !== 'OWNER') {
+        throw ApiError.forbidden('Only OWNER can delete workspace')
+    }
+
+    const workspace = await prisma.workspace.delete({
+        where: {
+            id: id as string
+        }
+    })
+
+    sendNoContent(res)
+})
+
+// ─── GET /workspaces/:id/members ─────────────────────────────────
+export const getWorkspaceMembers = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params
+    const userId = req.user!.id
+
+    const member = await getMember(id as string, userId)
+    if (!member) {
+        throw ApiError.forbidden('You are not a member of this workspace')
+    }
+
+    const members = await prisma.workspaceMember.findMany({
+        where: {
+            workspaceId: id as string
+        },
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    email: true,
+                    name: true,
+                    avatarUrl: true
+                }
+            }
+        },
+        orderBy: {
+            joinedAt: 'asc'
+        }
+    })
+    sendSuccess(res, members, 'Members fetched successfully')
+})
+
+// ─── PATCH /workspaces/:id/members/:uid ──────────────────────────
+export const updateMemberRole = asyncHandler(async (req: Request, res: Response) => {
+    const { id, uid } = req.params
+
+    const userId = req.user!.id
+    const { role } = req.body
+
+    if (!role) {
+        throw ApiError.badRequest('Role is required')
+    }
+
+    const requester = await getMember(id as string, userId)
+
+    if (!requester || !["OWNER", "ADMIN"].includes(requester.role)) {
+        throw ApiError.forbidden('Only OWNER or ADMIN can change roles')
+    }
+
+    const targetMember = await getMember(id as string, uid as string)
+
+    if (!targetMember) {
+        throw ApiError.notFound('Member not found in this workspace')
+    }
+
+    if (role === "OWNER") {
+        throw ApiError.forbidden('Cannot assign OWNER role')
+    }
+
+    const updated = await prisma.workspaceMember.update({
+        where: {
+            workspaceId_userId: {
+                workspaceId: id as string,
+                userId: uid as string
+            }
+        },
+        data: {
+            role
+        },
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    email: true,
+                    name: true,
+                }
+            }
+        }
+    })
+    sendSuccess(res, updated, 'Member Role updated successfully')
+
+})
+
+// ─── DELETE /workspaces/:id/members/:uid ─────────────────────────
+export const removeMember = asyncHandler(async (req: Request, res: Response) => {
+    const { id, uid } = req.params
+    const userId = req.user!.id
+
+    const requester = await getMember(id as string, userId)
+
+    if (!requester || !["OWNER", "ADMIN"].includes(requester.role)) {
+        throw ApiError.forbidden('Only OWNER or ADMIN can delete members')
+    }
+
+    const targetMember = await getMember(id as string, uid as string)
+
+    if (!targetMember) {
+        throw ApiError.notFound('Member not found in this workspace')
+    }
+
+    if (targetMember.role === "OWNER") {
+        throw ApiError.forbidden('Cannot remove OWNER from workspace')
+    }
+
+    const deleted = await prisma.workspaceMember.delete({
+        where: {
+            workspaceId_userId: {
+                workspaceId: id as string,
+                userId: uid as string
+            }
+        }
+    })
+    sendNoContent(res)
+
+})
