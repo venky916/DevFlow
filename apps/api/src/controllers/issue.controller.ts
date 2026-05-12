@@ -3,11 +3,12 @@ import { asyncHandler } from "../lib/asyncHandler";
 import { ApiError } from "../lib/ApiError";
 import { prisma } from "@devflow/db";
 import { sendNoContent, sendSuccess } from "../lib/apiResponse";
+import { createIssueSchema,updateIssueSchema,moveIssueSchema,moveIssueToSprintSchema } from "@devflow/validators";
 
 // ─── POST /projects/:id/issues ────────────────────────────────────
 export const createIssue = asyncHandler(async (req: Request, res: Response) => {
     const { id: projectId } = req.params;
-    const { title, description, priority, assigneeId, sprintId } = req.body;
+    const { title, description, priority, assigneeId, sprintId } = createIssueSchema.parse(req.body);
     const creatorId = req.user!.id;
 
     if (!title) {
@@ -217,7 +218,7 @@ export const getIssueById = asyncHandler(async (req: Request, res: Response) => 
 // ─── PATCH /issues/:id ────────────────────────────────────────────
 export const updateIssue = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
-    const { title, description, status, assigneeId, priority } = req.body
+    const { title, description, status, assigneeId, priority } = updateIssueSchema.parse(req.body)
 
     const issue = await prisma.issue.findUnique({
         where: {
@@ -266,11 +267,7 @@ export const updateIssue = asyncHandler(async (req: Request, res: Response) => {
 // ─── PATCH /issues/:id/move ───────────────────────────────────────
 export const moveIssue = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
-    const { status, position } = req.body
-
-    if (!status || position === undefined) {
-        throw ApiError.badRequest('Status and position are required')
-    }
+    const { status, position } = moveIssueSchema.parse(req.body)
 
     const issue = await prisma.issue.findUnique({
         where: {
@@ -300,7 +297,7 @@ export const moveIssue = asyncHandler(async (req: Request, res: Response) => {
 // ─── PATCH /issues/:id/move-to-sprint ────────────────────────────
 export const moveIssueToSprint = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
-    const { sprintId } = req.body
+    const { sprintId } = moveIssueToSprintSchema.parse(req.body)
 
     const issue = await prisma.issue.findUnique({
         where: {

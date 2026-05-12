@@ -1,5 +1,5 @@
 {
-  "name": "api",
+  "name": "ws",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -12,21 +12,15 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "zod": "^4.4.3"
+    "ws": "^8.20.0"
   },
   "devDependencies": {
     "@devflow/backend-common": "workspace:*",
-    "@devflow/config": "workspace:*",
-    "@devflow/db": "workspace:*",
     "@devflow/types": "workspace:*",
-    "@devflow/validators": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/node": "^25.6.0",
+    "@types/node": "^25.6.2",
+    "@types/ws": "^8.18.1",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }

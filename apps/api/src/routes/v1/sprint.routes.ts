@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { authenticate } from "../middlewares/auth.middleware";
-import { attachSprintProject, requireProjectMember, requireProjectRole } from "../middlewares/permission.middleware";
-import { completeSprint, createSprint, deleteSprint, getSprintById, getSprints, startSprint, updateSprint } from "../controllers/sprint.controller";
+import { authenticate } from "../../middlewares/auth.middleware";
+import { attachSprintProject, requireProjectMember, requireProjectRole } from "../../middlewares/permission.middleware";
+import { completeSprint, createSprint, deleteSprint, getSprintById, getSprints, startSprint, updateSprint } from "../../controllers/sprint.controller";
 
 const router = Router({ mergeParams: true });
 

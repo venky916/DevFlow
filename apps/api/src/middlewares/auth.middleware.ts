@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express"
-import { adminAuth } from "../lib/firebase-admin.js"
+import { adminAuth } from "@devflow/backend-common"
 import { prisma } from "@devflow/db"
 
 declare global {

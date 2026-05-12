@@ -1,13 +1,13 @@
 import { Router } from "express";
-import { authenticate } from "../middlewares/auth.middleware.js";
-import { createProject, getProjectById, updateProject, deleteProject, getProjects, getProjectMembers, removeProjectMember } from "../controllers/project.controller.js";
+import { authenticate } from "../../middlewares/auth.middleware.js";
+import { createProject, getProjectById, updateProject, deleteProject, getProjects, getProjectMembers, removeProjectMember } from "../../controllers/project.controller.js";
 import {
     requireWorkspaceMember,
     requireWorkspaceRole,
     requireProjectMember,
     requireProjectRole
-} from "../middlewares/permission.middleware.js";
-import { updateMemberRole } from "../controllers/workspace.controller";
+} from "../../middlewares/permission.middleware.js";
+import { updateMemberRole } from "../../controllers/workspace.controller";
 
 const router = Router({ mergeParams: true });
 

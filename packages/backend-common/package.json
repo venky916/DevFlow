@@ -1,0 +1,25 @@
+{
+  "name": "@devflow/backend-common",
+  "version": "1.0.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@upstash/redis": "^1.38.0",
+    "dotenv": "^17.4.2",
+    "firebase-admin": "^13.8.0",
+    "pino": "^10.3.1"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^25.7.0",
+    "pino-pretty": "^13.1.3",
+    "typescript": "^6.0.3"
+  }
+}

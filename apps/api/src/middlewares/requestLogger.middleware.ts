@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { logger } from "../lib/logger";
+import { logger } from "@devflow/backend-common";
 
 export const requestLogger = (req: Request, res: Response, next: NextFunction) => {
     const start = Date.now();

@@ -3,16 +3,12 @@ import { asyncHandler } from "../lib/asyncHandler";
 import { ApiError } from "../lib/ApiError";
 import { prisma } from "@devflow/db";
 import { sendNoContent, sendSuccess } from "../lib/apiResponse";
-
+import { createSprintSchema,updateSprintSchema } from "@devflow/validators";
 
 // ─── POST /projects/:id/sprints ───────────────────────────────────
 export const createSprint = asyncHandler(async (req: Request, res: Response) => {
     const { id: projectId } = req.params;
-    const { name, startDate, endDate } = req.body;
-
-    if (!name) {
-        throw ApiError.badRequest('Sprint name is required')
-    }
+    const { name, startDate, endDate } = createSprintSchema.parse(req.body);
 
     const Sprint = await prisma.sprint.create({
         data: {
@@ -102,7 +98,7 @@ export const getSprintById = asyncHandler(async (req: Request, res: Response) =>
 // ─── PATCH /sprints/:id ───────────────────────────────────────────
 export const updateSprint = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
-    const { name, startDate, endDate } = req.body
+    const { name, startDate, endDate } = updateSprintSchema.parse(req.body)
 
     const sprint = await prisma.sprint.findUnique({
         where: {

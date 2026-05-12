@@ -3,6 +3,7 @@ import { asyncHandler } from "../lib/asyncHandler"
 import { Request, Response } from "express"
 import { ApiError } from "../lib/ApiError"
 import { sendCreated, sendNoContent, sendSuccess } from "../lib/apiResponse"
+import { createWorkspaceSchema, updateMemberRoleSchema, updateWorkspaceSchema } from "@devflow/validators"
 
 const getMember = async (workspaceId: string, userId: string) => {
     const member = await prisma.workspaceMember.findFirst({
@@ -16,12 +17,8 @@ const getMember = async (workspaceId: string, userId: string) => {
 
 // ─── POST /workspaces ─────────────────────────────────────────────
 export const createWorkspace = asyncHandler(async (req: Request, res: Response) => {
-    const { name, slug, logoUrl } = req.body
+    const { name, slug, logoUrl } = createWorkspaceSchema.parse(req.body)
     const userId = req.user!.id
-
-    if (!name || !slug) {
-        throw ApiError.badRequest('Name and slug are required')
-    }
 
     const existing = await prisma.workspace.findFirst({
         where: {
@@ -151,7 +148,7 @@ export const getWorkspaceById = asyncHandler(async (req: Request, res: Response)
 // ─── PATCH /workspaces/: id ────────────────────────────────────────
 export const updateWorkspace = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
-    const { name, logoUrl } = req.body
+    const { name, logoUrl } = updateWorkspaceSchema.parse(req.body)
     const userId = req.user!.id
 
     const member = await getMember(id as string, userId)
@@ -229,11 +226,7 @@ export const updateMemberRole = asyncHandler(async (req: Request, res: Response)
     const { id, uid } = req.params
 
     const userId = req.user!.id
-    const { role } = req.body
-
-    if (!role) {
-        throw ApiError.badRequest('Role is required')
-    }
+    const { role } = updateMemberRoleSchema.parse(req.body)
 
     const requester = await getMember(id as string, userId)
 

@@ -3,11 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { requestLogger } from './middlewares/requestLogger.middleware';
 import { errorMiddleware } from './middlewares/error.middleware';
-import authRoutes from './routes/auth.routes';
-import workspaceRoutes from './routes/workspace.routes';
-import projectRoutes from './routes/project.routes';
-import sprintRoutes from './routes/sprint.routes';
-import issueRoutes from './routes/issue.routes';
+import v1Routes from './routes/v1';
 
 const app = express();
 const PORT = process.env.PORT ?? 4000;
@@ -21,14 +17,7 @@ app.get('/health', (_req, res) => {
     res.json({ status: 'ok' });
 });
 
-app.use('/auth', authRoutes);
-app.use("/workspace", workspaceRoutes);
-app.use('/workspaces/:workspaceId/projects', projectRoutes);
-app.use('/projects', projectRoutes);
-app.use("/projects/:id/sprints", sprintRoutes);
-app.use("/sprints",sprintRoutes)
-app.use("/projects/:id/issues", issueRoutes);
-app.use("/issues", issueRoutes);
+app.use('/api/v1', v1Routes);
 
 //Global error handler
 app.use(errorMiddleware);

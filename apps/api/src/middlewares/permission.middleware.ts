@@ -2,9 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { asyncHandler } from "../lib/asyncHandler";
 import { prisma } from "@devflow/db";
 import { ApiError } from "../lib/ApiError";
-
-type WorkspaceRole = 'OWNER' | 'ADMIN' | 'LEAD' | 'DEVELOPER' | 'VIEWER';
-type ProjectRole = 'LEAD' | 'DEVELOPER' | 'VIEWER';
+import { WorkspaceRole,ProjectRole } from "@devflow/types";
 
 // ─── Attach projectId from sprintId ───────────────────────────────
 export const attachSprintProject = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -84,8 +82,6 @@ export const requireProjectRole = (...roles: ProjectRole[]) => {
         const member = await prisma.projectMember.findUnique({
             where: { projectId_userId: { projectId: projectId as string, userId } },
         });
-
-        console.log(member, userId)
 
         if (!member) {
             throw ApiError.forbidden('You are not a member of this project');

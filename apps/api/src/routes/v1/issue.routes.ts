@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { authenticate } from "../middlewares/auth.middleware";
-import { attachIssueProject, requireProjectMember, requireProjectRole } from "../middlewares/permission.middleware";
-import { createIssue, deleteIssue, getBacklogIssues, getBoardIssues, getIssueById, moveIssue, moveIssueToSprint, updateIssue } from "../controllers/issue.controller";
+import { authenticate } from "../../middlewares/auth.middleware";
+import { attachIssueProject, requireProjectMember, requireProjectRole } from "../../middlewares/permission.middleware";
+import { createIssue, deleteIssue, getBacklogIssues, getBoardIssues, getIssueById, moveIssue, moveIssueToSprint, updateIssue } from "../../controllers/issue.controller";
 
 const router = Router({ mergeParams: true });
 router.use(authenticate);
