@@ -3,7 +3,8 @@ import { asyncHandler } from "../lib/asyncHandler";
 import { ApiError } from "../lib/ApiError";
 import { prisma } from "@devflow/db";
 import { sendNoContent, sendSuccess } from "../lib/apiResponse";
-import { createIssueSchema,updateIssueSchema,moveIssueSchema,moveIssueToSprintSchema } from "@devflow/validators";
+import { createIssueSchema, updateIssueSchema, moveIssueSchema, moveIssueToSprintSchema } from "@devflow/validators";
+import { publishToProject } from "../lib/redis.publisher";
 
 // ─── POST /projects/:id/issues ────────────────────────────────────
 export const createIssue = asyncHandler(async (req: Request, res: Response) => {
@@ -59,6 +60,10 @@ export const createIssue = asyncHandler(async (req: Request, res: Response) => {
     })
 
     // TODO: publish ISSUE_CREATED event to Redis pub/sub → WS broadcasts to clients
+    await publishToProject(projectId as string, {
+        type: "ISSUE_CREATED",
+        payload: { issue }
+    })
 
     sendSuccess(res, issue, "Issue created successfully")
 })
@@ -260,7 +265,19 @@ export const updateIssue = asyncHandler(async (req: Request, res: Response) => {
     })
 
     // TODO: publish ISSUE_UPDATED event to Redis pub/sub → WS broadcasts
-
+    await publishToProject(issue.projectId, {
+        type: "ISSUE_UPDATED",
+        payload: {
+            issueId: id,
+            changes: {
+                title,
+                description,
+                status,
+                assigneeId,
+                priority
+            }
+        }
+    })
     sendSuccess(res, updated, "Issue updated successfully")
 })
 
@@ -290,6 +307,14 @@ export const moveIssue = asyncHandler(async (req: Request, res: Response) => {
     })
 
     // TODO: publish ISSUE_MOVED event to Redis pub/sub → WS broadcasts to all clients in room
+    await publishToProject(updated.projectId, {
+        type: "ISSUE_MOVED",
+        payload: {
+            issueId: id,
+            newStatus: status,
+            newPosition: position
+        }
+    })
     sendSuccess(res, updated, "Issue moved successfully")
 
 })
@@ -354,6 +379,13 @@ export const deleteIssue = asyncHandler(async (req: Request, res: Response) => {
     await prisma.issue.delete({
         where: {
             id: id as string
+        }
+    })
+
+    await publishToProject(issue.projectId, {
+        type: "ISSUE_DELETED",
+        payload: {
+            issueId: id
         }
     })
     sendNoContent(res)

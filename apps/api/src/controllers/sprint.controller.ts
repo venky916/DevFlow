@@ -3,7 +3,8 @@ import { asyncHandler } from "../lib/asyncHandler";
 import { ApiError } from "../lib/ApiError";
 import { prisma } from "@devflow/db";
 import { sendNoContent, sendSuccess } from "../lib/apiResponse";
-import { createSprintSchema,updateSprintSchema } from "@devflow/validators";
+import { createSprintSchema, updateSprintSchema } from "@devflow/validators";
+import { publishToProject } from "../lib/redis.publisher";
 
 // ─── POST /projects/:id/sprints ───────────────────────────────────
 export const createSprint = asyncHandler(async (req: Request, res: Response) => {
@@ -229,6 +230,10 @@ export const startSprint = asyncHandler(async (req: Request, res: Response) => {
     })
 
     // TODO: publish SPRINT_STARTED event to Redis pub/sub → WS broadcasts to clients
+    await publishToProject(sprint.projectId, {
+        type: "SPRINT_STARTED",
+        payload: { sprintId: id, name: sprint.name }
+    })
     sendSuccess(res, updated, "Sprint started successfully")
 })
 
@@ -264,7 +269,7 @@ export const completeSprint = asyncHandler(async (req: Request, res: Response) =
     if (!['LEAD'].includes(member.role)) {
         throw ApiError.forbidden('Only LEAD can start a sprint');
     }
-    
+
 
     if (sprint.status === "COMPLETED") {
         throw ApiError.badRequest('Sprint is already completed')
@@ -302,5 +307,10 @@ export const completeSprint = asyncHandler(async (req: Request, res: Response) =
     const doneCount = sprint?.issues.filter(issue => issue.status === "DONE").length
 
     // TODO: publish SPRINT_COMPLETED event to Redis pub/sub → WS broadcasts to clients
+
+    await publishToProject(sprint.projectId, {
+        type: "SPRINT_COMPLETED",
+        payload: { sprintId: id, incompleteCount, doneCount }
+    })
     sendSuccess(res, { sprintId: id, incompleteCount, doneCount, message: `${incompleteCount} issues moved back to backlog`, }, "Sprint completed successfully")
 })

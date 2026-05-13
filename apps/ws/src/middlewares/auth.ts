@@ -4,6 +4,7 @@ import { adminAuth } from "@devflow/backend-common";
 import { logger } from "@devflow/backend-common";
 import { AuthenticatedWebSocket } from "../types/socket.types";
 import { IncomingMessage } from "node:http";
+import { prisma } from "@devflow/db";
 
 export const authenticateWS = async (ws: WebSocket, req: IncomingMessage) => {
     try {
@@ -22,11 +23,26 @@ export const authenticateWS = async (ws: WebSocket, req: IncomingMessage) => {
 
         const decoded = await adminAuth.verifyIdToken(token)
 
+        const user = await prisma.user.findUnique({
+            where: {
+                firebaseUid: decoded.uid
+            }
+        })
+
+        if (!user) {
+            ws.send(JSON.stringify({
+                type: "ERROR",
+                message: "User not found, please login first"
+            }))
+            ws.close(1008, "Unauthorized")
+            return false
+        }
+
         // attach user to ws connection
         const authWs = ws as AuthenticatedWebSocket;
-        authWs.userId = decoded.uid;
-        authWs.email = decoded.email ?? "";
-        authWs.name = decoded.name ?? null
+        authWs.userId = user.id;
+        authWs.email = user.email ?? "";
+        authWs.name = user.name ?? null
 
         logger.info(`User authenticated: ${decoded.email} `)
 

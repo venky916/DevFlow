@@ -37,7 +37,7 @@ wss.on('connection', async (ws, req) => {
     ws.send(JSON.stringify({ type: "CONNECTED", message: `Welcome ${authWs.name ?? authWs.email}!` }));
 
     // ─── Message handler ──────────────────────────────────────
-    ws.on('message', (data) => {
+    ws.on('message',async (data) => {
 
         try {
             const event: ClientEvent = JSON.parse(data.toString());
@@ -45,7 +45,7 @@ wss.on('connection', async (ws, req) => {
 
             switch (event.type) {
                 case "JOIN_PROJECT": {
-                    handleJoinProject(authWs, event.payload as { projectId: string })
+                    await handleJoinProject(authWs, event.payload as { projectId: string })
                     break;
                 }
                 case "LEAVE_PROJECT": {
@@ -53,7 +53,7 @@ wss.on('connection', async (ws, req) => {
                     break;
                 }
                 case "JOIN_ISSUE": {
-                    handleJoinIssue(authWs, event.payload as { issueId: string })
+                    await handleJoinIssue(authWs, event.payload as { issueId: string })
                     break;
                 }
                 case "LEAVE_ISSUE": {
