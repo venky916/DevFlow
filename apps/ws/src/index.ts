@@ -3,11 +3,11 @@ import http from "http"
 import { WebSocketServer } from "ws"
 import { AuthenticatedWebSocket } from "./types/socket.types"
 import { authenticateWS } from "./middlewares/auth"
-import { logger } from "@devflow/backend-common"
+import { logger, subscriber } from "@devflow/backend-common"
 import { ClientEvent } from "@devflow/types"
 import { handleJoinProject, handleLeaveProject } from "./handlers/project.handler"
 import { handleJoinIssue, handleLeaveIssue } from "./handlers/issue.handler"
-import { leaveAllRooms } from "./rooms"
+import { joinRoom, leaveAllRooms } from "./rooms"
 
 const PORT = process.env.PORT ?? 4001
 
@@ -32,6 +32,18 @@ wss.on('connection', async (ws, req) => {
     if (!authenticated) return;
 
     logger.info(`Client connected: ${authWs.userId}`);
+
+    // ─── Auto subscribe to personal notification channel ──────
+    subscriber.subscribe(`user:${authWs.userId}`, (err) => {
+        if (err) {
+            logger.error({ err }, 'Failed to subscribe to user channel');
+            return;
+        }
+        logger.info(`User ${authWs.userId} subscribed to personal channel`);
+    });
+
+    // ─── Also join personal WS room ───────────────────────────
+    joinRoom(`user:${authWs.userId}`, authWs);
 
     // send welcome message
     ws.send(JSON.stringify({ type: "CONNECTED", message: `Welcome ${authWs.name ?? authWs.email}!` }));

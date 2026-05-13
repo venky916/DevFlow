@@ -5,6 +5,7 @@ import { prisma } from "@devflow/db";
 import { sendNoContent, sendSuccess } from "../lib/apiResponse";
 import { createIssueSchema, updateIssueSchema, moveIssueSchema, moveIssueToSprintSchema } from "@devflow/validators";
 import { publishToProject } from "../lib/redis.publisher";
+import { activityQueue, notificationQueue, emailQueue } from "@devflow/queues"
 
 // ─── POST /projects/:id/issues ────────────────────────────────────
 export const createIssue = asyncHandler(async (req: Request, res: Response) => {
@@ -58,6 +59,45 @@ export const createIssue = asyncHandler(async (req: Request, res: Response) => {
             }
         }
     })
+
+    // after issue created:
+    await activityQueue.add("activity", {
+        action: 'ISSUE_CREATED',
+        userId: creatorId,
+        projectId: projectId as string,
+        issueId: issue.id,
+        meta: { title: issue.title },
+    })
+
+    if (assigneeId) {
+        await notificationQueue.add("notification", {
+            userId: assigneeId,
+            type: 'ISSUE_ASSIGNED',
+            content: `You were assigned to: ${title}`,
+            link: `/issues/${issue.id}`,
+            triggeredBy: creatorId,
+        })
+
+        // get assignee email for email notification
+        const assignee = await prisma.user.findUnique({
+            where: { id: assigneeId },
+            select: { email: true, name: true },
+        });
+
+        if (assignee) {
+            await emailQueue.add("email", {
+                to: "venkateshsmsv1999@gmail.com",
+                type: 'ISSUE_ASSIGNED',
+                data: {
+                    assigneeName: assignee.name,
+                    issueTitle: title,
+                    projectName: projectId,
+                    assignedBy: creatorId,
+                    issueLink: `http://localhost:3000/issues/${issue.id}`,
+                },
+            })
+        }
+    }
 
     // TODO: publish ISSUE_CREATED event to Redis pub/sub → WS broadcasts to clients
     await publishToProject(projectId as string, {
