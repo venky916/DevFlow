@@ -25,6 +25,7 @@
     "@devflow/queues": "workspace:*",
     "@devflow/types": "workspace:*",
     "@devflow/validators": "workspace:*",
+    "@devflow/storage": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",

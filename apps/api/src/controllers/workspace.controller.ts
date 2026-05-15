@@ -4,6 +4,8 @@ import { Request, Response } from "express"
 import { ApiError } from "../lib/ApiError"
 import { sendCreated, sendNoContent, sendSuccess } from "../lib/apiResponse"
 import { createWorkspaceSchema, updateMemberRoleSchema, updateWorkspaceSchema } from "@devflow/validators"
+import { generatePresignedDownloadUrl } from "@devflow/storage"
+import {z} from "zod"
 
 const getMember = async (workspaceId: string, userId: string) => {
     const member = await prisma.workspaceMember.findFirst({
@@ -299,4 +301,22 @@ export const removeMember = asyncHandler(async (req: Request, res: Response) => 
     })
     sendNoContent(res)
 
+})
+
+// ─── UPDATE LOGO ──────────────────────────────────────────────
+export const updateWorkspaceLogo = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params
+    const {url } = z.object({
+        url: z.url()
+    }).parse(req.body)
+
+    const workspace = await prisma.workspace.update({
+        where: {
+            id: id as string
+        },
+        data: {
+            logoUrl: url
+        }
+    })
+    sendSuccess(res, workspace, 'Logo updated successfully')
 })
