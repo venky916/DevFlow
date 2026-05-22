@@ -7,7 +7,7 @@ import { logger, subscriber } from "@devflow/backend-common"
 import { ClientEvent } from "@devflow/types"
 import { handleJoinProject, handleLeaveProject } from "./handlers/project.handler"
 import { handleJoinIssue, handleLeaveIssue } from "./handlers/issue.handler"
-import { joinRoom, leaveAllRooms } from "./rooms"
+import {roomManager} from "./roomManager"
 
 const PORT = process.env.PORT ?? 4001
 
@@ -43,7 +43,7 @@ wss.on('connection', async (ws, req) => {
     });
 
     // ─── Also join personal WS room ───────────────────────────
-    joinRoom(`user:${authWs.userId}`, authWs);
+    roomManager.join(`user:${authWs.userId}`, authWs);
 
     // send welcome message
     ws.send(JSON.stringify({ type: "CONNECTED", message: `Welcome ${authWs.name ?? authWs.email}!` }));
@@ -92,7 +92,7 @@ wss.on('connection', async (ws, req) => {
 
     // ─── Disconnect handler ───────────────────────────────────
     ws.on('close', () => {
-        leaveAllRooms(authWs);
+        roomManager.leaveAll(authWs);
         logger.info('Client disconnected');
     })
 

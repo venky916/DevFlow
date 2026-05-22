@@ -1,9 +1,9 @@
 import { AuthenticatedWebSocket } from "../types/socket.types";
-import { joinRoom, leaveRoom } from "../rooms";
 import { logger } from "@devflow/backend-common";
 import { subscribeToIssueChannel, unsubscribeFromIssueChannel } from "../lib/redis.subscriber";
 import { joinIssueSchema, leaveIssueSchema } from "@devflow/validators";
 import { prisma } from "@devflow/db";
+import { roomManager } from "../roomManager";
 
 export const handleJoinIssue = async (ws: AuthenticatedWebSocket, payload: { issueId: string }) => {
     try {
@@ -42,7 +42,7 @@ export const handleJoinIssue = async (ws: AuthenticatedWebSocket, payload: { iss
             return;
         }
         const roomId = `issue:${issueId}`
-        joinRoom(roomId, ws)
+        roomManager.join(roomId, ws)
         subscribeToIssueChannel(issueId)
         logger.info(`User ${ws.userId} joined issue room: ${issueId}`)
         ws.send(JSON.stringify({
@@ -65,7 +65,7 @@ export const handleLeaveIssue = (ws: AuthenticatedWebSocket, payload: { issueId:
 
         const { issueId } = validPayload
         const roomId = `issue:${issueId}`
-        leaveRoom(roomId, ws)
+        roomManager.leave(roomId, ws)
         unsubscribeFromIssueChannel(issueId)
         logger.info(`User ${ws.userId} left issue room: ${issueId}`)
     } catch (error) {

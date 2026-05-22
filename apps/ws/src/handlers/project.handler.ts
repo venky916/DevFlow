@@ -1,9 +1,9 @@
 import { AuthenticatedWebSocket } from "../types/socket.types";
-import { joinRoom, leaveRoom } from "../rooms";
 import { logger } from "@devflow/backend-common";
 import { joinProjectSchema, leaveProjectSchema } from "@devflow/validators"
 import { subscribeToProjectChannel, unsubscribeFromProjectChannel } from "../lib/redis.subscriber";
 import { prisma } from "@devflow/db"
+import { roomManager } from "../roomManager";
 
 export const handleJoinProject = async (ws: AuthenticatedWebSocket, payload: { projectId: string }) => {
     const { payload: validPayload } = joinProjectSchema.parse({
@@ -30,7 +30,7 @@ export const handleJoinProject = async (ws: AuthenticatedWebSocket, payload: { p
     }
     const roomId = `project:${projectId}`
     // join WS room
-    joinRoom(roomId, ws)
+    roomManager.join(roomId, ws)
 
     // subscribe to project channel
     subscribeToProjectChannel(projectId)
@@ -52,7 +52,7 @@ export const handleLeaveProject = (ws: AuthenticatedWebSocket, payload: { projec
         const { projectId } = validPayload;
         const roomId = `project:${projectId}`
 
-        leaveRoom(roomId, ws)
+        roomManager.leave(roomId, ws)
 
         unsubscribeFromProjectChannel(projectId)
         logger.info(`User ${ws.userId} left project room: ${projectId}`)

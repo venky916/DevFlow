@@ -1,12 +1,12 @@
 import { subscriber } from "@devflow/backend-common";
 import { logger } from "@devflow/backend-common";
-import { broadcastToRoom } from "../rooms";
+import { roomManager } from "../roomManager";
 
 subscriber.on("message", (channel, message) => {
     try {
         const event = JSON.parse(message)
         logger.info({ channel, type: event.type }, "Redis event received")
-        broadcastToRoom(channel, event)
+        roomManager.broadcast(channel, event)
     } catch (error) {
         logger.error({ error }, "Redis event error")
     }
