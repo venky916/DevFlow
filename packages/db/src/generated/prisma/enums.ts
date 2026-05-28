@@ -58,3 +58,15 @@ export const SprintStatus = {
 } as const
 
 export type SprintStatus = (typeof SprintStatus)[keyof typeof SprintStatus]
+
+
+export const NotificationType = {
+  ISSUE_ASSIGNED: 'ISSUE_ASSIGNED',
+  ISSUE_COMMENTED: 'ISSUE_COMMENTED',
+  SPRINT_STARTED: 'SPRINT_STARTED',
+  SPRINT_COMPLETED: 'SPRINT_COMPLETED',
+  WORKSPACE_INVITED: 'WORKSPACE_INVITED',
+  PROJECT_ADDED: 'PROJECT_ADDED'
+} as const
+
+export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType]

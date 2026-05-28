@@ -1,26 +1,9 @@
-
+import { ClientEvents, ProjectEvents, IssueEvents, UserEvents } from "./events"
 // all event types client can send
-export type ClientEventType = | 'JOIN_PROJECT'
-    | 'LEAVE_PROJECT'
-    | 'JOIN_ISSUE'
-    | 'LEAVE_ISSUE'
-    | 'CURSOR_MOVE'
-    | 'PING';
+export type ClientEventType = typeof ClientEvents[keyof typeof ClientEvents]
 
 // all event types server can send
-export type ServerEventType = | 'CONNECTED'
-    | 'JOINED_PROJECT'
-    | 'JOINED_ISSUE'
-    | 'ISSUE_MOVED'
-    | 'ISSUE_CREATED'
-    | 'ISSUE_UPDATED'
-    | 'ISSUE_DELETED'
-    | 'SPRINT_STARTED'
-    | 'SPRINT_COMPLETED'
-    | 'COMMENT_ADDED'
-    | 'CURSOR_MOVE'
-    | 'PONG'
-    | 'ERROR';
+export type ServerEventType = | typeof ProjectEvents[keyof typeof ProjectEvents] | typeof IssueEvents[keyof typeof IssueEvents] | typeof UserEvents[keyof typeof UserEvents]
 
 export interface ClientEvent {
     type: ClientEventType;

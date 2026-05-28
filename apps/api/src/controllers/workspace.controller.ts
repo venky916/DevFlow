@@ -3,9 +3,9 @@ import { asyncHandler } from "../lib/asyncHandler"
 import { Request, Response } from "express"
 import { ApiError } from "../lib/ApiError"
 import { sendCreated, sendNoContent, sendSuccess } from "../lib/apiResponse"
-import { createWorkspaceSchema, updateMemberRoleSchema, updateWorkspaceSchema } from "@devflow/validators"
+import { createWorkspaceSchema, updateMemberRoleSchema, updateWorkspaceSchema, updateWorkspaceLogoSchema } from "@devflow/validators"
 import { generatePresignedDownloadUrl } from "@devflow/storage"
-import {z} from "zod"
+import { getCache, setCache, CacheKeys, TTL, deleteCache } from "../lib/cache"
 
 const getMember = async (workspaceId: string, userId: string) => {
     const member = await prisma.workspaceMember.findFirst({
@@ -202,6 +202,15 @@ export const getWorkspaceMembers = asyncHandler(async (req: Request, res: Respon
         throw ApiError.forbidden('You are not a member of this workspace')
     }
 
+    // ─── Check cache ──────────────────────────────────────────
+    const cacheKey = CacheKeys.workspaceMembers(id as string)
+    const cached = await getCache(cacheKey)
+
+    if (cached) {
+        sendSuccess(res, cached, "Members fetched successfully")
+        return
+    }
+
     const members = await prisma.workspaceMember.findMany({
         where: {
             workspaceId: id as string
@@ -220,6 +229,8 @@ export const getWorkspaceMembers = asyncHandler(async (req: Request, res: Respon
             joinedAt: 'asc'
         }
     })
+
+    await setCache(cacheKey, members)
     sendSuccess(res, members, 'Members fetched successfully')
 })
 
@@ -266,6 +277,9 @@ export const updateMemberRole = asyncHandler(async (req: Request, res: Response)
             }
         }
     })
+
+    // add after DB write in both functions:
+    await deleteCache(CacheKeys.workspaceMembers(id as string))
     sendSuccess(res, updated, 'Member Role updated successfully')
 
 })
@@ -299,6 +313,9 @@ export const removeMember = asyncHandler(async (req: Request, res: Response) => 
             }
         }
     })
+
+    // add after DB write in both functions:
+    await deleteCache(CacheKeys.workspaceMembers(id as string))
     sendNoContent(res)
 
 })
@@ -306,9 +323,7 @@ export const removeMember = asyncHandler(async (req: Request, res: Response) => 
 // ─── UPDATE LOGO ──────────────────────────────────────────────
 export const updateWorkspaceLogo = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
-    const {url } = z.object({
-        url: z.url()
-    }).parse(req.body)
+    const { url } = updateWorkspaceLogoSchema.parse(req.body)
 
     const workspace = await prisma.workspace.update({
         where: {

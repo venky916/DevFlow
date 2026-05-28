@@ -3,7 +3,7 @@ import { logger } from "@devflow/backend-common";
 import { joinProjectSchema, leaveProjectSchema } from "@devflow/validators"
 import { subscribeToProjectChannel, unsubscribeFromProjectChannel } from "../lib/redis.subscriber";
 import { prisma } from "@devflow/db"
-import { roomManager } from "../roomManager";
+import { roomManager } from "../RoomManager";
 
 export const handleJoinProject = async (ws: AuthenticatedWebSocket, payload: { projectId: string }) => {
     const { payload: validPayload } = joinProjectSchema.parse({

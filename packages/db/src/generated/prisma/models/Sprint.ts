@@ -441,10 +441,6 @@ export type EnumSprintStatusFieldUpdateOperationsInput = {
   set?: $Enums.SprintStatus
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type SprintCreateNestedOneWithoutIssuesInput = {
   create?: Prisma.XOR<Prisma.SprintCreateWithoutIssuesInput, Prisma.SprintUncheckedCreateWithoutIssuesInput>
   connectOrCreate?: Prisma.SprintCreateOrConnectWithoutIssuesInput

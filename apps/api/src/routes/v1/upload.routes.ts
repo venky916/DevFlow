@@ -18,7 +18,7 @@ router.delete("/upload/:file", deleteFile);
 // ─── ATTACHMENTS ──────────────────────────────────────────────
 router.post("/issues/:id/attachments", saveAttachment);
 router.get("/issues/:id/attachments", getAttachments);
-router.delete("/issues/:id/attachments/:attachmentId", deleteAttachment);
+router.delete("/issues/:id/attachments/:id", deleteAttachment);
 
 // ─── AVATAR + LOGO ────────────────────────────────────────────
 router.patch("/workspaces/:id/logo", updateWorkspaceLogo);

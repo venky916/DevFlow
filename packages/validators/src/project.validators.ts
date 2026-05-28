@@ -12,6 +12,11 @@ export const updateProjectSchema = z.object({
     description: z.string().max(500).optional().nullable()
 })
 
+export const addProjectMemberSchema = z.object({
+    userId: z.string().min(1),
+    role: z.enum(['LEAD', 'DEVELOPER', 'VIEWER'])
+})
+
 export const updateProjectMemberRoleSchema = z.object({
     role: z.enum(['LEAD', 'DEVELOPER', 'VIEWER'])
 })

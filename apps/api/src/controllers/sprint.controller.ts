@@ -5,6 +5,9 @@ import { prisma } from "@devflow/db";
 import { sendNoContent, sendSuccess } from "../lib/apiResponse";
 import { createSprintSchema, updateSprintSchema } from "@devflow/validators";
 import { publishToProject } from "../lib/redis.publisher";
+import { activityQueue } from "@devflow/queues";
+import { ActivityActions, ProjectEvents } from "@devflow/types";
+import { CacheKeys, deleteCache } from "../lib/cache";
 
 // ─── POST /projects/:id/sprints ───────────────────────────────────
 export const createSprint = asyncHandler(async (req: Request, res: Response) => {
@@ -183,21 +186,6 @@ export const startSprint = asyncHandler(async (req: Request, res: Response) => {
         throw ApiError.notFound('Sprint not found')
     }
 
-    // NOW we have projectId → check permission
-    const member = await prisma.projectMember.findUnique({
-        where: {
-            projectId_userId: {
-                projectId: sprint.projectId,
-                userId,
-            },
-        },
-    });
-
-    if (!member) throw ApiError.forbidden('You are not a member of this project');
-    if (!['LEAD'].includes(member.role)) {
-        throw ApiError.forbidden('Only LEAD can start a sprint');
-    }
-
     if (sprint.status === "ACTIVE") {
         throw ApiError.badRequest('Sprint is already active')
     }
@@ -229,9 +217,20 @@ export const startSprint = asyncHandler(async (req: Request, res: Response) => {
         }
     })
 
+    // in startSprint — after sprint updated:
+    await deleteCache(CacheKeys.board(sprint.projectId, id as string))
+
+    // after sprint started:
+    await activityQueue.add('activity', {
+        action: ActivityActions.SPRINT_STARTED,
+        userId: req.user!.id,
+        projectId: sprint.projectId,
+        meta: { sprintId: id, sprintName: sprint.name },
+    });
+
     // TODO: publish SPRINT_STARTED event to Redis pub/sub → WS broadcasts to clients
     await publishToProject(sprint.projectId, {
-        type: "SPRINT_STARTED",
+        type: ProjectEvents.SPRINT_STARTED,
         payload: { sprintId: id, name: sprint.name }
     })
     sendSuccess(res, updated, "Sprint started successfully")
@@ -253,21 +252,6 @@ export const completeSprint = asyncHandler(async (req: Request, res: Response) =
 
     if (!sprint) {
         throw ApiError.notFound('Sprint not found')
-    }
-
-    // NOW we have projectId → check permission
-    const member = await prisma.projectMember.findUnique({
-        where: {
-            projectId_userId: {
-                projectId: sprint.projectId,
-                userId,
-            },
-        },
-    });
-
-    if (!member) throw ApiError.forbidden('You are not a member of this project');
-    if (!['LEAD'].includes(member.role)) {
-        throw ApiError.forbidden('Only LEAD can start a sprint');
     }
 
 
@@ -302,14 +286,22 @@ export const completeSprint = asyncHandler(async (req: Request, res: Response) =
             }
         })
     })
+    // in completeSprint — after transaction:
+    await deleteCache(CacheKeys.board(sprint.projectId, id as string))
 
     const incompleteCount = sprint?.issues.filter(issue => issue.status !== "DONE").length
     const doneCount = sprint?.issues.filter(issue => issue.status === "DONE").length
 
-    // TODO: publish SPRINT_COMPLETED event to Redis pub/sub → WS broadcasts to clients
+    await activityQueue.add('activity', {
+        action: ActivityActions.SPRINT_COMPLETED,
+        userId: req.user!.id,
+        projectId: sprint.projectId,
+        meta: { sprintId: id, doneCount, incompleteCount },
+    });
 
+    // TODO: publish SPRINT_COMPLETED event to Redis pub/sub → WS broadcasts to clients
     await publishToProject(sprint.projectId, {
-        type: "SPRINT_COMPLETED",
+        type: ProjectEvents.SPRINT_COMPLETED,
         payload: { sprintId: id, incompleteCount, doneCount }
     })
     sendSuccess(res, { sprintId: id, incompleteCount, doneCount, message: `${incompleteCount} issues moved back to backlog`, }, "Sprint completed successfully")

@@ -409,10 +409,6 @@ export type WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput = {
   deleteMany?: Prisma.WorkspaceMemberScalarWhereInput | Prisma.WorkspaceMemberScalarWhereInput[]
 }
 
-export type EnumWorkspaceRoleFieldUpdateOperationsInput = {
-  set?: $Enums.WorkspaceRole
-}
-
 export type WorkspaceMemberCreateWithoutUserInput = {
   id?: string
   role?: $Enums.WorkspaceRole

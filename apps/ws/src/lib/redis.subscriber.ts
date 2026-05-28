@@ -1,6 +1,6 @@
 import { subscriber } from "@devflow/backend-common";
 import { logger } from "@devflow/backend-common";
-import { roomManager } from "../roomManager";
+import { roomManager } from "../RoomManager";
 
 subscriber.on("message", (channel, message) => {
     try {
@@ -26,6 +26,13 @@ export const subscribeToProjectChannel = (projectId: string) => {
 
 export const unsubscribeFromProjectChannel = (projectId: string) => {
     const channel = `project:${projectId}`
+    // ─── Only unsubscribe from Redis if room is empty ─────────
+    const roomSize = roomManager.getRoomSize(channel)
+    if (roomSize > 0) {
+        logger.info(`Room ${channel} still has ${roomSize} clients — skipping Redis unsubscribe`)
+        return
+    }
+
     subscriber.unsubscribe(channel, (error) => {
         if (error) {
             logger.error({ error }, `Failed to unsubscribe from ${channel}`)
@@ -48,6 +55,13 @@ export const subscribeToIssueChannel = (issueId: string) => {
 
 export const unsubscribeFromIssueChannel = (issueId: string) => {
     const channel = `issue:${issueId}`
+    // ─── Only unsubscribe from Redis if room is empty ─────────
+    const roomSize = roomManager.getRoomSize(channel)
+    if (roomSize > 0) {
+        logger.info(`Room ${channel} still has ${roomSize} clients — skipping Redis unsubscribe`)
+        return
+    }
+
     subscriber.unsubscribe(channel, (error) => {
         if (error) {
             logger.error({ error }, `Failed to unsubscribe from ${channel}`)

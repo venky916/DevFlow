@@ -28,6 +28,11 @@ export type User = Prisma.UserModel
  */
 export type Workspace = Prisma.WorkspaceModel
 /**
+ * Model WorkspaceInvite
+ * 
+ */
+export type WorkspaceInvite = Prisma.WorkspaceInviteModel
+/**
  * Model WorkspaceMember
  * 
  */

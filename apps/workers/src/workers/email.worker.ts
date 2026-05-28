@@ -1,16 +1,24 @@
 import { Worker, Job } from "bullmq";
-import { Resend } from 'resend';
-import { prisma } from "@devflow/db";
+import nodemailer from "nodemailer";
+// import { Resend } from "resend";
 import { logger } from "@devflow/backend-common";
-import { EmailJobData } from "@devflow/queues";
-import { connection } from "../lib/redis";
+import { EmailJobData, connection } from "@devflow/queues";
+import { NotificationTypes } from "@devflow/types";
 
-const resend = new Resend(process.env.RESEND_API_KEY!);
+// const resend = new Resend(process.env.RESEND_API_KEY!);
+// ─── Nodemailer transporter ───────────────────────────────────
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.GMAIL_USER!,
+        pass: process.env.GMAIL_APP_PASSWORD!
+    }
+});
 
 // ─── Email templates ──────────────────────────────────────────────
 const getEmailContent = (type: EmailJobData['type'], data: Record<string, any>) => {
     switch (type) {
-        case "ISSUE_ASSIGNED":
+        case NotificationTypes.ISSUE_ASSIGNED:
             return {
                 subject: `You've been assigned to: ${data.issueTitle}`,
                 html: `
@@ -23,7 +31,7 @@ const getEmailContent = (type: EmailJobData['type'], data: Record<string, any>) 
         `,
             };
 
-        case "ISSUE_COMMENTED":
+        case NotificationTypes.ISSUE_COMMENTED:
             return {
                 subject: `New comment on: ${data.issueTitle}`,
                 html: `
@@ -35,7 +43,7 @@ const getEmailContent = (type: EmailJobData['type'], data: Record<string, any>) 
             };
 
 
-        case "SPRINT_STARTED":
+        case NotificationTypes.SPRINT_STARTED:
             return {
                 subject: `Sprint started: ${data.sprintName}`,
                 html: `
@@ -45,7 +53,7 @@ const getEmailContent = (type: EmailJobData['type'], data: Record<string, any>) 
         `,
             };
 
-        case "SPRINT_COMPLETED":
+        case NotificationTypes.SPRINT_COMPLETED:
             return {
                 subject: `Sprint completed: ${data.sprintName}`,
                 html: `
@@ -56,17 +64,29 @@ const getEmailContent = (type: EmailJobData['type'], data: Record<string, any>) 
         `,
             };
 
-        case "WORKSPACE_INVITE":
+        case NotificationTypes.WORKSPACE_INVITED:
             return {
-                subject: `You've been invited to ${data.workspaceName}`,
+                subject: `You've been invited to join ${data.workspaceName} on DevFlow`,
                 html: `
-          <h2>Workspace Invitation</h2>
-          <p><strong>${data.invitedBy}</strong> invited you to join <strong>${data.workspaceName}</strong>.</p>
-          <a href="${data.inviteLink}">Accept Invitation</a>
-        `,
-            };
+            <h2>You're invited!</h2>
+            <p><strong>${data.invitedBy}</strong> invited you to join <strong>${data.workspaceName}</strong> as <strong>${data.role}</strong>.</p>
+            <p>This invite expires in 7 days.</p>
+            <a href="${data.inviteLink}" style="
+                background: #6366f1;
+                color: white;
+                padding: 12px 24px;
+                border-radius: 6px;
+                text-decoration: none;
+                display: inline-block;
+                margin-top: 16px;
+            ">Accept Invite</a>
+            <p style="color: #666; font-size: 12px; margin-top: 24px;">
+                If you didn't expect this invite, you can ignore this email.
+            </p>
+        `
+            }
 
-        case "PROJECT_ADDED":
+        case NotificationTypes.PROJECT_ADDED:
             return {
                 subject: `You've been added to: ${data.projectName}`,
                 html: `
@@ -90,12 +110,44 @@ async function emailFunction(job: Job<EmailJobData>) {
 
     const { subject, html } = getEmailContent(type, data);
 
-    await resend.emails.send({ from: 'DevFlow<onboarding@resend.dev >', to, subject, html });
+    try {
+        const response = await transporter.sendMail({
+            from: `DevFlow <${process.env.GMAIL_USER}>`,
+            to,
+            subject,
+            html
+        })
 
-    logger.info({ jobId: job.id, to, type }, "Email sent successfully")
+        logger.info({
+            jobId: job.id,
+            to,
+            type,
+            messageId: response.messageId,
+            response: response.response
+        }, "✅ Email sent successfully")
+
+    } catch (error) {
+        logger.error({
+            jobId: job.id,
+            to,
+            error: error instanceof Error ? error.message : String(error),
+            errorCode: error instanceof Error && 'code' in error ? (error as any).code : null
+        }, "❌ Email failed to send")
+        throw error  // BullMQ will retry
+    }
 }
 
 export const emailWorker = new Worker<EmailJobData>("email-queue", emailFunction, { connection, concurrency: 5 });
+
+(async () => {
+    try {
+        await emailWorker.waitUntilReady()
+        logger.info("✅ Email worker connected to Redis")
+    } catch (error) {
+        logger.error({ error }, "❌ Activity worker FAILED to connect to Redis")
+        process.exit(1)
+    }
+})()
 
 emailWorker.on("completed", (job) => {
     logger.info({ jobId: job.id }, "Email job completed")

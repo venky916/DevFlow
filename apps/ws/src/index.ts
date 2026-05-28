@@ -7,7 +7,7 @@ import { logger, subscriber } from "@devflow/backend-common"
 import { ClientEvent } from "@devflow/types"
 import { handleJoinProject, handleLeaveProject } from "./handlers/project.handler"
 import { handleJoinIssue, handleLeaveIssue } from "./handlers/issue.handler"
-import {roomManager} from "./roomManager"
+import {roomManager} from "./RoomManager"
 
 const PORT = process.env.PORT ?? 4001
 

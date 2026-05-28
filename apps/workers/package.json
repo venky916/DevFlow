@@ -15,14 +15,18 @@
     "@devflow/backend-common": "workspace:*",
     "@devflow/db": "workspace:*",
     "@devflow/queues": "workspace:*",
+    "@devflow/types": "workspace:*",
     "bullmq": "^5.76.8",
     "dotenv": "^17.4.2",
+    "nodemailer": "^8.0.9",
     "resend": "^6.12.3"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
     "@devflow/config": "workspace:*",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
     "@types/node": "^25.7.0",
+    "@types/nodemailer": "^8.0.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }

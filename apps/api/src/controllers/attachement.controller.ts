@@ -2,17 +2,9 @@ import { Request, Response } from "express";
 import { prisma } from "@devflow/db";
 import { asyncHandler } from "../lib/asyncHandler";
 import { ApiError } from "../lib/ApiError";
-import { z } from "zod";
 import { generatePresignedDownloadUrl, deleteFileFromB2 } from "@devflow/storage";
 import { sendSuccess, sendCreated, sendNoContent } from "../lib/apiResponse";
-
-const saveAttachmentSchema = z.object({
-    fileKey: z.string().min(1),
-    fileName: z.string().min(1),
-    fileSize: z.number().optional(),
-    mimetype: z.string().optional(),
-    url: z.string().min(1)
-})
+import {saveAttachmentSchema} from "@devflow/validators"
 
 // ─── SAVE ATTACHMENT ──────────────────────────────────────────
 // just saves to DB — doesnt care if its an issue, comment, or anything else
@@ -25,7 +17,7 @@ export const saveAttachment = asyncHandler(async (req: Request, res: Response) =
         throw ApiError.badRequest("Invalid attachment data")
     }
 
-    const { fileKey, fileName, fileSize, mimetype, url } = parsed.data;
+    const { fileKey, fileName, fileSize, mimeType, url } = parsed.data;
 
     const issue = await prisma.issue.findUnique({
         where: {
@@ -42,7 +34,7 @@ export const saveAttachment = asyncHandler(async (req: Request, res: Response) =
             fileKey: fileKey as string,
             fileName: fileName as string,
             fileSize,
-            mimeType: mimetype as string,
+            mimeType: mimeType as string,
             url: url as string,
             issueId: issue.id,
             uploadedBy: req.user!.id
@@ -93,7 +85,6 @@ export const getAttachments = asyncHandler(async (req: Request, res: Response) =
             signedUrl: signedUrl
         }
     }))
-    console.log(withSignedUrls)
     sendSuccess(res, withSignedUrls, "Attachments fetched")
 })
 

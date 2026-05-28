@@ -1,8 +1,8 @@
 import { Worker, Job } from "bullmq";
 import { prisma } from "@devflow/db";
 import { logger, publisher } from "@devflow/backend-common";
-import { NotificationJobData } from "@devflow/queues";
-import { connection } from "../lib/redis";
+import { NotificationJobData, connection } from "@devflow/queues";
+import { UserEvents } from "@devflow/types";
 
 async function notificationFunction(job: Job<NotificationJobData>) {
     const { userId, type, content, link, triggeredBy } = job.data;
@@ -13,7 +13,11 @@ async function notificationFunction(job: Job<NotificationJobData>) {
     const notification = await prisma.notification.create({
         data: {
             userId,
-            content
+            type,
+            content,
+            link: link ?? null,
+            triggeredBy: triggeredBy ?? null,
+            isRead: false
         }
     })
 
@@ -24,7 +28,7 @@ async function notificationFunction(job: Job<NotificationJobData>) {
     await publisher.publish(
         `user:${userId}`,
         JSON.stringify({
-            type: 'NOTIFICATION',
+            type: UserEvents.NOTIFICATION,
             payload: {
                 id: notification.id,
                 content,
@@ -39,6 +43,16 @@ async function notificationFunction(job: Job<NotificationJobData>) {
 }
 
 export const notificationWorker = new Worker<NotificationJobData>("notification-queue", notificationFunction, { connection, concurrency: 5 });
+
+(async () => {
+    try {
+        await notificationWorker.waitUntilReady()
+        logger.info("✅ Notification worker connected to Redis")
+    } catch (error) {
+        logger.error({ error }, "❌ Activity worker FAILED to connect to Redis")
+        process.exit(1)
+    }
+})()
 
 notificationWorker.on("completed", (job) => {
     logger.info({ jobId: job.id }, "Notification job completed")

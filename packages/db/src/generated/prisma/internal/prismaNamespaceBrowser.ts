@@ -53,6 +53,7 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   Workspace: 'Workspace',
+  WorkspaceInvite: 'WorkspaceInvite',
   WorkspaceMember: 'WorkspaceMember',
   Project: 'Project',
   ProjectMember: 'ProjectMember',
@@ -103,6 +104,21 @@ export const WorkspaceScalarFieldEnum = {
 } as const
 
 export type WorkspaceScalarFieldEnum = (typeof WorkspaceScalarFieldEnum)[keyof typeof WorkspaceScalarFieldEnum]
+
+
+export const WorkspaceInviteScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  email: 'email',
+  role: 'role',
+  token: 'token',
+  expiresAt: 'expiresAt',
+  acceptedAt: 'acceptedAt',
+  invitedBy: 'invitedBy',
+  createdAt: 'createdAt'
+} as const
+
+export type WorkspaceInviteScalarFieldEnum = (typeof WorkspaceInviteScalarFieldEnum)[keyof typeof WorkspaceInviteScalarFieldEnum]
 
 
 export const WorkspaceMemberScalarFieldEnum = {
@@ -215,6 +231,10 @@ export type AttachmentScalarFieldEnum = (typeof AttachmentScalarFieldEnum)[keyof
 export const NotificationScalarFieldEnum = {
   id: 'id',
   content: 'content',
+  type: 'type',
+  link: 'link',
+  isRead: 'isRead',
+  triggeredBy: 'triggeredBy',
   userId: 'userId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

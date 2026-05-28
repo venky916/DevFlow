@@ -4,8 +4,8 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "devDependencies": {
-    "@devflow/config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@devflow/config": "workspace:*",
     "typescript": "^5.9.2"
   },
   "keywords": [],

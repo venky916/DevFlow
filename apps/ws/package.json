@@ -12,17 +12,18 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@devflow/backend-common": "workspace:*",
+    "@devflow/db": "workspace:*",
+    "@devflow/types": "workspace:*",
+    "@devflow/validators": "workspace:*",
     "dotenv": "^17.4.2",
     "ioredis": "^5.10.1",
     "ws": "^8.20.0"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@devflow/backend-common": "workspace:*",
-    "@devflow/types": "workspace:*",
-    "@devflow/validators": "workspace:*",
     "@devflow/config": "workspace:*",
-    "@devflow/db": "workspace:*",
+    "@repo/eslint-config": "workspace:*",
     "@types/node": "^25.6.2",
     "@types/ws": "^8.18.1",
     "tsx": "^4.21.0",

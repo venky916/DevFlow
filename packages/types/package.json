@@ -5,8 +5,9 @@
   "types": "./src/index.ts",
   "keywords": [],
   "devDependencies": {
-    "@devflow/config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@repo/eslint-config": "workspace:*",
+    "@devflow/config": "workspace:*",
     "typescript": "^5.9.2"
   },
   "author": "",

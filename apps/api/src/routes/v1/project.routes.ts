@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticate } from "../../middlewares/auth.middleware.js";
-import { createProject, getProjectById, updateProject, deleteProject, getProjects, getProjectMembers, removeProjectMember } from "../../controllers/project.controller.js";
+import { createProject, getProjectById, updateProject, deleteProject, getProjects, getProjectMembers, removeProjectMember, addProjectMember } from "../../controllers/project.controller.js";
 import {
     requireWorkspaceMember,
     requireWorkspaceRole,
@@ -22,6 +22,7 @@ router.delete("/:id", requireWorkspaceRole('OWNER', 'ADMIN'), deleteProject);
 
 // Member management
 router.get("/:id/members", requireProjectMember, getProjectMembers);
+router.post("/:id/members", requireProjectMember, addProjectMember);
 router.put("/:id/members/:uid", requireProjectRole('LEAD'), updateMemberRole);
 router.delete("/:id/members/:uid", requireProjectRole('LEAD'), removeProjectMember);
 

@@ -20,6 +20,24 @@ importers:
 
   apps/api:
     dependencies:
+      '@devflow/backend-common':
+        specifier: workspace:*
+        version: link:../../packages/backend-common
+      '@devflow/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@devflow/queues':
+        specifier: workspace:*
+        version: link:../../packages/queues
+      '@devflow/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
+      '@devflow/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      '@devflow/validators':
+        specifier: workspace:*
+        version: link:../../packages/validators
       cors:
         specifier: ^2.8.6
         version: 2.8.6
@@ -36,27 +54,12 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@devflow/backend-common':
-        specifier: workspace:*
-        version: link:../../packages/backend-common
       '@devflow/config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@devflow/db':
+      '@repo/eslint-config':
         specifier: workspace:*
-        version: link:../../packages/db
-      '@devflow/queues':
-        specifier: workspace:*
-        version: link:../../packages/queues
-      '@devflow/storage':
-        specifier: workspace:*
-        version: link:../../packages/storage
-      '@devflow/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@devflow/validators':
-        specifier: workspace:*
-        version: link:../../packages/validators
+        version: link:../../packages/eslint-config
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
@@ -127,12 +130,21 @@ importers:
       '@devflow/queues':
         specifier: workspace:*
         version: link:../../packages/queues
+      '@devflow/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      '@types/nodemailer':
+        specifier: ^8.0.0
+        version: 8.0.0
       bullmq:
         specifier: ^5.76.8
         version: 5.76.8
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
+      nodemailer:
+        specifier: ^8.0.9
+        version: 8.0.9
       resend:
         specifier: ^6.12.3
         version: 6.12.3
@@ -140,6 +152,9 @@ importers:
       '@devflow/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../packages/eslint-config
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
@@ -155,6 +170,18 @@ importers:
 
   apps/ws:
     dependencies:
+      '@devflow/backend-common':
+        specifier: workspace:*
+        version: link:../../packages/backend-common
+      '@devflow/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@devflow/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      '@devflow/validators':
+        specifier: workspace:*
+        version: link:../../packages/validators
       bufferutil:
         specifier: ^4.0.1
         version: 4.1.0
@@ -171,21 +198,12 @@ importers:
         specifier: ^8.20.0
         version: 8.20.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     devDependencies:
-      '@devflow/backend-common':
-        specifier: workspace:*
-        version: link:../../packages/backend-common
       '@devflow/config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@devflow/db':
+      '@repo/eslint-config':
         specifier: workspace:*
-        version: link:../../packages/db
-      '@devflow/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@devflow/validators':
-        specifier: workspace:*
-        version: link:../../packages/validators
+        version: link:../../packages/eslint-config
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
@@ -220,6 +238,9 @@ importers:
       '@devflow/config':
         specifier: workspace:*
         version: link:../config
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
@@ -254,6 +275,9 @@ importers:
       '@devflow/config':
         specifier: workspace:*
         version: link:../config
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
@@ -308,6 +332,9 @@ importers:
 
   packages/queues:
     dependencies:
+      '@devflow/types':
+        specifier: workspace:*
+        version: link:../types
       bullmq:
         specifier: ^5.76.8
         version: 5.76.8
@@ -315,6 +342,9 @@ importers:
       '@devflow/config':
         specifier: workspace:*
         version: link:../config
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
@@ -337,6 +367,12 @@ importers:
         specifier: ^17.4.2
         version: 17.4.2
     devDependencies:
+      '@devflow/config':
+        specifier: workspace:*
+        version: link:../config
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
@@ -352,6 +388,9 @@ importers:
       '@devflow/config':
         specifier: workspace:*
         version: link:../config
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
@@ -1602,6 +1641,9 @@ packages:
 
   '@types/node@25.7.0':
     resolution: {integrity: sha512-z+pdZyxE+RTQE9AcboAZCb4otwcrvgHD+GlBpPgn0emDVt0ohrTMhAwlr2Wd9nZ+nihhYFxO2pThz3C5qSu2Eg==}
+
+  '@types/nodemailer@8.0.0':
+    resolution: {integrity: sha512-fyf8jWULsCo0d0BuoQ75i6IeoHs47qcqxWc7yUdUcV0pOZGjUTTOvwdG1PRXUDqN/8A64yQdQdnA2pZgcdi+cA==}
 
   '@types/qs@6.15.0':
     resolution: {integrity: sha512-JawvT8iBVWpzTrz3EGw9BTQFg3BQNmwERdKE22vlTxawwtbyUSlMppvZYKLZzB5zgACXdXxbD3m1bXaMqP/9ow==}
@@ -2892,6 +2934,10 @@ packages:
   node-gyp-build@4.8.4:
     resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
     hasBin: true
+
+  nodemailer@8.0.9:
+    resolution: {integrity: sha512-5ofa7BUN8+C+Hckh5V2GjeeOGRQBx0CJQA6KxrvuZfC8iU4/q7sLn8XrtEEhJkjV6HdyIiQs7Bba6bTao8JhkA==}
+    engines: {node: '>=6.0.0'}
 
   object-assign@4.1.1:
     resolution: {integrity: sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg==}
@@ -5025,6 +5071,10 @@ snapshots:
     dependencies:
       undici-types: 7.21.0
 
+  '@types/nodemailer@8.0.0':
+    dependencies:
+      '@types/node': 25.7.0
+
   '@types/qs@6.15.0': {}
 
   '@types/range-parser@1.2.7': {}
@@ -6650,6 +6700,8 @@ snapshots:
     optional: true
 
   node-gyp-build@4.8.4: {}
+
+  nodemailer@8.0.9: {}
 
   object-assign@4.1.1: {}
 

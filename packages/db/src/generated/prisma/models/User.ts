@@ -206,6 +206,7 @@ export type UserWhereInput = {
   attachments?: Prisma.AttachmentListRelationFilter
   createdIssues?: Prisma.IssueListRelationFilter
   assignedIssues?: Prisma.IssueListRelationFilter
+  sentInvites?: Prisma.WorkspaceInviteListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -224,6 +225,7 @@ export type UserOrderByWithRelationInput = {
   attachments?: Prisma.AttachmentOrderByRelationAggregateInput
   createdIssues?: Prisma.IssueOrderByRelationAggregateInput
   assignedIssues?: Prisma.IssueOrderByRelationAggregateInput
+  sentInvites?: Prisma.WorkspaceInviteOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -245,6 +247,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   attachments?: Prisma.AttachmentListRelationFilter
   createdIssues?: Prisma.IssueListRelationFilter
   assignedIssues?: Prisma.IssueListRelationFilter
+  sentInvites?: Prisma.WorkspaceInviteListRelationFilter
 }, "id" | "firebaseUid" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -289,6 +292,7 @@ export type UserCreateInput = {
   attachments?: Prisma.AttachmentCreateNestedManyWithoutUploaderInput
   createdIssues?: Prisma.IssueCreateNestedManyWithoutCreatorInput
   assignedIssues?: Prisma.IssueCreateNestedManyWithoutAssigneeInput
+  sentInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -307,6 +311,7 @@ export type UserUncheckedCreateInput = {
   attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutUploaderInput
   createdIssues?: Prisma.IssueUncheckedCreateNestedManyWithoutCreatorInput
   assignedIssues?: Prisma.IssueUncheckedCreateNestedManyWithoutAssigneeInput
+  sentInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserUpdateInput = {
@@ -325,6 +330,7 @@ export type UserUpdateInput = {
   attachments?: Prisma.AttachmentUpdateManyWithoutUploaderNestedInput
   createdIssues?: Prisma.IssueUpdateManyWithoutCreatorNestedInput
   assignedIssues?: Prisma.IssueUpdateManyWithoutAssigneeNestedInput
+  sentInvites?: Prisma.WorkspaceInviteUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -343,6 +349,7 @@ export type UserUncheckedUpdateInput = {
   attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutUploaderNestedInput
   createdIssues?: Prisma.IssueUncheckedUpdateManyWithoutCreatorNestedInput
   assignedIssues?: Prisma.IssueUncheckedUpdateManyWithoutAssigneeNestedInput
+  sentInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -425,6 +432,20 @@ export type NullableStringFieldUpdateOperationsInput = {
 
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
+}
+
+export type UserCreateNestedOneWithoutSentInvitesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSentInvitesInput, Prisma.UserUncheckedCreateWithoutSentInvitesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSentInvitesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutSentInvitesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSentInvitesInput, Prisma.UserUncheckedCreateWithoutSentInvitesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSentInvitesInput
+  upsert?: Prisma.UserUpsertWithoutSentInvitesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSentInvitesInput, Prisma.UserUpdateWithoutSentInvitesInput>, Prisma.UserUncheckedUpdateWithoutSentInvitesInput>
 }
 
 export type UserCreateNestedOneWithoutWorkspacesInput = {
@@ -541,6 +562,94 @@ export type UserUpdateOneRequiredWithoutNotificationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutNotificationsInput, Prisma.UserUpdateWithoutNotificationsInput>, Prisma.UserUncheckedUpdateWithoutNotificationsInput>
 }
 
+export type UserCreateWithoutSentInvitesInput = {
+  id?: string
+  firebaseUid: string
+  email: string
+  name?: string | null
+  avatarUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  workspaces?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
+  projects?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
+  comments?: Prisma.CommentCreateNestedManyWithoutUserInput
+  activities?: Prisma.ActivityLogCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  attachments?: Prisma.AttachmentCreateNestedManyWithoutUploaderInput
+  createdIssues?: Prisma.IssueCreateNestedManyWithoutCreatorInput
+  assignedIssues?: Prisma.IssueCreateNestedManyWithoutAssigneeInput
+}
+
+export type UserUncheckedCreateWithoutSentInvitesInput = {
+  id?: string
+  firebaseUid: string
+  email: string
+  name?: string | null
+  avatarUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  workspaces?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
+  projects?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+  comments?: Prisma.CommentUncheckedCreateNestedManyWithoutUserInput
+  activities?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutUploaderInput
+  createdIssues?: Prisma.IssueUncheckedCreateNestedManyWithoutCreatorInput
+  assignedIssues?: Prisma.IssueUncheckedCreateNestedManyWithoutAssigneeInput
+}
+
+export type UserCreateOrConnectWithoutSentInvitesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutSentInvitesInput, Prisma.UserUncheckedCreateWithoutSentInvitesInput>
+}
+
+export type UserUpsertWithoutSentInvitesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutSentInvitesInput, Prisma.UserUncheckedUpdateWithoutSentInvitesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutSentInvitesInput, Prisma.UserUncheckedCreateWithoutSentInvitesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutSentInvitesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutSentInvitesInput, Prisma.UserUncheckedUpdateWithoutSentInvitesInput>
+}
+
+export type UserUpdateWithoutSentInvitesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  firebaseUid?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  workspaces?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
+  projects?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
+  comments?: Prisma.CommentUpdateManyWithoutUserNestedInput
+  activities?: Prisma.ActivityLogUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  attachments?: Prisma.AttachmentUpdateManyWithoutUploaderNestedInput
+  createdIssues?: Prisma.IssueUpdateManyWithoutCreatorNestedInput
+  assignedIssues?: Prisma.IssueUpdateManyWithoutAssigneeNestedInput
+}
+
+export type UserUncheckedUpdateWithoutSentInvitesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  firebaseUid?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  workspaces?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
+  projects?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+  comments?: Prisma.CommentUncheckedUpdateManyWithoutUserNestedInput
+  activities?: Prisma.ActivityLogUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutUploaderNestedInput
+  createdIssues?: Prisma.IssueUncheckedUpdateManyWithoutCreatorNestedInput
+  assignedIssues?: Prisma.IssueUncheckedUpdateManyWithoutAssigneeNestedInput
+}
+
 export type UserCreateWithoutWorkspacesInput = {
   id?: string
   firebaseUid: string
@@ -556,6 +665,7 @@ export type UserCreateWithoutWorkspacesInput = {
   attachments?: Prisma.AttachmentCreateNestedManyWithoutUploaderInput
   createdIssues?: Prisma.IssueCreateNestedManyWithoutCreatorInput
   assignedIssues?: Prisma.IssueCreateNestedManyWithoutAssigneeInput
+  sentInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutWorkspacesInput = {
@@ -573,6 +683,7 @@ export type UserUncheckedCreateWithoutWorkspacesInput = {
   attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutUploaderInput
   createdIssues?: Prisma.IssueUncheckedCreateNestedManyWithoutCreatorInput
   assignedIssues?: Prisma.IssueUncheckedCreateNestedManyWithoutAssigneeInput
+  sentInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutWorkspacesInput = {
@@ -606,6 +717,7 @@ export type UserUpdateWithoutWorkspacesInput = {
   attachments?: Prisma.AttachmentUpdateManyWithoutUploaderNestedInput
   createdIssues?: Prisma.IssueUpdateManyWithoutCreatorNestedInput
   assignedIssues?: Prisma.IssueUpdateManyWithoutAssigneeNestedInput
+  sentInvites?: Prisma.WorkspaceInviteUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutWorkspacesInput = {
@@ -623,6 +735,7 @@ export type UserUncheckedUpdateWithoutWorkspacesInput = {
   attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutUploaderNestedInput
   createdIssues?: Prisma.IssueUncheckedUpdateManyWithoutCreatorNestedInput
   assignedIssues?: Prisma.IssueUncheckedUpdateManyWithoutAssigneeNestedInput
+  sentInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateWithoutProjectsInput = {
@@ -640,6 +753,7 @@ export type UserCreateWithoutProjectsInput = {
   attachments?: Prisma.AttachmentCreateNestedManyWithoutUploaderInput
   createdIssues?: Prisma.IssueCreateNestedManyWithoutCreatorInput
   assignedIssues?: Prisma.IssueCreateNestedManyWithoutAssigneeInput
+  sentInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutProjectsInput = {
@@ -657,6 +771,7 @@ export type UserUncheckedCreateWithoutProjectsInput = {
   attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutUploaderInput
   createdIssues?: Prisma.IssueUncheckedCreateNestedManyWithoutCreatorInput
   assignedIssues?: Prisma.IssueUncheckedCreateNestedManyWithoutAssigneeInput
+  sentInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutProjectsInput = {
@@ -690,6 +805,7 @@ export type UserUpdateWithoutProjectsInput = {
   attachments?: Prisma.AttachmentUpdateManyWithoutUploaderNestedInput
   createdIssues?: Prisma.IssueUpdateManyWithoutCreatorNestedInput
   assignedIssues?: Prisma.IssueUpdateManyWithoutAssigneeNestedInput
+  sentInvites?: Prisma.WorkspaceInviteUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutProjectsInput = {
@@ -707,6 +823,7 @@ export type UserUncheckedUpdateWithoutProjectsInput = {
   attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutUploaderNestedInput
   createdIssues?: Prisma.IssueUncheckedUpdateManyWithoutCreatorNestedInput
   assignedIssues?: Prisma.IssueUncheckedUpdateManyWithoutAssigneeNestedInput
+  sentInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateWithoutCreatedIssuesInput = {
@@ -724,6 +841,7 @@ export type UserCreateWithoutCreatedIssuesInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   attachments?: Prisma.AttachmentCreateNestedManyWithoutUploaderInput
   assignedIssues?: Prisma.IssueCreateNestedManyWithoutAssigneeInput
+  sentInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutCreatedIssuesInput = {
@@ -741,6 +859,7 @@ export type UserUncheckedCreateWithoutCreatedIssuesInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutUploaderInput
   assignedIssues?: Prisma.IssueUncheckedCreateNestedManyWithoutAssigneeInput
+  sentInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutCreatedIssuesInput = {
@@ -763,6 +882,7 @@ export type UserCreateWithoutAssignedIssuesInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   attachments?: Prisma.AttachmentCreateNestedManyWithoutUploaderInput
   createdIssues?: Prisma.IssueCreateNestedManyWithoutCreatorInput
+  sentInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutAssignedIssuesInput = {
@@ -780,6 +900,7 @@ export type UserUncheckedCreateWithoutAssignedIssuesInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutUploaderInput
   createdIssues?: Prisma.IssueUncheckedCreateNestedManyWithoutCreatorInput
+  sentInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutAssignedIssuesInput = {
@@ -813,6 +934,7 @@ export type UserUpdateWithoutCreatedIssuesInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   attachments?: Prisma.AttachmentUpdateManyWithoutUploaderNestedInput
   assignedIssues?: Prisma.IssueUpdateManyWithoutAssigneeNestedInput
+  sentInvites?: Prisma.WorkspaceInviteUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCreatedIssuesInput = {
@@ -830,6 +952,7 @@ export type UserUncheckedUpdateWithoutCreatedIssuesInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutUploaderNestedInput
   assignedIssues?: Prisma.IssueUncheckedUpdateManyWithoutAssigneeNestedInput
+  sentInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUpsertWithoutAssignedIssuesInput = {
@@ -858,6 +981,7 @@ export type UserUpdateWithoutAssignedIssuesInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   attachments?: Prisma.AttachmentUpdateManyWithoutUploaderNestedInput
   createdIssues?: Prisma.IssueUpdateManyWithoutCreatorNestedInput
+  sentInvites?: Prisma.WorkspaceInviteUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAssignedIssuesInput = {
@@ -875,6 +999,7 @@ export type UserUncheckedUpdateWithoutAssignedIssuesInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutUploaderNestedInput
   createdIssues?: Prisma.IssueUncheckedUpdateManyWithoutCreatorNestedInput
+  sentInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateWithoutCommentsInput = {
@@ -892,6 +1017,7 @@ export type UserCreateWithoutCommentsInput = {
   attachments?: Prisma.AttachmentCreateNestedManyWithoutUploaderInput
   createdIssues?: Prisma.IssueCreateNestedManyWithoutCreatorInput
   assignedIssues?: Prisma.IssueCreateNestedManyWithoutAssigneeInput
+  sentInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutCommentsInput = {
@@ -909,6 +1035,7 @@ export type UserUncheckedCreateWithoutCommentsInput = {
   attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutUploaderInput
   createdIssues?: Prisma.IssueUncheckedCreateNestedManyWithoutCreatorInput
   assignedIssues?: Prisma.IssueUncheckedCreateNestedManyWithoutAssigneeInput
+  sentInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutCommentsInput = {
@@ -942,6 +1069,7 @@ export type UserUpdateWithoutCommentsInput = {
   attachments?: Prisma.AttachmentUpdateManyWithoutUploaderNestedInput
   createdIssues?: Prisma.IssueUpdateManyWithoutCreatorNestedInput
   assignedIssues?: Prisma.IssueUpdateManyWithoutAssigneeNestedInput
+  sentInvites?: Prisma.WorkspaceInviteUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCommentsInput = {
@@ -959,6 +1087,7 @@ export type UserUncheckedUpdateWithoutCommentsInput = {
   attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutUploaderNestedInput
   createdIssues?: Prisma.IssueUncheckedUpdateManyWithoutCreatorNestedInput
   assignedIssues?: Prisma.IssueUncheckedUpdateManyWithoutAssigneeNestedInput
+  sentInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateWithoutActivitiesInput = {
@@ -976,6 +1105,7 @@ export type UserCreateWithoutActivitiesInput = {
   attachments?: Prisma.AttachmentCreateNestedManyWithoutUploaderInput
   createdIssues?: Prisma.IssueCreateNestedManyWithoutCreatorInput
   assignedIssues?: Prisma.IssueCreateNestedManyWithoutAssigneeInput
+  sentInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutActivitiesInput = {
@@ -993,6 +1123,7 @@ export type UserUncheckedCreateWithoutActivitiesInput = {
   attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutUploaderInput
   createdIssues?: Prisma.IssueUncheckedCreateNestedManyWithoutCreatorInput
   assignedIssues?: Prisma.IssueUncheckedCreateNestedManyWithoutAssigneeInput
+  sentInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutActivitiesInput = {
@@ -1026,6 +1157,7 @@ export type UserUpdateWithoutActivitiesInput = {
   attachments?: Prisma.AttachmentUpdateManyWithoutUploaderNestedInput
   createdIssues?: Prisma.IssueUpdateManyWithoutCreatorNestedInput
   assignedIssues?: Prisma.IssueUpdateManyWithoutAssigneeNestedInput
+  sentInvites?: Prisma.WorkspaceInviteUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutActivitiesInput = {
@@ -1043,6 +1175,7 @@ export type UserUncheckedUpdateWithoutActivitiesInput = {
   attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutUploaderNestedInput
   createdIssues?: Prisma.IssueUncheckedUpdateManyWithoutCreatorNestedInput
   assignedIssues?: Prisma.IssueUncheckedUpdateManyWithoutAssigneeNestedInput
+  sentInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateWithoutAttachmentsInput = {
@@ -1060,6 +1193,7 @@ export type UserCreateWithoutAttachmentsInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   createdIssues?: Prisma.IssueCreateNestedManyWithoutCreatorInput
   assignedIssues?: Prisma.IssueCreateNestedManyWithoutAssigneeInput
+  sentInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutAttachmentsInput = {
@@ -1077,6 +1211,7 @@ export type UserUncheckedCreateWithoutAttachmentsInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   createdIssues?: Prisma.IssueUncheckedCreateNestedManyWithoutCreatorInput
   assignedIssues?: Prisma.IssueUncheckedCreateNestedManyWithoutAssigneeInput
+  sentInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutAttachmentsInput = {
@@ -1110,6 +1245,7 @@ export type UserUpdateWithoutAttachmentsInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   createdIssues?: Prisma.IssueUpdateManyWithoutCreatorNestedInput
   assignedIssues?: Prisma.IssueUpdateManyWithoutAssigneeNestedInput
+  sentInvites?: Prisma.WorkspaceInviteUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAttachmentsInput = {
@@ -1127,6 +1263,7 @@ export type UserUncheckedUpdateWithoutAttachmentsInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   createdIssues?: Prisma.IssueUncheckedUpdateManyWithoutCreatorNestedInput
   assignedIssues?: Prisma.IssueUncheckedUpdateManyWithoutAssigneeNestedInput
+  sentInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateWithoutNotificationsInput = {
@@ -1144,6 +1281,7 @@ export type UserCreateWithoutNotificationsInput = {
   attachments?: Prisma.AttachmentCreateNestedManyWithoutUploaderInput
   createdIssues?: Prisma.IssueCreateNestedManyWithoutCreatorInput
   assignedIssues?: Prisma.IssueCreateNestedManyWithoutAssigneeInput
+  sentInvites?: Prisma.WorkspaceInviteCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutNotificationsInput = {
@@ -1161,6 +1299,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutUploaderInput
   createdIssues?: Prisma.IssueUncheckedCreateNestedManyWithoutCreatorInput
   assignedIssues?: Prisma.IssueUncheckedCreateNestedManyWithoutAssigneeInput
+  sentInvites?: Prisma.WorkspaceInviteUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutNotificationsInput = {
@@ -1194,6 +1333,7 @@ export type UserUpdateWithoutNotificationsInput = {
   attachments?: Prisma.AttachmentUpdateManyWithoutUploaderNestedInput
   createdIssues?: Prisma.IssueUpdateManyWithoutCreatorNestedInput
   assignedIssues?: Prisma.IssueUpdateManyWithoutAssigneeNestedInput
+  sentInvites?: Prisma.WorkspaceInviteUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationsInput = {
@@ -1211,6 +1351,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutUploaderNestedInput
   createdIssues?: Prisma.IssueUncheckedUpdateManyWithoutCreatorNestedInput
   assignedIssues?: Prisma.IssueUncheckedUpdateManyWithoutAssigneeNestedInput
+  sentInvites?: Prisma.WorkspaceInviteUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 
@@ -1227,6 +1368,7 @@ export type UserCountOutputType = {
   attachments: number
   createdIssues: number
   assignedIssues: number
+  sentInvites: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1238,6 +1380,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   attachments?: boolean | UserCountOutputTypeCountAttachmentsArgs
   createdIssues?: boolean | UserCountOutputTypeCountCreatedIssuesArgs
   assignedIssues?: boolean | UserCountOutputTypeCountAssignedIssuesArgs
+  sentInvites?: boolean | UserCountOutputTypeCountSentInvitesArgs
 }
 
 /**
@@ -1306,6 +1449,13 @@ export type UserCountOutputTypeCountAssignedIssuesArgs<ExtArgs extends runtime.T
   where?: Prisma.IssueWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountSentInvitesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WorkspaceInviteWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1323,6 +1473,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   attachments?: boolean | Prisma.User$attachmentsArgs<ExtArgs>
   createdIssues?: boolean | Prisma.User$createdIssuesArgs<ExtArgs>
   assignedIssues?: boolean | Prisma.User$assignedIssuesArgs<ExtArgs>
+  sentInvites?: boolean | Prisma.User$sentInvitesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1366,6 +1517,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   attachments?: boolean | Prisma.User$attachmentsArgs<ExtArgs>
   createdIssues?: boolean | Prisma.User$createdIssuesArgs<ExtArgs>
   assignedIssues?: boolean | Prisma.User$assignedIssuesArgs<ExtArgs>
+  sentInvites?: boolean | Prisma.User$sentInvitesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1382,6 +1534,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     attachments: Prisma.$AttachmentPayload<ExtArgs>[]
     createdIssues: Prisma.$IssuePayload<ExtArgs>[]
     assignedIssues: Prisma.$IssuePayload<ExtArgs>[]
+    sentInvites: Prisma.$WorkspaceInvitePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1793,6 +1946,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   attachments<T extends Prisma.User$attachmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$attachmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AttachmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   createdIssues<T extends Prisma.User$createdIssuesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$createdIssuesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IssuePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   assignedIssues<T extends Prisma.User$assignedIssuesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$assignedIssuesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IssuePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  sentInvites<T extends Prisma.User$sentInvitesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sentInvitesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkspaceInvitePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2411,6 +2565,30 @@ export type User$assignedIssuesArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.IssueScalarFieldEnum | Prisma.IssueScalarFieldEnum[]
+}
+
+/**
+ * User.sentInvites
+ */
+export type User$sentInvitesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WorkspaceInvite
+   */
+  select?: Prisma.WorkspaceInviteSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WorkspaceInvite
+   */
+  omit?: Prisma.WorkspaceInviteOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WorkspaceInviteInclude<ExtArgs> | null
+  where?: Prisma.WorkspaceInviteWhereInput
+  orderBy?: Prisma.WorkspaceInviteOrderByWithRelationInput | Prisma.WorkspaceInviteOrderByWithRelationInput[]
+  cursor?: Prisma.WorkspaceInviteWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.WorkspaceInviteScalarFieldEnum | Prisma.WorkspaceInviteScalarFieldEnum[]
 }
 
 /**

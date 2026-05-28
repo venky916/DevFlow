@@ -15,6 +15,11 @@ export const updateMemberRoleSchema = z.object({
     role: z.enum(['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER', 'VIEWER'])
 })
 
+export const updateWorkspaceLogoSchema = z.object({
+    url: z.url()
+})
+
 export type CreateWorkspaceInput = z.infer<typeof createWorkspaceSchema>
 export type UpdateWorkspaceInput = z.infer<typeof updateWorkspaceSchema>
 export type UpdateMemberRoleInput = z.infer<typeof updateMemberRoleSchema>
+export type UpdateWorkspaceLogoInput = z.infer<typeof updateWorkspaceLogoSchema>

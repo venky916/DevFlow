@@ -3,7 +3,8 @@ import { ApiError } from "../lib/ApiError";
 import { prisma } from "@devflow/db";
 import { sendNoContent, sendSuccess } from "../lib/apiResponse";
 import { asyncHandler } from "../lib/asyncHandler";
-import { createProjectSchema,updateProjectSchema,updateProjectMemberRoleSchema } from "@devflow/validators"; "@devflow/validators"
+import { createProjectSchema, updateProjectSchema, updateProjectMemberRoleSchema, addProjectMemberSchema } from "@devflow/validators";
+import { getCache, setCache, CacheKeys, TTL, deleteCache } from "../lib/cache"
 
 // ─── POST /workspaces/:workspaceId/projects ───────────────────────
 export const createProject = asyncHandler(async (req: Request, res: Response) => {
@@ -157,9 +158,82 @@ export const deleteProject = asyncHandler(async (req: Request, res: Response) =>
     sendNoContent(res)
 })
 
+// ─── POST /projects/:id/members ──────────────────────────────
+// Add a workspace member to a project
+export const addProjectMember = asyncHandler(async (req: Request, res: Response) => {
+    const { id: projectId } = req.params
+    const { userId, role } = addProjectMemberSchema.parse(req.body)
+    const requester = req.user!.id
+
+    const project = await prisma.project.findUnique({
+        where: { id: projectId as string }
+    })
+
+    if (!project) {
+        throw ApiError.notFound('Project not found')
+    }
+
+    // Check requester permissions (workspace or project level)
+    const workspaceMember = await prisma.workspaceMember.findUnique({
+        where: {
+            workspaceId_userId: {
+                workspaceId: project.workspaceId,
+                userId: requester
+            }
+        }
+    })
+
+    // If not workspace OWNER/ADMIN, check if project LEAD
+    if (!workspaceMember || !["OWNER", "ADMIN"].includes(workspaceMember.role)) {
+        const projectMember = await prisma.projectMember.findUnique({
+            where: { projectId_userId: { projectId: projectId as string, userId: requester } }
+        })
+
+        if (!projectMember || projectMember.role !== 'LEAD') {
+            throw ApiError.forbidden('Only OWNER, ADMIN, or project LEAD can add members')
+        }
+    }
+
+    // Check if user is workspace member
+    const newMember = await prisma.workspaceMember.findUnique({
+        where: {
+            workspaceId_userId: {
+                workspaceId: project.workspaceId,
+                userId
+            }
+        }
+    })
+
+    if (!newMember) {
+        throw ApiError.conflict('User must be a workspace member first')
+    }
+
+    // Add to project
+    const member = await prisma.projectMember.create({
+        data: {
+            projectId: projectId as string,
+            userId,
+            role: role || 'DEVELOPER'
+        },
+        include: { user: { select: { id: true, name: true, email: true } } }
+    })
+
+    sendSuccess(res, member, 'Member added to project')
+
+})
+
 // ─── GET /projects/:id/members ────────────────────────────────────
 export const getProjectMembers = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
+
+    // ─── Check cache ──────────────────────────────────────────
+    const cacheKey = CacheKeys.projectMembers(id as string)
+    const cached = await getCache(cacheKey)
+
+    if (cached) {
+        sendSuccess(res, cached, "Members fetched successfully")
+        return
+    }
 
     const members = await prisma.projectMember.findMany({
         where: {
@@ -180,13 +254,15 @@ export const getProjectMembers = asyncHandler(async (req: Request, res: Response
         }
     })
 
+    await setCache(cacheKey, members, TTL.MEMBERS)
+
     sendSuccess(res, members, "Members fetched successfully")
 })
 
 // ─── PATCH /projects/:id/members/:uid ────────────────────────────
 export const updateProjectMemberRole = asyncHandler(async (req: Request, res: Response) => {
     const { id, uid } = req.params
-    const { role } = updateProjectMemberRoleSchema.parse(req.body) 
+    const { role } = updateProjectMemberRoleSchema.parse(req.body)
 
     const member = await prisma.projectMember.findUnique({
         where: { projectId_userId: { projectId: id as string, userId: uid as string } },
@@ -203,6 +279,9 @@ export const updateProjectMemberRole = asyncHandler(async (req: Request, res: Re
             user: { select: { id: true, name: true, email: true } },
         },
     });
+
+    // add after DB write in both functions:
+    await deleteCache(CacheKeys.projectMembers(id as string))
 
     sendSuccess(res, updated, "Member role updated successfully")
 })
@@ -231,6 +310,9 @@ export const removeProjectMember = asyncHandler(async (req: Request, res: Respon
             }
         }
     })
+
+    // add after DB write in both functions:
+    await deleteCache(CacheKeys.projectMembers(id as string))
     sendNoContent(res)
 
 })

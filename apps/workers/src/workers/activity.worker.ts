@@ -1,8 +1,7 @@
 import { Worker, Job } from "bullmq";
 import { prisma } from "@devflow/db";
 import { logger } from "@devflow/backend-common";
-import { ActivityJobData } from "@devflow/queues";
-import { connection } from "../lib/redis";
+import { ActivityJobData, connection } from "@devflow/queues";
 
 async function activityFunction(job: Job<ActivityJobData>) {
     const { action, userId, projectId, issueId, meta } = job.data;
@@ -23,6 +22,17 @@ async function activityFunction(job: Job<ActivityJobData>) {
 
 }
 export const activityWorker = new Worker<ActivityJobData>("activity-queue", activityFunction, { connection, concurrency: 5 });
+
+(async () => {
+    try {
+        await activityWorker.waitUntilReady()
+        logger.info("✅ Activity worker connected to Redis")
+    } catch (error) {
+        logger.error({ error }, "❌ Activity worker FAILED to connect to Redis")
+        process.exit(1)
+    }
+})()
+
 
 activityWorker.on("completed", (job) => {
     logger.info({ jobId: job.id }, "Activity job completed")

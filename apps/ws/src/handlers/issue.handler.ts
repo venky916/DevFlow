@@ -3,7 +3,7 @@ import { logger } from "@devflow/backend-common";
 import { subscribeToIssueChannel, unsubscribeFromIssueChannel } from "../lib/redis.subscriber";
 import { joinIssueSchema, leaveIssueSchema } from "@devflow/validators";
 import { prisma } from "@devflow/db";
-import { roomManager } from "../roomManager";
+import { roomManager } from "../RoomManager";
 
 export const handleJoinIssue = async (ws: AuthenticatedWebSocket, payload: { issueId: string }) => {
     try {

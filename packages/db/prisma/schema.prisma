@@ -48,6 +48,15 @@ enum SprintStatus {
   COMPLETED
 }
 
+enum NotificationType {
+  ISSUE_ASSIGNED
+  ISSUE_COMMENTED
+  SPRINT_STARTED
+  SPRINT_COMPLETED
+  WORKSPACE_INVITED
+  PROJECT_ADDED
+}
+
 
 model User {
   id          String   @id @default(cuid())
@@ -66,6 +75,7 @@ model User {
   attachments  Attachment[] 
   createdIssues Issue[] @relation("createdIssues")
   assignedIssues Issue[] @relation("assignedIssues")
+  sentInvites WorkspaceInvite[] @relation("sentInvites")
 
   @@map("users")
 }
@@ -74,17 +84,36 @@ model User {
 model Workspace{
   id          String   @id @default(cuid())
   name        String
-  slug       String   @unique
+  slug        String   @unique
   logoUrl     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   members     WorkspaceMember[]
   projects     Project[]
+  invites      WorkspaceInvite[]
 
   @@map("workspaces")
 }
 
+model WorkspaceInvite {
+  id  String     @id @default(cuid())
+  workspaceId  String
+  email        String
+  role         WorkspaceRole @default(DEVELOPER)
+  token        String   @unique @default(uuid())
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  invitedBy   String
+
+  createdAt   DateTime @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  inviter     User      @relation("sentInvites",fields: [invitedBy], references: [id])
+
+  @@map("workspace_invites")
+
+}
 model WorkspaceMember {
   id          String   @id @default(cuid())
   workspaceId String
@@ -227,6 +256,10 @@ model Attachment {
 model Notification {
   id          String   @id @default(cuid())
   content     String
+  type       NotificationType
+  link       String?
+  isRead    Boolean  @default(false)
+  triggeredBy String?
   userId      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

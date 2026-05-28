@@ -1,13 +1,8 @@
 import { Queue } from "bullmq";
 import { connection } from "./connection";
+import {NotificationTypes} from "@devflow/types";
 
-
-export type NotificationType = | 'ISSUE_ASSIGNED'
-    | 'ISSUE_COMMENTED'
-    | 'SPRINT_STARTED'
-    | 'SPRINT_COMPLETED'
-    | 'WORKSPACE_INVITED'
-    | 'PROJECT_ADDED';
+export type NotificationType = typeof NotificationTypes[keyof typeof NotificationTypes]
 
 // ─── Job data type ────────────────────────────────────────────────
 export interface NotificationJobData {

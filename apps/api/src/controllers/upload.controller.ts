@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { z } from "zod"
 import { generatePresignedUploadUrl, deleteFileFromB2 } from "@devflow/storage"
 import { asyncHandler } from "../lib/asyncHandler";
 import { ApiError } from "../lib/ApiError";
 import { sendSuccess, sendNoContent } from "../lib/apiResponse";
+import { presignedUrlSchema,deleteFileSchema } from "@devflow/validators";
 
 // [
 //     { "extension": "pdf", "mimeType": "application/pdf" },
@@ -23,17 +23,6 @@ import { sendSuccess, sendNoContent } from "../lib/apiResponse";
 //     { "extension": "txt", "mimeType": "text/plain" },
 //     { "extension": "zip", "mimeType": "application/zip" }
 // ]
-
-const presignedUrlSchema = z.object({
-    folder: z.enum(["attachments", "avatars", "logos"]),
-    fileName: z.string().min(1),
-    mimeType: z.string().min(1),
-    fileSize: z.number().max(10 * 1024 * 1024) // 10MB max
-})
-
-const deleteFileSchema = z.object({
-    fileKey: z.string().min(1)
-})
 
 
 // ─── GET PRESIGNED UPLOAD URL ─────────────────────────────────
