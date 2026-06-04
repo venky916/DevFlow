@@ -11,13 +11,15 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@devflow/backend-common": "workspace:*",
     "@devflow/types": "workspace:*",
-    "bullmq": "^5.76.8"
+    "bullmq": "^5.76.8",
+    "ioredis": "^5.10.1"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
-    "@repo/eslint-config": "workspace:*",
     "@devflow/config": "workspace:*",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
     "@types/node": "^25.7.0",
     "typescript": "^6.0.3"
   }

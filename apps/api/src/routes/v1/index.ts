@@ -13,6 +13,7 @@ import notificationRoutes from "./notification.routes"
 import { getProjectActivities } from '../../controllers/activity.controller';
 import { requireProjectMember } from '../../middlewares/permission.middleware';
 import { acceptInvite } from "../../controllers/invite.controller";
+
 const router = Router();
 
 router.use("/auth", authRoutes);

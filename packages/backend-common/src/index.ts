@@ -1,3 +1,3 @@
 export * from "./firebase-admin"
 export * from "./logger"
-export * from "./redis"
+export * from "./RedisManager"
