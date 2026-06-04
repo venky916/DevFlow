@@ -62,23 +62,27 @@ export function Select({
             sideOffset={4}
           >
             <RadixSelect.Viewport className="p-1">
-              {options.map((opt) => (
-                <RadixSelect.Item
-                  key={opt.value}
-                  value={opt.value}
-                  className={cn(
-                    "relative flex cursor-pointer select-none items-center rounded-[3px] py-1.5 pl-7 pr-3 text-sm text-text-secondary outline-none",
-                    "hover:bg-bg-hover hover:text-text-primary",
-                    "data-[highlighted]:bg-bg-hover data-[highlighted]:text-text-primary",
-                    "data-[state=checked]:text-text-primary",
-                  )}
-                >
-                  <RadixSelect.ItemIndicator className="absolute left-2 flex items-center justify-center">
-                    <Check className="h-3.5 w-3.5 text-accent" />
-                  </RadixSelect.ItemIndicator>
-                  <RadixSelect.ItemText>{opt.label}</RadixSelect.ItemText>
-                </RadixSelect.Item>
-              ))}
+              {options.map((opt) => {
+                // skip empty value items — show as placeholder instead
+                if (!opt.value) return null;
+                return (
+                  <RadixSelect.Item
+                    key={opt.value}
+                    value={opt.value}
+                    className={cn(
+                      "relative flex cursor-pointer select-none items-center rounded-[3px] py-1.5 pl-7 pr-3 text-sm text-text-secondary outline-none",
+                      "hover:bg-bg-hover hover:text-text-primary",
+                      "data-[highlighted]:bg-bg-hover data-[highlighted]:text-text-primary",
+                      "data-[state=checked]:text-text-primary",
+                    )}
+                  >
+                    <RadixSelect.ItemIndicator className="absolute left-2 flex items-center justify-center">
+                      <Check className="h-3.5 w-3.5 text-accent" />
+                    </RadixSelect.ItemIndicator>
+                    <RadixSelect.ItemText>{opt.label}</RadixSelect.ItemText>
+                  </RadixSelect.Item>
+                );
+              })}
             </RadixSelect.Viewport>
           </RadixSelect.Content>
         </RadixSelect.Portal>

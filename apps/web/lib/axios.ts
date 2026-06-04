@@ -8,10 +8,16 @@ export const api = axios.create({
 
 // attach fresh firebase token on every request
 api.interceptors.request.use(async (config) => {
-    const user = auth.currentUser;
-    if (user) {
-        const token = await user.getIdToken(); // auto refreshes if expired
-        config.headers.Authorization = `Bearer ${token}`;
+    try {
+        // wait for firebase auth to be ready
+        await auth.authStateReady();
+        const user = auth.currentUser;
+        if (user) {
+            const token = await user.getIdToken();
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+    } catch (err) {
+        console.error("[axios] token error:", err);
     }
-    return config
+    return config;
 })

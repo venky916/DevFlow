@@ -82,7 +82,8 @@ export const getMyWorkspaces = asyncHandler(async (req: Request, res: Response) 
             },
             _count: {
                 select: {
-                    projects: true
+                    projects: true,
+                    members: true
                 }
             }
         },

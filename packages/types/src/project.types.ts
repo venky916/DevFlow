@@ -23,7 +23,7 @@ export interface IProjectMember {
 }
 
 
-export interface IProjectMember extends IProject {
+export interface IProjectWithMembers extends IProject {
     members: IProjectMember[];
     _count?: {
         members: number,

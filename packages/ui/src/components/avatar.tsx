@@ -1,7 +1,7 @@
 import { cn } from "../lib/cn";
 
 interface AvatarProps {
-  name: string;
+  name?: string;
   src?: string;
   size?: "sm" | "md" | "lg";
   className?: string;
@@ -38,7 +38,7 @@ export function Avatar({ name, src, size = "md", className }: AvatarProps) {
           className="rounded-full w-full h-full object-cover"
         />
       ) : (
-        getInitials(name)
+        getInitials(name ?? "M V")
       )}
     </div>
   );
