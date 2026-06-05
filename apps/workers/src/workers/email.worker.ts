@@ -2,7 +2,7 @@ import { Worker, Job } from "bullmq";
 import nodemailer from "nodemailer";
 // import { Resend } from "resend";
 import { logger } from "@devflow/backend-common";
-import { EmailJobData, connection } from "@devflow/queues";
+import { EmailJobData, createRedisConnection } from "@devflow/queues";
 import { NotificationTypes } from "@devflow/types";
 
 // const resend = new Resend(process.env.RESEND_API_KEY!);
@@ -137,7 +137,7 @@ async function emailFunction(job: Job<EmailJobData>) {
     }
 }
 
-export const emailWorker = new Worker<EmailJobData>("email-queue", emailFunction, { connection, concurrency: 5 });
+export const emailWorker = new Worker<EmailJobData>("email-queue", emailFunction, { connection: createRedisConnection(), concurrency: 2 });
 
 (async () => {
     try {

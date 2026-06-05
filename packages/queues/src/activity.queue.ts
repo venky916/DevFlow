@@ -1,5 +1,5 @@
 import { Queue } from "bullmq";
-import { connection } from "./connection";
+import { createRedisConnection } from "./connection";
 
 // ─── Job data type ────────────────────────────────────────────────
 export interface ActivityJobData {
@@ -11,7 +11,7 @@ export interface ActivityJobData {
 }
 
 export const activityQueue = new Queue<ActivityJobData>("activity-queue", {
-    connection,
+    connection: createRedisConnection(),
     defaultJobOptions: {
         attempts: 3,
         backoff: {

@@ -1,6 +1,6 @@
 import { Queue } from "bullmq";
-import { connection } from "./connection";
-import {NotificationTypes} from "@devflow/types";
+import { createRedisConnection } from "./connection";
+import { NotificationTypes } from "@devflow/types";
 
 export type NotificationType = typeof NotificationTypes[keyof typeof NotificationTypes]
 
@@ -15,7 +15,7 @@ export interface NotificationJobData {
 
 
 export const notificationQueue = new Queue<NotificationJobData>('notification-queue', {
-    connection,
+    connection: createRedisConnection(),
     defaultJobOptions: {
         attempts: 3,
         backoff: {

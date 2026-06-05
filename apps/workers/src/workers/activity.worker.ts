@@ -1,7 +1,7 @@
 import { Worker, Job } from "bullmq";
 import { prisma } from "@devflow/db";
 import { logger } from "@devflow/backend-common";
-import { ActivityJobData, connection } from "@devflow/queues";
+import { ActivityJobData, createRedisConnection } from "@devflow/queues";
 
 async function activityFunction(job: Job<ActivityJobData>) {
     const { action, userId, projectId, issueId, meta } = job.data;
@@ -21,7 +21,7 @@ async function activityFunction(job: Job<ActivityJobData>) {
     logger.info({ jobId: job.id, action }, "Activity log written")
 
 }
-export const activityWorker = new Worker<ActivityJobData>("activity-queue", activityFunction, { connection, concurrency: 5 });
+export const activityWorker = new Worker<ActivityJobData>("activity-queue", activityFunction, { connection: createRedisConnection(), concurrency: 2 });
 
 (async () => {
     try {

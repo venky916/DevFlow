@@ -1,7 +1,7 @@
 import { Worker, Job } from "bullmq";
 import { prisma } from "@devflow/db";
 import { logger, publisher } from "@devflow/backend-common";
-import { NotificationJobData, connection } from "@devflow/queues";
+import { NotificationJobData, createRedisConnection } from "@devflow/queues";
 import { UserEvents } from "@devflow/types";
 
 async function notificationFunction(job: Job<NotificationJobData>) {
@@ -42,7 +42,7 @@ async function notificationFunction(job: Job<NotificationJobData>) {
     logger.info({ jobId: job.id, userId }, 'Notification sent');
 }
 
-export const notificationWorker = new Worker<NotificationJobData>("notification-queue", notificationFunction, { connection, concurrency: 5 });
+export const notificationWorker = new Worker<NotificationJobData>("notification-queue", notificationFunction, { connection: createRedisConnection(), concurrency: 2 });
 
 (async () => {
     try {

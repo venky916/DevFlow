@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Input } from "@devflow/ui/components/input";
-import { Textarea } from "@devflow/ui/components/textarea";
 import { Select } from "@devflow/ui/components/select";
 import { Avatar } from "@devflow/ui/components/avatar";
-import { useUpdateIssue } from "../../hooks/use-issues";
-import { useProjectSprints, useProjectMembers } from "../../hooks/use-issues";
+import {
+  useUpdateIssue,
+  useProjectSprints,
+  useProjectMembers,
+} from "../../hooks/use-issues";
 import { updateIssueSchema, type UpdateIssueInput } from "@devflow/validators";
 import type { IIssueWithRelations } from "@devflow/types";
 
@@ -32,13 +33,13 @@ const STATUS_OPTIONS = [
 interface Props {
   issue: IIssueWithRelations;
   projectId: string;
+  onSaving: (saving: boolean) => void;
 }
 
-export function IssueFields({ issue, projectId }: Props) {
+export function IssueFields({ issue, projectId, onSaving }: Props) {
   const { mutateAsync } = useUpdateIssue(issue.id, projectId);
   const { data: sprints } = useProjectSprints(projectId);
   const { data: members } = useProjectMembers(projectId);
-  const [saving, setSaving] = useState(false);
 
   const { register, handleSubmit, setValue, watch, reset } =
     useForm<UpdateIssueInput>({
@@ -52,7 +53,6 @@ export function IssueFields({ issue, projectId }: Props) {
       },
     });
 
-  // reset when issue changes
   useEffect(() => {
     reset({
       title: issue.title,
@@ -65,21 +65,17 @@ export function IssueFields({ issue, projectId }: Props) {
 
   const save = async (data: UpdateIssueInput) => {
     try {
-      setSaving(true);
+      onSaving(true);
       await mutateAsync(data);
     } catch {
       toast.error("Failed to update issue");
     } finally {
-      setSaving(false);
+      onSaving(false);
     }
   };
 
   const sprintOptions =
-    sprints?.map((s) => ({
-      label: s.name,
-      value: s.id,
-    })) ?? [];
-
+    sprints?.map((s) => ({ label: s.name, value: s.id })) ?? [];
   const memberOptions =
     members?.map((m) => ({
       label: m.user?.name ?? m.user?.email ?? "Unknown",
@@ -104,10 +100,9 @@ export function IssueFields({ issue, projectId }: Props) {
         onBlur={handleSubmit(save)}
       />
 
-      {/* Divider */}
       <div className="h-px bg-border-default" />
 
-      {/* Fields grid */}
+      {/* Fields */}
       <div className="flex flex-col gap-3">
         <FieldRow label="Status">
           <Select
@@ -149,7 +144,6 @@ export function IssueFields({ issue, projectId }: Props) {
             options={sprintOptions}
             value={issue.sprintId ?? undefined}
             onValueChange={(v) => {
-              setValue("assigneeId", v || null);
               handleSubmit(save)();
             }}
           />

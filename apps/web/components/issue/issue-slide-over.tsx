@@ -1,15 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { X, ExternalLink, Loader2 } from "lucide-react";
 import { cn } from "@devflow/ui/lib/cn";
 import { Badge } from "@devflow/ui/components/badge";
-import { useIssueById, useUpdateIssue } from "../../hooks/use-issues";
+import { useIssueById } from "../../hooks/use-issues";
 import { IssueFields } from "./issue-fields";
 import { ActivityPanel } from "./activity-panel";
-import type { IIssueWithRelations } from "@devflow/types";
-import { Spinner } from "@devflow/ui/components/spinner";
 
 interface Props {
   issueId: string | null;
@@ -18,12 +15,10 @@ interface Props {
 }
 
 export function IssueSlideOver({ issueId, onClose, projectId }: Props) {
-  const router = useRouter();
   const isOpen = !!issueId;
-
+  const [saving, setSaving] = useState(false);
   const { data: issue, isLoading } = useIssueById(issueId ?? "");
 
-  // close on escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -32,7 +27,6 @@ export function IssueSlideOver({ issueId, onClose, projectId }: Props) {
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  // update URL
   useEffect(() => {
     if (issueId) {
       const url = new URL(window.location.href);
@@ -47,7 +41,7 @@ export function IssueSlideOver({ issueId, onClose, projectId }: Props) {
 
   return (
     <>
-      {/* Backdrop — dims board */}
+      {/* Backdrop */}
       <div
         className={cn(
           "fixed inset-0 z-30 transition-opacity duration-200",
@@ -61,8 +55,7 @@ export function IssueSlideOver({ issueId, onClose, projectId }: Props) {
       {/* Panel */}
       <div
         className={cn(
-          "fixed top-[42px] right-0 bottom-0 z-40 w-1/2 bg-bg-surface border-l border-border-default",
-          "flex flex-col transition-transform duration-200 ease-out",
+          "fixed top-[42px] right-0 bottom-0 z-40 w-[460px] bg-bg-surface border-l border-border-default flex flex-col transition-transform duration-200 ease-out",
           isOpen ? "translate-x-0" : "translate-x-full",
         )}
       >
@@ -83,13 +76,12 @@ export function IssueSlideOver({ issueId, onClose, projectId }: Props) {
                 </Badge>
               </div>
               <div className="flex items-center gap-2">
-                <a
-                  href={`/issues/${issue.id}`}
-                  target="_blank"
-                  className="text-text-muted hover:text-text-primary transition-colors"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </a>
+                {saving && (
+                  <span className="flex items-center gap-1 text-[11px] text-text-muted">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Saving...
+                  </span>
+                )}
                 <button
                   onClick={onClose}
                   className="text-text-muted hover:text-text-primary transition-colors"
@@ -101,13 +93,14 @@ export function IssueSlideOver({ issueId, onClose, projectId }: Props) {
 
             {/* Body */}
             <div className="flex flex-1 overflow-hidden">
-              {/* Main area */}
               <div className="flex-1 overflow-y-auto p-4">
-                <IssueFields issue={issue} projectId={projectId} />
+                <IssueFields
+                  issue={issue}
+                  projectId={projectId}
+                  onSaving={setSaving}
+                />
               </div>
-
-              {/* Activity column */}
-              <div className="w-1/4 border-l border-border-default overflow-y-auto p-3 shrink-0">
+              <div className="w-[140px] border-l border-border-default overflow-y-auto p-3 shrink-0">
                 <ActivityPanel issueId={issue.id} />
               </div>
             </div>

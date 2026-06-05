@@ -7,8 +7,8 @@ const opts = {
         if (times > 10) return null;
         return Math.min(times * 1000, 10000);
     },
-    enableOfflineQueue: false,
-    lazyConnect: true,
+    // enableOfflineQueue: false, //→  throws immediately if not connected => first command always throws
+    lazyConnect: true, //→  first command arrives before connection is ready
 };
 
 
