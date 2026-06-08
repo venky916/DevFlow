@@ -14,5 +14,6 @@ export interface ISprint {
 export interface ISprintWithCount extends ISprint {
     _count: {
         issues: number;
-    }
+    },
+    doneCount: number;
 }

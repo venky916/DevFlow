@@ -28,3 +28,23 @@ export function GithubIcon() {
     </svg>
   );
 }
+
+export function KanbanIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      {/* Left column */}
+      <rect x="2" y="2" width="4" height="7" rx="1" />
+      {/* Middle column */}
+      <rect x="10" y="2" width="4" height="10" rx="1" />
+      {/* Right column */}
+      <rect x="18" y="2" width="4" height="5" rx="1" />
+    </svg>
+  );
+}

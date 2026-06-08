@@ -207,6 +207,8 @@ export const getWorkspaceMembers = asyncHandler(async (req: Request, res: Respon
     const cacheKey = CacheKeys.workspaceMembers(id as string)
     const cached = await getCache(cacheKey)
 
+    console.log(cacheKey, cached)
+
     if (cached) {
         sendSuccess(res, cached, "Members fetched successfully")
         return

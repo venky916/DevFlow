@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
-import { Plus, Filter } from "lucide-react";
+import { Plus, Filter, RotateCw } from "lucide-react";
 import { Button } from "@devflow/ui/components/button";
 import { Badge } from "@devflow/ui/components/badge";
 import { KanbanBoard } from "./kanban-board";
@@ -59,6 +59,9 @@ export function BoardPage() {
           {activeSprint && <Badge variant="success">Active</Badge>}
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm">
+            <RotateCw className="h-3.5 w-3.5" />
+          </Button>
           <Button variant="ghost" size="sm">
             <Filter className="h-3.5 w-3.5 mr-1.5" />
             Filter

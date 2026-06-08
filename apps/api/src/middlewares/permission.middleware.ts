@@ -73,6 +73,38 @@ export const requireWorkspaceRole = (...roles: WorkspaceRole[]) => {
     })
 };
 
+export const requireLeadOrAbove = asyncHandler(async (req, res, next) => {
+    const userId = req.user!.id;
+    const projectId = req.params.projectId ?? req.params.id;
+
+    // first check workspace role via project → workspaceId
+    const project = await prisma.project.findUnique({
+        where: { id: projectId as string },
+        select: { workspaceId: true }
+    });
+
+    if (!project) throw ApiError.notFound('Project not found');
+
+    const wsMember = await prisma.workspaceMember.findUnique({
+        where: { workspaceId_userId: { workspaceId: project.workspaceId, userId } }
+    });
+
+    if (wsMember && ['OWNER', 'ADMIN'].includes(wsMember.role)) {
+        return next(); // Owner/Admin always pass
+    }
+
+    // fall back to project role check
+    const projMember = await prisma.projectMember.findUnique({
+        where: { projectId_userId: { projectId: projectId as string, userId } }
+    });
+
+    if (!projMember || projMember.role !== 'LEAD') {
+        throw ApiError.forbidden('Only LEAD, OWNER, or ADMIN can perform this action');
+    }
+
+    next();
+});
+
 // ─── Project role check ───────────────────────────────────────────
 export const requireProjectRole = (...roles: ProjectRole[]) => {
     return asyncHandler(async (req: Request, res: Response, next: NextFunction) => {

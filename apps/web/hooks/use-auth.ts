@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import { useAuthStore } from "../stores/auth.store"
 import { api } from "../lib/axios";
+import { useQuery } from "@tanstack/react-query";
 
 export function useAuth() {
     const { user, setUser, clearAuth, setLoading, isLoading } = useAuthStore();
@@ -26,4 +27,14 @@ export function useAuth() {
     }, []);
 
     return { user, isLoading }
+}
+
+export function useMe() {
+    return useQuery({
+        queryKey: ["me"],
+        queryFn: async () => {
+            const res = await api.get("/users/me");
+            return res.data.data;
+        },
+    });
 }

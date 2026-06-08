@@ -40,6 +40,10 @@ export const getSprints = asyncHandler(async (req: Request, res: Response) => {
                 select: {
                     issues: true
                 }
+            },
+            issues: {
+                where: { status: "DONE" },
+                select: { id: true }
             }
         },
         orderBy: {
@@ -47,7 +51,13 @@ export const getSprints = asyncHandler(async (req: Request, res: Response) => {
         }
     })
 
-    sendSuccess(res, sprints, "Sprints fetched successfully")
+    const mapped = sprints.map((s) => ({
+        ...s,
+        doneCount: s.issues.length,
+        issues: undefined, // strip the issues array, only needed for count
+    }));
+
+    sendSuccess(res, mapped, "Sprints fetched successfully")
 })
 
 // ─── GET /sprints/:id ─────────────────────────────────────────────

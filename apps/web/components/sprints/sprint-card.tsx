@@ -39,74 +39,96 @@ export function SprintCard({
   return (
     <div
       className={cn(
-        "flex items-center justify-between p-4 rounded-[4px] border bg-bg-surface",
+        "flex flex-col gap-3 p-4 rounded-[4px] border bg-bg-surface",
         active
           ? "border-l-[3px] border-l-accent border-border-default"
           : "border-border-default",
       )}
     >
-      {/* Left */}
-      <div className="flex flex-col gap-1.5">
+      {/* Top row */}
+      <div className="flex items-center justify-between">
+        {/* Left */}
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[13px] font-medium text-text-primary">
+              {sprint.name}
+            </span>
+            <Badge
+              variant={
+                sprint.status === "ACTIVE"
+                  ? "success"
+                  : sprint.status === "PLANNED"
+                    ? "warning"
+                    : "neutral"
+              }
+            >
+              {sprint.status.charAt(0) + sprint.status.slice(1).toLowerCase()}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-3 text-[11px] text-text-muted">
+            <span>
+              {formatDate(sprint.startDate)} → {formatDate(sprint.endDate)}
+            </span>
+            <span>{issueCount} issues</span>
+          </div>
+        </div>
+
+        {/* Right — actions */}
         <div className="flex items-center gap-2">
-          <span className="text-[13px] font-medium text-text-primary">
-            {sprint.name}
-          </span>
-          <Badge
-            variant={
-              sprint.status === "ACTIVE"
-                ? "success"
-                : sprint.status === "PLANNED"
-                  ? "warning"
-                  : "neutral"
-            }
-          >
-            {sprint.status.charAt(0) + sprint.status.slice(1).toLowerCase()}
-          </Badge>
-        </div>
-
-        <div className="flex items-center gap-3 text-[11px] text-text-muted">
-          <span>
-            {formatDate(sprint.startDate)} → {formatDate(sprint.endDate)}
-          </span>
-          <span>{issueCount} issues</span>
+          {active && onComplete && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onComplete}
+              disabled={completing}
+            >
+              {completing ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <>
+                  <CheckCheck className="h-3.5 w-3.5 mr-1.5" /> Complete
+                </>
+              )}
+            </Button>
+          )}
+          {!active && sprint.status === "PLANNED" && onStart && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onStart}
+              disabled={starting || hasActiveSprint}
+            >
+              {starting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <>
+                  <Play className="h-3.5 w-3.5 mr-1.5" /> Start
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Right — actions */}
-      <div className="flex items-center gap-2">
-        {active && onComplete && (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={onComplete}
-            disabled={completing}
-          >
-            {completing ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <>
-                <CheckCheck className="h-3.5 w-3.5 mr-1.5" /> Complete
-              </>
-            )}
-          </Button>
-        )}
-        {!active && sprint.status === "PLANNED" && onStart && (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={onStart}
-            disabled={starting || hasActiveSprint}
-          >
-            {starting ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <>
-                <Play className="h-3.5 w-3.5 mr-1.5" /> Start
-              </>
-            )}
-          </Button>
-        )}
-      </div>
+      {/* Progress bar — active sprint only */}
+      {active && (
+        <div className="flex items-center gap-2">
+          <div className="flex-1 h-[3px] bg-bg-hover rounded-full overflow-hidden">
+            <div
+              className="h-full bg-accent rounded-full transition-all"
+              style={{
+                width:
+                  issueCount > 0
+                    ? `${Math.round((sprint.doneCount / issueCount) * 100)}%`
+                    : "0%",
+              }}
+            />
+          </div>
+          <span className="text-[11px] font-mono text-text-muted shrink-0">
+            {sprint.doneCount}/{issueCount}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

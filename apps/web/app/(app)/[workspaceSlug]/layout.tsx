@@ -3,5 +3,5 @@ export default function WorkspaceLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="flex h-full w-full overflow-hidden">{children}</div>;
+  return <>{children}</>;
 }

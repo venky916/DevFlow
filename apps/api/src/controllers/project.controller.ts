@@ -49,9 +49,27 @@ export const getProjects = asyncHandler(async (req: Request, res: Response) => {
     const { workspaceId } = req.params
     const userId = req.user!.id
 
+    // Check requester's workspace role
+    const workspaceMember = await prisma.workspaceMember.findUnique({
+        where: { workspaceId_userId: { workspaceId: workspaceId as string, userId } },
+    });
+
+    if (!workspaceMember) {
+        throw ApiError.forbidden("You are not a member of this workspace");
+    }
+
+    const isOwnerOrAdmin = ["OWNER", "ADMIN"].includes(workspaceMember.role);
+
     const projects = await prisma.project.findMany({
         where: {
-            workspaceId: workspaceId as string
+            workspaceId: workspaceId as string,
+            // Owner/Admin see all projects
+            // Everyone else sees only projects they are a member of
+            ...(!isOwnerOrAdmin && {
+                members: {
+                    some: { userId },
+                },
+            }),
         },
         include: {
             members: {

@@ -140,6 +140,21 @@ export const getBoardIssues = asyncHandler(async (req: Request, res: Response) =
         }
     })
 
+    // if no active sprint, return empty board immediately
+    if (!activeSprint) {
+        sendSuccess(res, {
+            activeSprint: null,
+            columns: {
+                BACKLOG: [],
+                TODO: [],
+                IN_PROGRESS: [],
+                IN_REVIEW: [],
+                DONE: []
+            }
+        }, "Board fetched successfully");
+        return;
+    }
+
     // ─── Check cache first ────────────────────────────────────
     const cacheKey = CacheKeys.board(projectId as string, activeSprint?.id ?? null)
 
@@ -224,6 +239,42 @@ export const getBacklogIssues = asyncHandler(async (req: Request, res: Response)
     sendSuccess(res, issues, "Issues fetched successfully")
 
 })
+
+// ─── GET /projects/:id/backlog/grouped ────────────────────────────
+export const getBacklogGrouped = asyncHandler(async (req: Request, res: Response) => {
+    const { id: projectId } = req.params;
+
+    const sprints = await prisma.sprint.findMany({
+        where: {
+            projectId: projectId as string,
+            status: { not: "COMPLETED" }
+        },
+        include: {
+            issues: {
+                include: {
+                    assignee: { select: { id: true, name: true, avatarUrl: true } },
+                    creator: { select: { id: true, name: true, avatarUrl: true } }
+                },
+                orderBy: { position: "asc" }
+            }
+        },
+        orderBy: { createdAt: "asc" }
+    });
+
+    const backlogIssues = await prisma.issue.findMany({
+        where: {
+            projectId: projectId as string,
+            sprintId: null
+        },
+        include: {
+            assignee: { select: { id: true, name: true, avatarUrl: true } },
+            creator: { select: { id: true, name: true, avatarUrl: true } }
+        },
+        orderBy: { position: "asc" }
+    });
+
+    sendSuccess(res, { sprints, backlogIssues }, "Backlog fetched successfully");
+});
 
 // ─── GET /issues/:id ──────────────────────────────────────────────
 export const getIssueById = asyncHandler(async (req: Request, res: Response) => {
@@ -558,3 +609,31 @@ export const deleteIssue = asyncHandler(async (req: Request, res: Response) => {
     })
     sendNoContent(res)
 })
+
+// ─── GET /my-issues ───────────────────────────────────────────────
+export const getMyIssues = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user!.id;
+
+    const issues = await prisma.issue.findMany({
+        where: {
+            assigneeId: userId
+        },
+        include: {
+            assignee: { select: { id: true, name: true, avatarUrl: true } },
+            creator: { select: { id: true, name: true, avatarUrl: true } },
+            project: { select: { id: true, name: true, slug: true } },
+            sprint: { select: { id: true, name: true, status: true } }
+        },
+        orderBy: { updatedAt: "desc" }
+    });
+
+    const columns = {
+        BACKLOG: issues.filter(i => i.status === "BACKLOG"),
+        TODO: issues.filter(i => i.status === "TODO"),
+        IN_PROGRESS: issues.filter(i => i.status === "IN_PROGRESS"),
+        IN_REVIEW: issues.filter(i => i.status === "IN_REVIEW"),
+        DONE: issues.filter(i => i.status === "DONE"),
+    };
+
+    sendSuccess(res, { columns }, "My issues fetched successfully");
+});

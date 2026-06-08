@@ -4,7 +4,7 @@ import { createComment, deleteComment, getComments, updateComment } from "../../
 import { requireProjectMember, attachIssueProject } from "../../middlewares/permission.middleware";
 
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
 router.use(authenticate);
 

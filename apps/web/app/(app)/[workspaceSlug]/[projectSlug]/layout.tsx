@@ -1,4 +1,4 @@
-import { ProjectSidebar } from "../../../../components/layout/project-sidebar";
+import { PageHeader } from "../../../../components/layout/page-header";
 
 export default function ProjectLayout({
   children,
@@ -6,8 +6,8 @@ export default function ProjectLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-full w-full overflow-hidden">
-      <ProjectSidebar />
+    <div className="flex flex-col h-full overflow-hidden">
+      <PageHeader />
       <main className="flex-1 overflow-auto bg-bg-app">{children}</main>
     </div>
   );

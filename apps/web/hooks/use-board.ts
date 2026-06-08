@@ -4,6 +4,7 @@ import { api } from "../lib/axios";
 import { useBoardStore } from "../stores/board.store";
 import type { IIssueWithRelations, IssueStatus, ISprint } from "@devflow/types";
 import type { MoveIssueInput } from "@devflow/validators";
+import { toast } from "sonner";
 
 interface BoardResponse {
     activeSprint: ISprint | null;
@@ -47,12 +48,18 @@ export function useMoveIssue() {
             return res.data.data;
         },
         onMutate: ({ issueId, data }) => {
-            // optimistic update
-            const columns = useBoardStore.getState().columns;
-            const fromStatus = Object.entries(columns).find(
+            const snapshot = useBoardStore.getState().columns;
+            const fromStatus = Object.entries(snapshot).find(
                 ([, issues]) => issues.some((i) => i.id === issueId)
             )?.[0] as IssueStatus;
             if (fromStatus) moveIssue(issueId, fromStatus, data.status, data.position);
+            return { snapshot }; // return for rollback
         },
+        onError: (_err, _vars, context) => {
+            if (context?.snapshot) {
+                useBoardStore.getState().setColumns(context.snapshot);
+            }
+            toast.error("Failed to move issue");
+        }
     });
 }

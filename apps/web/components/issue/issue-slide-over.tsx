@@ -7,6 +7,7 @@ import { Badge } from "@devflow/ui/components/badge";
 import { useIssueById } from "../../hooks/use-issues";
 import { IssueFields } from "./issue-fields";
 import { ActivityPanel } from "./activity-panel";
+import { useRouter } from "next/navigation";
 
 interface Props {
   issueId: string | null;
@@ -16,6 +17,7 @@ interface Props {
 
 export function IssueSlideOver({ issueId, onClose, projectId }: Props) {
   const isOpen = !!issueId;
+  const router = useRouter();
   const [saving, setSaving] = useState(false);
   const { data: issue, isLoading } = useIssueById(issueId ?? "");
 
@@ -55,7 +57,7 @@ export function IssueSlideOver({ issueId, onClose, projectId }: Props) {
       {/* Panel */}
       <div
         className={cn(
-          "fixed top-[42px] right-0 bottom-0 z-40 w-[460px] bg-bg-surface border-l border-border-default flex flex-col transition-transform duration-200 ease-out",
+          "fixed top-[42px] right-0 bottom-0 z-40 w-1/2 bg-bg-surface border-l border-border-default flex flex-col transition-transform duration-200 ease-out",
           isOpen ? "translate-x-0" : "translate-x-full",
         )}
       >
@@ -83,8 +85,17 @@ export function IssueSlideOver({ issueId, onClose, projectId }: Props) {
                   </span>
                 )}
                 <button
+                  onClick={() => {
+                    console.log("pushing to", `/issues/${issue.id}`);
+                    router.push(`/issues/${issue.id}`);
+                  }}
+                  className="text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </button>
+                <button
                   onClick={onClose}
-                  className="text-text-muted hover:text-text-primary transition-colors"
+                  className="text-text-muted hover:text-text-primary transition-colors cursor-pointer"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -100,7 +111,7 @@ export function IssueSlideOver({ issueId, onClose, projectId }: Props) {
                   onSaving={setSaving}
                 />
               </div>
-              <div className="w-[140px] border-l border-border-default overflow-y-auto p-3 shrink-0">
+              <div className="w-[250px] border-l border-border-default overflow-y-auto p-3 shrink-0">
                 <ActivityPanel issueId={issue.id} />
               </div>
             </div>
