@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +18,8 @@ import { signUpSchema, type SignUpForm } from "@devflow/validators";
 import { GithubIcon, GoogleIcon } from "../../icons";
 
 export function SignUpForm() {
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const router = useRouter();
   const [googleLoading, setGoogleLoading] = useState(false);
   const [githubLoading, setGithubLoading] = useState(false);
@@ -35,7 +37,7 @@ export function SignUpForm() {
     try {
       await signUpWithEmail(data.email, data.password, data.name);
       toast.success("Account created!");
-      router.push("/");
+      router.push(redirect ?? "/");
     } catch (err: any) {
       toast.error(err.message ?? "Sign up failed");
     }
@@ -46,7 +48,7 @@ export function SignUpForm() {
       setGoogleLoading(true);
       await signInWithGoogle();
       toast.success("Account created!");
-      router.push("/");
+      router.push(redirect ?? "/");
     } catch (err: any) {
       toast.error(err.message ?? "Google sign up failed");
     } finally {
@@ -59,7 +61,7 @@ export function SignUpForm() {
       setGithubLoading(true);
       await signInWithGithub();
       toast.success("Account created!");
-      router.push("/");
+      router.push(redirect ?? "/");
     } catch (err: any) {
       toast.error(err.message ?? "GitHub sign up failed");
     } finally {
@@ -176,7 +178,11 @@ export function SignUpForm() {
       <p className="text-center text-sm text-text-muted">
         Already have an account?{" "}
         <Link
-          href="/sign-in"
+          href={
+            redirect
+              ? `/sign-in?redirect=${encodeURIComponent(redirect)}`
+              : "/sign-in"
+          }
           className="text-accent hover:text-accent-hover transition-colors"
         >
           Sign in

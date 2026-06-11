@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +18,8 @@ import { signInSchema, type SignInForm } from "@devflow/validators";
 import { GoogleIcon, GithubIcon } from "../../icons";
 
 export function SignInForm() {
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const router = useRouter();
   const [googleLoading, setGoogleLoading] = useState(false);
   const [githubLoading, setGithubLoading] = useState(false);
@@ -34,7 +36,7 @@ export function SignInForm() {
     try {
       await signInWithEmail(data.email, data.password);
       toast.success("Welcome back!");
-      router.push("/");
+      router.push(redirect ?? "/");
     } catch (err: any) {
       toast.error(err.message ?? "Sign in failed");
     }
@@ -45,7 +47,7 @@ export function SignInForm() {
       setGoogleLoading(true);
       await signInWithGoogle();
       toast.success("Welcome back!");
-      router.push("/");
+      router.push(redirect ?? "/");
     } catch (err: any) {
       toast.error(err.message ?? "Google sign in failed");
     } finally {
@@ -58,7 +60,7 @@ export function SignInForm() {
       setGithubLoading(true);
       await signInWithGithub();
       toast.success("Welcome back!");
-      router.push("/");
+      router.push(redirect ?? "/");
     } catch (err: any) {
       toast.error(err.message ?? "GitHub sign in failed");
     } finally {
@@ -160,7 +162,11 @@ export function SignInForm() {
       <p className="text-center text-sm text-text-muted">
         Don't have an account?{" "}
         <Link
-          href="/sign-up"
+          href={
+            redirect
+              ? `/sign-up?redirect=${encodeURIComponent(redirect)}`
+              : "/sign-up"
+          }
           className="text-accent hover:text-accent-hover transition-colors"
         >
           Sign up

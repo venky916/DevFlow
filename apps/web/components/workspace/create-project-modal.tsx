@@ -61,7 +61,6 @@ export function CreateProjectModal({
       toast.success("Project created!");
       reset();
       onClose();
-      router.push(`/${workspaceSlug}/${project.slug}/board`);
     } catch (err: any) {
       toast.error(err.response?.data?.message ?? "Failed to create project");
     }

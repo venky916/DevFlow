@@ -1,4 +1,4 @@
-import { InboxPage } from "../../../../components/inbox/inbox-page";
+import { InboxPage } from "../../../components/inbox/inbox-page";
 
 export const metadata = {
   title: "Inbox — DevFlow",

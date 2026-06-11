@@ -13,9 +13,11 @@ interface Props {
   issueId: string | null;
   onClose: () => void;
   projectId: string;
+  workspaceSlug: string;
+  projectSlug: string;
 }
 
-export function IssueSlideOver({ issueId, onClose, projectId }: Props) {
+export function IssueSlideOver({ issueId, onClose, projectId, workspaceSlug, projectSlug }: Props) {
   const isOpen = !!issueId;
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -86,8 +88,7 @@ export function IssueSlideOver({ issueId, onClose, projectId }: Props) {
                 )}
                 <button
                   onClick={() => {
-                    console.log("pushing to", `/issues/${issue.id}`);
-                    router.push(`/issues/${issue.id}`);
+                    router.push(`/${workspaceSlug}/${projectSlug}/issues/${issue.id}`);
                   }}
                   className="text-text-muted hover:text-text-primary transition-colors cursor-pointer"
                 >

@@ -100,6 +100,8 @@ export function BoardPage() {
           issueId={selectedIssueId}
           onClose={() => setSelectedIssue(null)}
           projectId={project.id}
+          workspaceSlug={workspaceSlug}
+          projectSlug={projectSlug}
         />
       )}
     </div>

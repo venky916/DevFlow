@@ -72,6 +72,8 @@ export function MyIssuesPage() {
         issueId={selectedIssue?.id ?? null}
         onClose={() => setSelectedIssue(null)}
         projectId={selectedIssue?.project?.id ?? selectedIssue?.projectId ?? ""}
+        workspaceSlug={selectedIssue?.project?.workspace?.slug ?? ""}
+        projectSlug={selectedIssue?.project?.slug ?? ""}
       />
     </div>
   );

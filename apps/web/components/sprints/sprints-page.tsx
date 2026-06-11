@@ -61,6 +61,14 @@ export function SprintsPage() {
     });
   };
 
+  if (!project) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <p className="text-text-muted">Project not found</p>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -145,11 +153,13 @@ export function SprintsPage() {
         </div>
       )}
 
-      <CreateSprintModal
-        open={showModal}
-        onClose={() => setShowModal(false)}
-        projectId={project?.id ?? ""}
-      />
+      {project && (
+        <CreateSprintModal
+          open={showModal}
+          onClose={() => setShowModal(false)}
+          projectId={project.id}
+        />
+      )}
     </div>
   );
 }

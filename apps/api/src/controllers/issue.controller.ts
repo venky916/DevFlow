@@ -621,7 +621,16 @@ export const getMyIssues = asyncHandler(async (req: Request, res: Response) => {
         include: {
             assignee: { select: { id: true, name: true, avatarUrl: true } },
             creator: { select: { id: true, name: true, avatarUrl: true } },
-            project: { select: { id: true, name: true, slug: true } },
+            project: {
+                select: {
+                    id: true, name: true, slug: true, workspace: {
+                        select: {
+                            id: true,
+                            slug: true
+                        }
+                    }
+                }
+            },
             sprint: { select: { id: true, name: true, status: true } }
         },
         orderBy: { updatedAt: "desc" }
