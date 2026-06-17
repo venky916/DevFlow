@@ -30,19 +30,14 @@ import type { WorkspaceRole } from "@devflow/types";
 // ─── Helpers ──────────────────────────────────────────────────────
 const ROLE_OPTIONS = [
   { label: "Admin", value: "ADMIN" },
-  { label: "Lead", value: "LEAD" },
   { label: "Developer", value: "DEVELOPER" },
   { label: "Viewer", value: "VIEWER" },
 ];
 
 function roleVariant(role: WorkspaceRole) {
   switch (role) {
-    case "OWNER":
-      return "warning" as const;
     case "ADMIN":
-      return "info" as const;
-    case "LEAD":
-      return "success" as const;
+      return "warning" as const;
     case "DEVELOPER":
       return "neutral" as const;
     case "VIEWER":
@@ -89,7 +84,7 @@ function GeneralTab({
   const { data: workspaces } = useWorkspaces();
   const workspace = workspaces?.find((w) => w.id === workspaceId);
   const myRole = workspace?.members?.find((m) => m.userId === user?.id)?.role;
-  const isOwner = myRole === "OWNER";
+  const isAdmin = myRole === "ADMIN";
 
   const {
     register,
@@ -150,7 +145,7 @@ function GeneralTab({
         </form>
       </div>
 
-      {isOwner && (
+      {isAdmin && (
         <>
           <div className="h-px bg-border-default" />
           <div className="flex flex-col gap-3 p-4 rounded-[4px] border border-danger-text">
@@ -184,8 +179,7 @@ function MembersTab({ workspaceId }: { workspaceId: string }) {
   const { data: workspaces } = useWorkspaces();
   const workspace = workspaces?.find((w) => w.id === workspaceId);
   const myRole = workspace?.members?.find((m) => m.userId === user?.id)?.role;
-  const isOwnerOrAdmin = myRole === "OWNER" || myRole === "ADMIN";
-  const isOwner = myRole === "OWNER";
+  const isAdmin = myRole === "ADMIN";
 
   // track which member's role is being updated
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -208,9 +202,8 @@ function MembersTab({ workspaceId }: { workspaceId: string }) {
       <div className="flex flex-col gap-2">
         {members?.map((member: any) => {
           const isMe = member.userId === user?.id;
-          const isOwnerMember = member.role === "OWNER";
-          const canChangeRole = isOwnerOrAdmin && !isOwnerMember && !isMe;
-          const canRemove = isOwner && !isOwnerMember && !isMe;
+          const canChangeRole = isAdmin && !isMe;
+          const canRemove = isAdmin && !isMe;
 
           return (
             <div
@@ -234,9 +227,6 @@ function MembersTab({ workspaceId }: { workspaceId: string }) {
                     <span className="text-[10px] text-text-muted font-mono shrink-0">
                       you
                     </span>
-                  )}
-                  {isOwnerMember && (
-                    <ShieldCheck className="h-3 w-3 text-warning-text shrink-0" />
                   )}
                 </div>
                 <p className="text-[11px] text-text-muted truncate">

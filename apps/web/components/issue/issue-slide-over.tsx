@@ -59,7 +59,7 @@ export function IssueSlideOver({ issueId, onClose, projectId, workspaceSlug, pro
       {/* Panel */}
       <div
         className={cn(
-          "fixed top-[42px] right-0 bottom-0 z-40 w-1/2 bg-bg-surface border-l border-border-default flex flex-col transition-transform duration-200 ease-out",
+          "fixed top-[38px] right-0 bottom-0 z-40 w-1/2 bg-bg-surface border-l border-border-default flex flex-col transition-transform duration-200 ease-out",
           isOpen ? "translate-x-0" : "translate-x-full",
         )}
       >

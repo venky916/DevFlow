@@ -1,3 +1,5 @@
+import { IIssueWithRelations } from "./issue.types";
+
 export type SprintStatus = 'PLANNED' | 'ACTIVE' | 'COMPLETED'
 
 export interface ISprint {
@@ -16,4 +18,8 @@ export interface ISprintWithCount extends ISprint {
         issues: number;
     },
     doneCount: number;
+}
+
+export interface ISprintWithIssues extends ISprint {
+    issues: IIssueWithRelations[];
 }

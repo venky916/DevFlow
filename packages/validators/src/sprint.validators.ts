@@ -26,3 +26,5 @@ export const updateSprintSchema = z.object({
 
 export type CreateSprintInput = z.infer<typeof createSprintSchema>
 export type UpdateSprintInput = z.infer<typeof updateSprintSchema>
+
+// z.coerce.date().nullable().optional()

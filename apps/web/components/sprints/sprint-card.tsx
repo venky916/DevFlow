@@ -41,7 +41,7 @@ export function SprintCard({
       className={cn(
         "flex flex-col gap-3 p-4 rounded-[4px] border bg-bg-surface",
         active
-          ? "border-l-[3px] border-l-accent border-border-default"
+          ? "border-[3px]  border-border-default border-l-accent"
           : "border-border-default",
       )}
     >

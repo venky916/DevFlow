@@ -58,7 +58,7 @@ export const getProjects = asyncHandler(async (req: Request, res: Response) => {
         throw ApiError.forbidden("You are not a member of this workspace");
     }
 
-    const isOwnerOrAdmin = ["OWNER", "ADMIN"].includes(workspaceMember.role);
+    const isOwnerOrAdmin = ["ADMIN"].includes(workspaceMember.role);
 
     const projects = await prisma.project.findMany({
         where: {
@@ -202,7 +202,7 @@ export const addProjectMember = asyncHandler(async (req: Request, res: Response)
     })
 
     // If not workspace OWNER/ADMIN, check if project LEAD
-    if (!workspaceMember || !["OWNER", "ADMIN"].includes(workspaceMember.role)) {
+    if (!workspaceMember || workspaceMember.role !== "ADMIN") {
         const projectMember = await prisma.projectMember.findUnique({
             where: { projectId_userId: { projectId: projectId as string, userId: requester } }
         })
@@ -224,6 +224,10 @@ export const addProjectMember = asyncHandler(async (req: Request, res: Response)
 
     if (!newMember) {
         throw ApiError.conflict('User must be a workspace member first')
+    }
+
+    if (newMember.role === 'VIEWER' && role !== 'VIEWER') {
+        throw ApiError.forbidden('Workspace VIEWERs can only be added as project VIEWER')
     }
 
     // Add to project

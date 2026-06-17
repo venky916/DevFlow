@@ -30,18 +30,17 @@ export default function WorkspaceHomePage() {
 
     // Lead/Developer/Viewer don't see the workspace projects grid
     // Redirect them straight to their first assigned project's board
-    const isOwnerOrAdmin =
-      workspaceRole === "OWNER" || workspaceRole === "ADMIN";
+    const isAdmin = workspaceRole === "ADMIN";
 
-    if (!isOwnerOrAdmin && projects.length > 0) {
+    if (!isAdmin && projects.length > 0) {
       router.replace(`/${workspaceSlug}/${projects?.[0]?.slug}/board`);
     }
   }, [projects, projLoading, workspaceRole]);
 
   // Owner/Admin see the projects grid
-  const isOwnerOrAdmin = workspaceRole === "OWNER" || workspaceRole === "ADMIN";
+  const isAdmin = workspaceRole === "ADMIN";
 
-  if (!isOwnerOrAdmin) {
+  if (!isAdmin) {
     // Show spinner while redirect happens
     return (
       <div className="flex items-center justify-center h-full bg-bg-app">

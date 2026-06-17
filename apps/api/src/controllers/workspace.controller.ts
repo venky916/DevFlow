@@ -32,7 +32,7 @@ export const createWorkspace = asyncHandler(async (req: Request, res: Response) 
         throw ApiError.conflict(`Slug already taken`)
     }
 
-    // Create workspace + add creator as OWNER in one transaction
+    // Create workspace + add creator as ADMIN in one transaction
     const workspace = await prisma.$transaction(async (tx) => {
         const ws = await tx.workspace.create({
             data: {
@@ -46,7 +46,7 @@ export const createWorkspace = asyncHandler(async (req: Request, res: Response) 
             data: {
                 workspaceId: ws.id,
                 userId,
-                role: 'OWNER'
+                role: 'ADMIN'
             }
         })
 
@@ -156,8 +156,8 @@ export const updateWorkspace = asyncHandler(async (req: Request, res: Response) 
 
     const member = await getMember(id as string, userId)
 
-    if (!member || !["OWNER", "ADMIN"].includes(member.role)) {
-        throw ApiError.forbidden('Only OWNER or ADMIN can update workspace')
+    if (!member || !["ADMIN"].includes(member.role)) {
+        throw ApiError.forbidden('Only ADMIN can update workspace')
     }
 
     const workspace = await prisma.workspace.update({
@@ -180,8 +180,8 @@ export const deleteWorkspace = asyncHandler(async (req: Request, res: Response) 
 
     const member = await getMember(id as string, userId)
 
-    if (!member || member.role !== 'OWNER') {
-        throw ApiError.forbidden('Only OWNER can delete workspace')
+    if (!member || member.role !== 'ADMIN') {
+        throw ApiError.forbidden('Only ADMIN can delete workspace')
     }
 
     const workspace = await prisma.workspace.delete({
@@ -246,8 +246,8 @@ export const updateMemberRole = asyncHandler(async (req: Request, res: Response)
 
     const requester = await getMember(id as string, userId)
 
-    if (!requester || !["OWNER", "ADMIN"].includes(requester.role)) {
-        throw ApiError.forbidden('Only OWNER or ADMIN can change roles')
+    if (!requester || !["ADMIN"].includes(requester.role)) {
+        throw ApiError.forbidden('Only ADMIN can change roles')
     }
 
     const targetMember = await getMember(id as string, uid as string)
@@ -256,8 +256,8 @@ export const updateMemberRole = asyncHandler(async (req: Request, res: Response)
         throw ApiError.notFound('Member not found in this workspace')
     }
 
-    if (role === "OWNER") {
-        throw ApiError.forbidden('Cannot assign OWNER role')
+    if (role === "ADMIN") {
+        throw ApiError.forbidden('Cannot assign ADMIN role')
     }
 
     const updated = await prisma.workspaceMember.update({
@@ -294,8 +294,8 @@ export const removeMember = asyncHandler(async (req: Request, res: Response) => 
 
     const requester = await getMember(id as string, userId)
 
-    if (!requester || !["OWNER", "ADMIN"].includes(requester.role)) {
-        throw ApiError.forbidden('Only OWNER or ADMIN can delete members')
+    if (!requester || !["ADMIN"].includes(requester.role)) {
+        throw ApiError.forbidden('Only ADMIN can delete members')
     }
 
     const targetMember = await getMember(id as string, uid as string)
@@ -304,8 +304,8 @@ export const removeMember = asyncHandler(async (req: Request, res: Response) => 
         throw ApiError.notFound('Member not found in this workspace')
     }
 
-    if (targetMember.role === "OWNER") {
-        throw ApiError.forbidden('Cannot remove OWNER from workspace')
+    if (targetMember.role === "ADMIN") {
+        throw ApiError.forbidden('Cannot remove ADMIN from workspace')
     }
 
     const deleted = await prisma.workspaceMember.delete({

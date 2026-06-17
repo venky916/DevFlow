@@ -30,8 +30,11 @@ import { useBacklogGrouped, useMoveToSprint } from "../../hooks/use-backlog";
 import { CreateIssueModal } from "../board/create-issue-modal";
 import { IssueSlideOver } from "../issue/issue-slide-over";
 import { useProjectMembers, useProjectSprints } from "../../hooks/use-issues";
-import type { IIssueWithRelations, IssuePriority } from "@devflow/types";
-import type { ISprintWithIssues } from "../../hooks/use-backlog";
+import type {
+  IIssueWithRelations,
+  IssuePriority,
+  ISprint,
+} from "@devflow/types";
 
 // ─── Priority dot colors ──────────────────────────────────────────
 const PRIORITY_COLORS: Record<IssuePriority, string> = {
@@ -105,7 +108,7 @@ function SprintSection({
   sprint,
   onOpen,
 }: {
-  sprint: ISprintWithIssues;
+  sprint: ISprint & { issues: IIssueWithRelations[] };
   onOpen: (issue: IIssueWithRelations) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -152,7 +155,7 @@ function SprintSection({
                 No issues — drag here to add
               </p>
             ) : (
-              sprint.issues.map((issue :IIssueWithRelations) => (
+              sprint.issues.map((issue: IIssueWithRelations) => (
                 <IssueRow key={issue.id} issue={issue} onOpen={onOpen} />
               ))
             )}
@@ -408,6 +411,8 @@ export function BacklogPage() {
             issueId={selectedIssue?.id ?? null}
             onClose={() => setSelectedIssue(null)}
             projectId={project.id}
+            workspaceSlug={workspaceSlug}
+            projectSlug={projectSlug}
           />
         </>
       )}

@@ -1,6 +1,6 @@
 import { IUserPublic } from "./user.types";
 
-export type WorkspaceRole = "OWNER" | "ADMIN" | "LEAD" | "DEVELOPER" | "VIEWER";
+export type WorkspaceRole = "ADMIN" | "DEVELOPER" | "VIEWER";
 
 export interface IWorkspace {
     id: string;
@@ -27,4 +27,17 @@ export interface IWorkspaceWithMembers extends IWorkspace {
         projects: number,
         members: number
     }
+}
+
+export interface IWorkspaceInvite {
+    id: string;
+    email: string;
+    role: WorkspaceRole;
+    expiresAt: string;
+    createdAt: string;
+    inviter?: {
+        id: string;
+        name: string | null;
+        email: string;
+    };
 }

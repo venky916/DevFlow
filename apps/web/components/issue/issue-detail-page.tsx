@@ -349,7 +349,7 @@ function ActivityPanel({ issueId }: { issueId: string }) {
       ) : !activities?.length ? (
         <p className="text-[12px] text-text-disabled">No activity yet</p>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 h-full max-h-[370px] overflow-y-auto">
           {activities.map((a: any) => (
             <div key={a.id} className="flex items-start gap-2">
               <Avatar name={a.user?.name ?? "?"} size="sm" />

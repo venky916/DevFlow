@@ -10,7 +10,10 @@ export function useCreateIssue(projectId: string) {
             const res = await api.post(`/projects/${projectId}/issues`, data);
             return res.data.data as IIssueWithRelations;
         },
-        onSuccess: () => qc.invalidateQueries({ queryKey: ["board", projectId] }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ["backlog-grouped", projectId] });
+            qc.invalidateQueries({ queryKey: ["board", projectId] });
+        }
     });
 }
 
@@ -35,6 +38,7 @@ export function useUpdateIssue(issueId: string, projectId: string) {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["issue", issueId] });
             qc.invalidateQueries({ queryKey: ["board", projectId] });
+            qc.invalidateQueries({ queryKey: ["backlog-grouped", projectId] });
         },
     });
 }

@@ -40,8 +40,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       pathname.startsWith(r),
     );
     // Already on a workspace or project route
-    const isOnWorkspaceRoute =
-      pathname.split("/").length >= 2 && !isOnPublicAppRoute;
+    const isOnWorkspaceRoute = pathname.split("/").filter(Boolean).length >= 1;
+
     if (isOnWorkspaceRoute || isOnPublicAppRoute) return;
 
     // No workspaces at all → send to create workspace
@@ -51,6 +51,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [user, isLoading, wsLoading, workspaces, pathname]);
 
+  // ── Role-based redirect from root "/" ─────────────────────────
   useEffect(() => {
     if (isLoading || wsLoading || projLoading) return;
     if (!user || !firstWorkspace || !projects) return;
@@ -62,10 +63,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       (m) => m.userId === storeUser?.id,
     );
     const workspaceRole = myMembership?.role;
-    const isOwnerOrAdmin =
-      workspaceRole === "OWNER" || workspaceRole === "ADMIN";
+    const isAdmin = workspaceRole === "ADMIN";
 
-    if (isOwnerOrAdmin) {
+    if (isAdmin) {
       // Owner/Admin → workspace home
       router.replace(`/${firstWorkspace.slug}`);
     } else {

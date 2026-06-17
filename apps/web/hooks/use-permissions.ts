@@ -11,23 +11,24 @@ export interface Permissions {
     workspaceRole: WorkspaceRole | null;
     projectRole: ProjectRole | null;
 
-    // workspace-level helpers
-    isOwner: boolean;
-    isOwnerOrAdmin: boolean;
+    // workspace-level
+    isAdmin: boolean;
 
-    // project-level helpers (Lead OR workspace Owner/Admin can do these)
+    // project-level (LEAD or workspace ADMIN)
     isLeadOrAbove: boolean;
     canViewBacklog: boolean;
     canManageSprints: boolean;
     canManageProjectMembers: boolean;
     canViewProjectSettings: boolean;
 
-    // board-level helpers
+    // board-level
     canCreateIssue: boolean;
     canDragAnyCard: boolean;
     canComment: boolean;
 
-    // loading state
+    // viewer check
+    isViewer: boolean;
+
     isLoading: boolean;
 }
 
@@ -40,67 +41,48 @@ export function usePermissions(): Permissions {
     const user = useAuthStore((s) => s.user);
     const { data: workspaces, isLoading: wsLoading } = useWorkspaces();
 
-    // Find current workspace
     const currentWorkspace = workspaces?.find((ws) => ws.slug === workspaceSlug);
+    const workspaceMember = currentWorkspace?.members?.find((m) => m.userId === user?.id);
+    const workspaceRole = (workspaceMember?.role ?? null) as WorkspaceRole | null;
 
-    // Find current user's workspace membership
-    const workspaceMember = currentWorkspace?.members?.find(
-        (m) => m.userId === user?.id
-    );
-    const workspaceRole = workspaceMember?.role ?? null;
-
-    // Find current project membership (from projects query)
-    // We pull projectRole from the projects list members array
     const { data: projects, isLoading: projLoading } = useProjects(
         currentWorkspace?.id ?? ""
     );
 
     const currentProject = projects?.find((p) => p.slug === projectSlug);
-    const projectMember = currentProject?.members?.find(
-        (m) => m.userId === user?.id
-    );
-    const projectRole = projectMember?.role ?? null;
+    const projectMember = currentProject?.members?.find((m) => m.userId === user?.id);
+    const projectRole = (projectMember?.role ?? null) as ProjectRole | null;
 
     const isLoading = wsLoading || projLoading;
 
     // ─── Derived booleans ──────────────────────────────────────────
-    const isOwner = workspaceRole === "OWNER";
-    const isOwnerOrAdmin = isOwner || workspaceRole === "ADMIN";
 
-    // Lead at project level OR Owner/Admin at workspace level
-    const isLeadOrAbove =
-        isOwnerOrAdmin || projectRole === "LEAD";
+    // Workspace ADMIN
+    const isAdmin = workspaceRole === "ADMIN";
 
-    const canViewBacklog = isLeadOrAbove;
-    const canManageSprints = isLeadOrAbove;
-    const canManageProjectMembers = isLeadOrAbove;
-    const canViewProjectSettings = isLeadOrAbove;
+    // LEAD at project level OR ADMIN at workspace level
+    const isLeadOrAbove = isAdmin || projectRole === "LEAD";
 
-    // Developer+ can create issues and comment, Viewer cannot
-    const isDeveloperOrAbove =
-        isLeadOrAbove ||
-        projectRole === "DEVELOPER" ||
-        workspaceRole === "DEVELOPER";
+    // DEVELOPER at project level OR Lead/Admin
+    // Note: workspaceRole DEVELOPER alone is NOT enough —
+    // they must also be a project member with DEVELOPER role
+    const isDeveloperOrAbove = isLeadOrAbove || projectRole === "DEVELOPER";
 
-    const canCreateIssue = isDeveloperOrAbove;
-    const canComment = isDeveloperOrAbove;
-
-    // Only Owner/Admin/Lead can drag anyone's card
-    const canDragAnyCard = isLeadOrAbove;
+    const isViewer = projectRole === "VIEWER" && !isAdmin;
 
     return {
         workspaceRole,
         projectRole,
-        isOwner,
-        isOwnerOrAdmin,
+        isAdmin,
         isLeadOrAbove,
-        canViewBacklog,
-        canManageSprints,
-        canManageProjectMembers,
-        canViewProjectSettings,
-        canCreateIssue,
-        canDragAnyCard,
-        canComment,
+        canViewBacklog: isLeadOrAbove,
+        canManageSprints: isLeadOrAbove,
+        canManageProjectMembers: isLeadOrAbove,
+        canViewProjectSettings: isLeadOrAbove,
+        canCreateIssue: isDeveloperOrAbove,
+        canDragAnyCard: isLeadOrAbove,
+        canComment: isDeveloperOrAbove,
+        isViewer,
         isLoading,
     };
 }

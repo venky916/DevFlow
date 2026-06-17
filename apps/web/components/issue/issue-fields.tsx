@@ -146,6 +146,7 @@ export function IssueFields({ issue, projectId, onSaving }: Props) {
             onValueChange={(v) => {
               handleSubmit(save)();
             }}
+            disabled
           />
         </FieldRow>
       </div>

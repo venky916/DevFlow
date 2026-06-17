@@ -21,9 +21,8 @@ import {
   useMarkAllAsRead,
   useClearReadNotifications,
   useDeleteNotification,
-  type INotification,
 } from "../../hooks/use-notifications";
-import type { NotificationType } from "@devflow/types";
+import type { NotificationType, INotification } from "@devflow/types";
 
 // ─── Notification icon by type ────────────────────────────────────
 function NotifIcon({ type }: { type: NotificationType }) {

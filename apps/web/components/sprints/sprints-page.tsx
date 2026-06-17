@@ -108,7 +108,7 @@ export function SprintsPage() {
       {activeSprint && (
         <div className="flex flex-col gap-3">
           <p className="text-[11px] uppercase tracking-[0.04em] font-mono text-text-muted">
-            Active
+            Active 
           </p>
           <SprintCard
             sprint={activeSprint}
@@ -123,7 +123,7 @@ export function SprintsPage() {
       {plannedSprints.length > 0 && (
         <div className="flex flex-col gap-3">
           <p className="text-[11px] uppercase tracking-[0.04em] font-mono text-text-muted">
-            Planned
+            Planned {plannedSprints.length}
           </p>
           <div className="flex flex-col gap-2">
             {plannedSprints.map((sprint) => (
@@ -143,7 +143,7 @@ export function SprintsPage() {
       {completedSprints.length > 0 && (
         <div className="flex flex-col gap-3">
           <p className="text-[11px] uppercase tracking-[0.04em] font-mono text-text-muted">
-            Completed
+            Completed {completedSprints.length}
           </p>
           <div className="flex flex-col gap-2">
             {completedSprints.map((sprint) => (

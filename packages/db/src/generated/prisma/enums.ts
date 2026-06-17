@@ -10,9 +10,7 @@
 */
 
 export const WorkspaceRole = {
-  OWNER: 'OWNER',
   ADMIN: 'ADMIN',
-  LEAD: 'LEAD',
   DEVELOPER: 'DEVELOPER',
   VIEWER: 'VIEWER'
 } as const

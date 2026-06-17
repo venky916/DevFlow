@@ -2,20 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
-import type { WorkspaceRole } from "@devflow/types";
-
-export interface IWorkspaceInvite {
-    id: string;
-    email: string;
-    role: WorkspaceRole;
-    expiresAt: string;
-    createdAt: string;
-    inviter?: {
-        id: string;
-        name: string | null;
-        email: string;
-    };
-}
+import type { WorkspaceRole, IWorkspaceInvite } from "@devflow/types";
 
 // ─── Members ──────────────────────────────────────────────────────
 export function useWorkspaceMembers(workspaceId: string) {

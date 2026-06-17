@@ -142,7 +142,7 @@ export function AppSidebar() {
   const currentProject = projects?.find((p) => p.slug === activeProjectSlug);
 
   const {
-    isOwnerOrAdmin,
+    isAdmin,
     isLeadOrAbove,
     canViewBacklog,
     canManageSprints,
@@ -163,9 +163,7 @@ export function AppSidebar() {
 
   // Projects visible to this user
   // Owner/Admin see all; Lead/Dev/Viewer see only their assigned ones
-  const visibleProjects = isOwnerOrAdmin
-    ? projects
-    : projects?.filter((p) => p.members?.some((m) => m.userId === user?.id));
+  const visibleProjects = projects;
 
   async function handleSignOut() {
     await auth.signOut();
@@ -186,14 +184,17 @@ export function AppSidebar() {
   return (
     <aside className="w-[200px] min-w-[200px] h-full bg-bg-sidebar border-r border-border-default flex flex-col shrink-0">
       {/* ── DevFlow brand — always static ──────────────────────── */}
-      <div className="flex items-center gap-2 px-4 h-[38px] border-b border-border-default shrink-0">
+      <button
+        onClick={() => router.push("/")}
+        className="flex items-center gap-2 px-4 h-[38px] border-b border-border-default shrink-0"
+      >
         <div className="h-[20px] w-[20px] rounded-[4px] bg-accent flex items-center justify-center shrink-0">
           <Zap className="h-3 w-3 text-bg-app" />
         </div>
         <span className="text-[13px] font-semibold text-text-primary tracking-tight">
           DevFlow
         </span>
-      </div>
+      </button>
 
       {/* ── Global nav — always visible ────────────────────────── */}
       <nav className="flex flex-col gap-0.5 px-2 pt-1">
@@ -221,9 +222,9 @@ export function AppSidebar() {
           {/* ══════════════════════════════════════════════════════
               WORKSPACE VIEW
               Shown when: no project context at all
-              Who sees it: Owner/Admin only (Lead/Dev get redirected)
+              Who sees it: Admin only (Lead/Dev get redirected)
           ══════════════════════════════════════════════════════ */}
-          {!onProjectRoute && isOwnerOrAdmin && (
+          {!onProjectRoute && (
             <>
               {/* Workspace switcher */}
               <div className="relative px-2">
@@ -283,7 +284,7 @@ export function AppSidebar() {
 
               <SidebarDivider />
 
-              {/* Projects list — Owner/Admin see all */}
+              {/* Projects list — Admin see all */}
               <div className="px-2">
                 <SectionLabel label="Projects" />
                 <nav className="flex flex-col gap-0.5">
@@ -344,65 +345,64 @@ export function AppSidebar() {
           ══════════════════════════════════════════════════════ */}
           {onProjectRoute && (
             <>
-              {/* Workspace switcher — Owner/Admin only, back nav to workspace */}
-              {isOwnerOrAdmin && (
-                <div className="relative px-2">
-                  <button
-                    onClick={() => setWsDropOpen((v) => !v)}
-                    className="flex items-center gap-2 w-full px-2 py-[5px] rounded-[4px] hover:bg-bg-hover transition-colors"
-                  >
-                    <div className="h-[18px] w-[18px] rounded-[4px] bg-accent-subtle flex items-center justify-center shrink-0">
-                      <span className="text-accent text-[10px] font-bold font-mono">
-                        {currentWorkspace?.name?.[0]?.toUpperCase() ?? "D"}
-                      </span>
-                    </div>
-                    <span className="text-[12px] font-medium text-text-secondary flex-1 text-left truncate">
-                      {currentWorkspace?.name ?? "Workspace"}
-                    </span>
-                    <ChevronDown className="h-3 w-3 text-text-muted shrink-0" />
-                  </button>
+              {/* Workspace switcher — Admin only, back nav to workspace */}
 
-                  <DropdownMenu
-                    open={wsDropOpen}
-                    onClose={() => setWsDropOpen(false)}
-                  >
-                    <DropdownLabel label="Workspaces" />
-                    {workspaces?.map((ws) => (
-                      <button
-                        key={ws.id}
-                        onClick={() => {
-                          setWsDropOpen(false);
-                          router.push(`/${ws.slug}`);
-                        }}
-                        className="flex items-center gap-2 w-full px-3 py-1.5 text-[13px] text-text-secondary hover:bg-bg-hover hover:text-text-primary transition-colors"
-                      >
-                        <div className="h-[16px] w-[16px] rounded-[3px] bg-accent-subtle flex items-center justify-center shrink-0">
-                          <span className="text-accent text-[9px] font-bold font-mono">
-                            {ws.name?.[0]?.toUpperCase()}
-                          </span>
-                        </div>
-                        <span className="flex-1 text-left truncate">
-                          {ws.name}
-                        </span>
-                        {ws.slug === activeWorkspaceSlug && (
-                          <Check className="h-3 w-3 text-accent shrink-0" />
-                        )}
-                      </button>
-                    ))}
-                    <DropdownDivider />
-                    <DropdownItem
+              <div className="relative px-2">
+                <button
+                  onClick={() => setWsDropOpen((v) => !v)}
+                  className="flex items-center gap-2 w-full px-2 py-[5px] rounded-[4px] hover:bg-bg-hover transition-colors"
+                >
+                  <div className="h-[18px] w-[18px] rounded-[4px] bg-accent-subtle flex items-center justify-center shrink-0">
+                    <span className="text-accent text-[10px] font-bold font-mono">
+                      {currentWorkspace?.name?.[0]?.toUpperCase() ?? "D"}
+                    </span>
+                  </div>
+                  <span className="text-[12px] font-medium text-text-secondary flex-1 text-left truncate">
+                    {currentWorkspace?.name ?? "Workspace"}
+                  </span>
+                  <ChevronDown className="h-3 w-3 text-text-muted shrink-0" />
+                </button>
+
+                <DropdownMenu
+                  open={wsDropOpen}
+                  onClose={() => setWsDropOpen(false)}
+                >
+                  <DropdownLabel label="Workspaces" />
+                  {workspaces?.map((ws) => (
+                    <button
+                      key={ws.id}
                       onClick={() => {
                         setWsDropOpen(false);
-                        router.push("/workspaces");
+                        router.push(`/${ws.slug}`);
                       }}
-                      icon={Plus}
-                      label="New workspace"
-                    />
-                  </DropdownMenu>
-                </div>
-              )}
+                      className="flex items-center gap-2 w-full px-3 py-1.5 text-[13px] text-text-secondary hover:bg-bg-hover hover:text-text-primary transition-colors"
+                    >
+                      <div className="h-[16px] w-[16px] rounded-[3px] bg-accent-subtle flex items-center justify-center shrink-0">
+                        <span className="text-accent text-[9px] font-bold font-mono">
+                          {ws.name?.[0]?.toUpperCase()}
+                        </span>
+                      </div>
+                      <span className="flex-1 text-left truncate">
+                        {ws.name}
+                      </span>
+                      {ws.slug === activeWorkspaceSlug && (
+                        <Check className="h-3 w-3 text-accent shrink-0" />
+                      )}
+                    </button>
+                  ))}
+                  <DropdownDivider />
+                  <DropdownItem
+                    onClick={() => {
+                      setWsDropOpen(false);
+                      router.push("/workspaces");
+                    }}
+                    icon={Plus}
+                    label="New workspace"
+                  />
+                </DropdownMenu>
+              </div>
 
-              {isOwnerOrAdmin && <SidebarDivider />}
+              <SidebarDivider />
 
               {/* Project switcher — everyone sees this */}
               <div className="relative px-2">
@@ -507,7 +507,7 @@ export function AppSidebar() {
               </div>
 
               {/* Workspace settings — Owner/Admin only */}
-              {isOwnerOrAdmin && (
+              {isAdmin && (
                 <>
                   <SidebarDivider />
                   <div className="px-2">
@@ -556,6 +556,16 @@ export function AppSidebar() {
             }}
             icon={User}
             label="Profile"
+          />
+          <DropdownDivider />
+          {/* Add this */}
+          <DropdownItem
+            onClick={() => {
+              setProfileMenuOpen(false);
+              router.push("/workspaces");
+            }}
+            icon={LayoutGrid}
+            label="My Workspaces"
           />
           <DropdownDivider />
           <DropdownItem

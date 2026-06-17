@@ -1,6 +1,6 @@
 import { IUserPublic } from "./user.types";
 
-export type ProjectRole = "LEAD" | "DEVELOPER" | "VIEWER";
+export type ProjectRole = "ADMIN" | "LEAD" | "DEVELOPER" | "VIEWER";
 
 export interface IProject {
     id: string;

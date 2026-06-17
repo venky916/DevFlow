@@ -2,28 +2,11 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
-import type { NotificationType } from "@devflow/types";
-
-export interface INotification {
-    id: string;
-    content: string;
-    type: NotificationType;
-    link: string | null;
-    isRead: boolean;
-    triggeredBy: string | null;
-    userId: string;
-    createdAt: string;
-    updatedAt: string;
-}
-
-interface NotificationsResponse {
-    notifications: INotification[];
-    unreadCount: number;
-}
+import type { NotificationType, INotificationResponse, INotification } from "@devflow/types";
 
 // ─── GET /notifications ───────────────────────────────────────────
 export function useNotifications() {
-    return useQuery<NotificationsResponse>({
+    return useQuery<INotificationResponse>({
         queryKey: ["notifications"],
         queryFn: async () => {
             const res = await api.get("/notifications");

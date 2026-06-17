@@ -7,12 +7,12 @@ export const createWorkspaceSchema = z.object({
 })
 
 export const updateWorkspaceSchema = z.object({
-    name:z.string().min(1).max(50).optional(),
-    logoUrl:z.url().optional()
+    name: z.string().min(1).max(50).optional(),
+    logoUrl: z.url().optional()
 })
 
 export const updateMemberRoleSchema = z.object({
-    role: z.enum(['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER', 'VIEWER'])
+    role: z.enum(['ADMIN', 'DEVELOPER', 'VIEWER'])
 })
 
 export const updateWorkspaceLogoSchema = z.object({

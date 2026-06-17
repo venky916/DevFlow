@@ -5,7 +5,8 @@ import {
     requireWorkspaceMember,
     requireWorkspaceRole,
     requireProjectMember,
-    requireProjectRole
+    requireProjectRole,
+    requireLeadOrAbove
 } from "../../middlewares/permission.middleware.js";
 import { updateMemberRole } from "../../controllers/workspace.controller";
 
@@ -14,16 +15,16 @@ const router = Router({ mergeParams: true });
 router.use(authenticate);
 
 // Project CRUD
-router.post("/", requireWorkspaceRole('OWNER', 'ADMIN'), createProject);
+router.post("/", requireWorkspaceRole('ADMIN'), createProject);
 router.get("/", requireWorkspaceMember, getProjects);
 router.get("/:id", requireProjectMember, getProjectById);
-router.patch("/:id", requireProjectRole('LEAD'), updateProject);
-router.delete("/:id", requireWorkspaceRole('OWNER', 'ADMIN'), deleteProject);
+router.patch("/:id", requireLeadOrAbove, updateProject);
+router.delete("/:id", requireWorkspaceRole('ADMIN'), deleteProject);
 
 // Member management
 router.get("/:id/members", requireProjectMember, getProjectMembers);
-router.post("/:id/members", requireProjectMember, addProjectMember);
-router.put("/:id/members/:uid", requireProjectRole('LEAD'), updateMemberRole);
-router.delete("/:id/members/:uid", requireProjectRole('LEAD'), removeProjectMember);
+router.post("/:id/members", requireLeadOrAbove, addProjectMember);
+router.put("/:id/members/:uid", requireLeadOrAbove, updateMemberRole);
+router.delete("/:id/members/:uid", requireLeadOrAbove, removeProjectMember);
 
 export default router

@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { asyncHandler } from "../lib/asyncHandler";
 import { prisma } from "@devflow/db";
 import { ApiError } from "../lib/ApiError";
-import { WorkspaceRole,ProjectRole } from "@devflow/types";
+import { WorkspaceRole, ProjectRole } from "@devflow/types";
 
 // ─── Attach projectId from sprintId ───────────────────────────────
 export const attachSprintProject = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -89,9 +89,9 @@ export const requireLeadOrAbove = asyncHandler(async (req, res, next) => {
         where: { workspaceId_userId: { workspaceId: project.workspaceId, userId } }
     });
 
-    if (wsMember && ['OWNER', 'ADMIN'].includes(wsMember.role)) {
-        return next(); // Owner/Admin always pass
-    }
+    if (!wsMember) throw ApiError.forbidden('You are not a member of this workspace');
+
+    if (wsMember.role === 'ADMIN') return next();
 
     // fall back to project role check
     const projMember = await prisma.projectMember.findUnique({

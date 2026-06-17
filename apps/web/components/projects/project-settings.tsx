@@ -318,6 +318,22 @@ function AddMemberTab({
     value: m.userId,
   }));
 
+  const selectedMember = available.find(
+    (m: any) => m.userId === selectedUserId,
+  );
+  const isSelectedViewer = selectedMember?.role === "VIEWER";
+
+  // When selected member changes, force role to VIEWER if they're workspace VIEWER
+  const handleMemberChange = (userId: string) => {
+    setSelectedUserId(userId);
+    const member = available.find((m: any) => m.userId === userId);
+    if (member?.role === "VIEWER") {
+      setRole("VIEWER");
+    } else {
+      setRole("DEVELOPER");
+    }
+  };
+
   const handleAdd = () => {
     if (!selectedUserId) return;
     addMember(
@@ -361,11 +377,15 @@ function AddMemberTab({
             placeholder="Select a member..."
             options={memberOptions}
             value={selectedUserId}
-            onValueChange={setSelectedUserId}
+            onValueChange={handleMemberChange}
           />
           <Select
             label="Role"
-            options={ROLE_OPTIONS}
+            options={
+              isSelectedViewer
+                ? [{ label: "Viewer", value: "VIEWER" }]
+                : ROLE_OPTIONS
+            }
             value={role}
             onValueChange={(v) => setRole(v as ProjectRole)}
           />
@@ -415,8 +435,7 @@ export function ProjectSettings() {
   const wsRole = workspace?.members?.find(
     (m: any) => m.userId === user?.id,
   )?.role;
-  const isOwnerOrAdmin = wsRole === "OWNER" || wsRole === "ADMIN";
-  const canDelete = isOwnerOrAdmin;
+  const isAdmin = wsRole === "ADMIN";
 
   const tabs = [
     {
@@ -427,7 +446,7 @@ export function ProjectSettings() {
           projectId={project.id}
           projectName={project.name}
           projectDescription={project.description}
-          canDelete={canDelete}
+          canDelete={isAdmin}
         />
       ),
     },
@@ -436,7 +455,7 @@ export function ProjectSettings() {
       value: "members",
       content: <MembersTab projectId={project.id} isLead={isLead} />,
     },
-    ...(isLead || isOwnerOrAdmin
+    ...(isLead || isAdmin
       ? [
           {
             label: "Add Member",
