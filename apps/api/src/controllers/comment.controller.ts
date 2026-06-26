@@ -5,8 +5,9 @@ import { ApiError } from "../lib/ApiError"
 import { sendNoContent, sendSuccess, sendCreated } from "../lib/apiResponse"
 import { publishToIssue } from "../lib/redis.publisher"
 import { activityQueue, emailQueue, notificationQueue } from "@devflow/queues"
-import { createCommentSchema, updateCommentSchema } from "@devflow/validators"
+import { createCommentSchema, extractMentions, updateCommentSchema } from "@devflow/validators"
 import { ActivityActions, IssueEvents, NotificationTypes } from "@devflow/types"
+import { logActivity } from "../lib/logActivity"
 
 // ─── POST /issues/:id/comments ───────────────────────────────────
 export const createComment = asyncHandler(async (req: Request, res: Response) => {
@@ -47,6 +48,12 @@ export const createComment = asyncHandler(async (req: Request, res: Response) =>
         }
     })
 
+    // fetch commenter name once — used in all notification content below
+    const commenter = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true }
+    })
+
     // ─── Publish to WS (issue detail page)
     await publishToIssue(issueId as string, {
         type: IssueEvents.COMMENT_ADDED,
@@ -56,44 +63,97 @@ export const createComment = asyncHandler(async (req: Request, res: Response) =>
     })
 
     // ─── Enqueue activity log
-    await activityQueue.add("activity", {
+    await logActivity({
         action: ActivityActions.COMMENT_ADDED,
+        scope: "ISSUE",
         userId,
         projectId: issue.projectId,
         issueId: issueId as string,
         meta: { commentId: comment.id, preview: content.slice(0, 100) },
     })
 
-    // ─── Notify issue creator (if not the commenter)
-    if (issue.creatorId !== userId) {
-        const commenter = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { name: true, email: true }
-        })
-        await notificationQueue.add("notification", {
-            userId: issue.creatorId,
-            type: NotificationTypes.ISSUE_COMMENTED,
-            content: `${commenter?.name ?? 'Someone'} commented on: ${issue.title}`,
-            link: `/issues/${issueId}`,
-            triggeredBy: userId,
-        })
+    // ─── mention + notification logic
+    // extract @[userId] mentions from content
+    const mentionedUserIds = extractMentions(content)
 
-        const creator = await prisma.user.findUnique({
-            where: { id: issue.creatorId },
-            select: { email: true, name: true },
+    if (mentionedUserIds.length > 0) {
+        // validate each mentioned user is actually a project member
+        const projectMembers = await prisma.projectMember.findMany({
+            where: {
+                projectId: issue.projectId,
+            },
+            select: {
+                userId: true
+            }
         })
+        const membersIds = new Set(projectMembers.map(member => member.userId))
 
-        if (creator) {
-            await emailQueue.add("email", {
-                to: creator.email,
-                type: NotificationTypes.ISSUE_COMMENTED,
-                data: {
-                    issueTitle: issue.title,
-                    commentedBy: commenter?.name ?? 'Someone',
-                    comment: content.slice(0, 200),
-                    issueLink: `${process.env.BASE_WEB_URL}/issues/${issueId}`,
-                }
+        const validMentionIds = mentionedUserIds.filter(id => id !== userId && membersIds.has(id))
+
+        // fire MENTION notification for each valid mention
+        for (const mentionedUserId of validMentionIds) {
+            await notificationQueue.add('notification', {
+                userId: mentionedUserId,
+                type: NotificationTypes.MENTION,
+                content: `@${commenter?.name ?? 'Someone'} mentioned you in: ${issue.title}`,
+                link: `/issues/${issueId}`,
+                triggeredBy: userId
             })
+        }
+
+        // ISSUE_COMMENTED → creator + assignee only if NOT already mentioned
+        const mentionedSet = new Set(validMentionIds)
+        const commentRecipients = [issue.creatorId, issue.assigneeId].filter(Boolean) as string[]
+
+        for (const recipientId of commentRecipients) {
+            if (recipientId === userId) continue
+            if (mentionedSet.has(recipientId)) continue
+
+            await notificationQueue.add('notification', {
+                userId: recipientId,
+                type: NotificationTypes.ISSUE_COMMENTED,
+                content: `@${commenter?.name ?? 'Someone'} commented on your issue: ${issue.title}`,
+                link: `/issues/${issueId}`,
+                triggeredBy: userId
+            })
+        }
+    } else {
+        // no mentions — notify creator + assignee normally
+        const commentRecipients = [issue.creatorId, issue.assigneeId].filter(Boolean) as string[]
+
+        for (const recipientId of commentRecipients) {
+            if (recipientId === userId) continue
+
+            await notificationQueue.add('notification', {
+                userId: recipientId,
+                type: NotificationTypes.ISSUE_COMMENTED,
+                content: `@${commenter?.name ?? 'Someone'} commented on your issue: ${issue.title}`,
+                link: `/issues/${issueId}`,
+                triggeredBy: userId
+            })
+
+            // email notification for creator only (not assignee, too noisy)
+            if (recipientId === issue.creatorId) {
+                const creator = await prisma.user.findUnique({
+                    where: { id: issue.creatorId },
+                    select: { email: true, name: true }
+                })
+
+                if (creator) {
+                    await emailQueue.add('email', {
+                        to: creator.email,
+                        type: NotificationTypes.ISSUE_COMMENTED,
+                        data: {
+                            issueTitle: issue.title,
+                            commentedBy: commenter?.name ?? 'Someone',
+                            comment: content.slice(0, 200),
+                            assigneeName: creator.name,
+                            projectName: issue.projectId,
+                            issueLink: `${process.env.BASE_WEB_URL}/issues/${issueId}`,
+                        }
+                    })
+                }
+            }
         }
     }
 
@@ -127,7 +187,7 @@ export const getComments = asyncHandler(async (req: Request, res: Response) => {
 
 // ─── PATCH /comments/:id ─────────────────────────────────────────
 export const updateComment = asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.params
+    const { id, projectId } = req.params
     const { content } = updateCommentSchema.parse(req.body)
     const userId = req.user!.id
 
@@ -163,6 +223,21 @@ export const updateComment = asyncHandler(async (req: Request, res: Response) =>
             }
         }
     })
+
+    await publishToIssue(comment.issueId, {
+        type: IssueEvents.COMMENT_UPDATED,
+        payload: { comment: updatedComment }
+    })
+
+    await logActivity({
+        action: ActivityActions.COMMENT_UPDATED,
+        scope: 'ISSUE',
+        userId,
+        projectId: projectId as string,
+        issueId: comment.issueId,
+        meta: { commentId: id }
+    })
+
 
     sendSuccess(res, updatedComment, "Comment updated successfully")
 })

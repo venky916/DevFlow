@@ -21,7 +21,8 @@ export const getIssueActivities = asyncHandler(async (req: Request, res: Respons
     }
     const activities = await prisma.activityLog.findMany({
         where: {
-            issueId: issueId as string
+            issueId: issueId as string,
+            scope: "ISSUE"
         },
         orderBy: {
             createdAt: "desc"
@@ -45,7 +46,8 @@ export const getProjectActivities = asyncHandler(async (req: Request, res: Respo
 
     const activities = await prisma.activityLog.findMany({
         where: {
-            projectId: projectId as string
+            projectId: projectId as string,
+            scope: "PROJECT"
         },
 
         include: {
@@ -56,7 +58,7 @@ export const getProjectActivities = asyncHandler(async (req: Request, res: Respo
                     avatarUrl: true
                 }
             },
-            issues: {
+            issue: {
                 select: {
                     id: true,
                     title: true
@@ -67,6 +69,38 @@ export const getProjectActivities = asyncHandler(async (req: Request, res: Respo
             createdAt: "desc"
         },
         take: 50, // last 50 activities
+    })
+    sendSuccess(res, activities, 'Activities fetched successfully')
+})
+
+// ─── GET /projects/:id/activities/all ────────────────────────────────
+export const getAllProjectActivities = asyncHandler(async (req: Request, res: Response) => {
+    const { id: projectId } = req.params;
+
+    const activities = await prisma.activityLog.findMany({
+        where: {
+            projectId: projectId as string,
+        },
+
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    name: true,
+                    avatarUrl: true
+                }
+            },
+            issue: {
+                select: {
+                    id: true,
+                    title: true
+                }
+            }
+        },
+        orderBy: {
+            createdAt: "desc"
+        },
+        take: 100, // last 100 activities
     })
     sendSuccess(res, activities, 'Activities fetched successfully')
 })

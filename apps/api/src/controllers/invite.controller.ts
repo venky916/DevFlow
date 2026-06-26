@@ -3,7 +3,7 @@ import { prisma } from "@devflow/db"
 import { asyncHandler } from "../lib/asyncHandler";
 import { ApiError } from "../lib/ApiError"
 import { sendCreated, sendSuccess } from "../lib/apiResponse";
-import { emailQueue } from "@devflow/queues"
+import { emailQueue, notificationQueue } from "@devflow/queues"
 import { NotificationTypes } from "@devflow/types";
 import { createInviteSchema, acceptInviteSchema } from "@devflow/validators";
 
@@ -85,6 +85,17 @@ export const createInvite = asyncHandler(async (req: Request, res: Response) => 
             email: true
         }
     })
+
+    // if user already has an account, fire in-app notification too
+    if (invitedUser) {
+        await notificationQueue.add('notification', {
+            userId: invitedUser.id,
+            type: NotificationTypes.WORKSPACE_INVITED,
+            content: `You've been invited to join ${workspace.name}`,
+            link: `/invite?token=${invite.token}`,
+            triggeredBy: userId,
+        })
+    }
 
     // queue invite email
     await emailQueue.add("email", {

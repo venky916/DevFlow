@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Plus, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@devflow/ui/components/button";
@@ -35,6 +35,7 @@ import type {
   IssuePriority,
   ISprint,
 } from "@devflow/types";
+import { arrayMove } from "@dnd-kit/sortable";
 
 // ─── Priority dot colors ──────────────────────────────────────────
 const PRIORITY_COLORS: Record<IssuePriority, string> = {
@@ -116,7 +117,6 @@ function SprintSection({
 
   return (
     <div className="flex flex-col">
-      {/* Section header */}
       <button
         onClick={() => setCollapsed((v) => !v)}
         className="flex items-center gap-2 px-2 py-2 hover:bg-bg-hover rounded-[4px] transition-colors group"
@@ -137,17 +137,19 @@ function SprintSection({
         </span>
       </button>
 
-      {/* Issue rows */}
-      {!collapsed && (
-        <div
-          ref={setNodeRef}
-          className={cn(
-            "flex flex-col ml-5 min-h-[32px] rounded-[4px] transition-colors",
-            isOver && "bg-bg-hover",
-          )}
-        >
+      {/* ✅ always rendered — never unmounts, so ref stays alive */}
+      <div
+        ref={setNodeRef}
+        className={cn(
+          "flex flex-col ml-5 rounded-[4px] transition-colors",
+          isOver && "bg-bg-hover",
+          collapsed ? "min-h-0" : "min-h-[32px]", // shrink when collapsed
+        )}
+      >
+        {/* ✅ content hidden via CSS, not unmounted */}
+        <div className={collapsed ? "hidden" : "flex flex-col"}>
           <SortableContext
-            items={sprint.issues.map((i: IIssueWithRelations) => i.id)}
+            items={sprint.issues.map((i) => i.id)}
             strategy={verticalListSortingStrategy}
           >
             {sprint.issues.length === 0 ? (
@@ -155,13 +157,13 @@ function SprintSection({
                 No issues — drag here to add
               </p>
             ) : (
-              sprint.issues.map((issue: IIssueWithRelations) => (
+              sprint.issues.map((issue) => (
                 <IssueRow key={issue.id} issue={issue} onOpen={onOpen} />
               ))
             )}
           </SortableContext>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -196,14 +198,16 @@ function BacklogSection({
         </span>
       </button>
 
-      {!collapsed && (
-        <div
-          ref={setNodeRef}
-          className={cn(
-            "flex flex-col ml-5 min-h-[32px] rounded-[4px] transition-colors",
-            isOver && "bg-bg-hover",
-          )}
-        >
+      {/* ✅ same fix — always rendered */}
+      <div
+        ref={setNodeRef}
+        className={cn(
+          "flex flex-col ml-5 rounded-[4px] transition-colors",
+          isOver && "bg-bg-hover",
+          collapsed ? "min-h-0" : "min-h-[32px]",
+        )}
+      >
+        <div className={collapsed ? "hidden" : "flex flex-col"}>
           <SortableContext
             items={issues.map((i) => i.id)}
             strategy={verticalListSortingStrategy}
@@ -219,7 +223,7 @@ function BacklogSection({
             )}
           </SortableContext>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -244,9 +248,15 @@ export function BacklogPage() {
   const project = projects?.find((p) => p.slug === projectSlug);
 
   const { data, isLoading } = useBacklogGrouped(project?.id ?? "");
+
   const { data: sprints } = useProjectSprints(project?.id ?? "");
   const { data: members } = useProjectMembers(project?.id ?? "");
   const { mutate: moveToSprint } = useMoveToSprint(project?.id ?? "");
+  const [localSprints, setLocalSprints] = useState<
+    (ISprint & { issues: IIssueWithRelations[] })[]
+  >([]);
+
+  const [localBacklog, setLocalBacklog] = useState<IIssueWithRelations[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -254,21 +264,19 @@ export function BacklogPage() {
 
   // find issue across all sections
   function findIssue(issueId: string): IIssueWithRelations | null {
-    if (!data) return null;
-    for (const sprint of data.sprints) {
+    for (const sprint of localSprints) {
       const found = sprint.issues.find((i) => i.id === issueId);
       if (found) return found;
     }
-    return data.backlogIssues.find((i) => i.id === issueId) ?? null;
+    return localBacklog.find((i) => i.id === issueId) ?? null;
   }
 
   // find which container (sprintId or "BACKLOG") an issue is in
   function findContainer(issueId: string): string | null {
-    if (!data) return null;
-    for (const sprint of data.sprints) {
+    for (const sprint of localSprints) {
       if (sprint.issues.some((i) => i.id === issueId)) return sprint.id;
     }
-    if (data.backlogIssues.some((i) => i.id === issueId)) return "BACKLOG";
+    if (localBacklog.some((i) => i.id === issueId)) return "BACKLOG";
     return null;
   }
 
@@ -285,29 +293,93 @@ export function BacklogPage() {
     const overId = over.id as string;
 
     const fromContainer = findContainer(issueId);
+    const allSprintIds = localSprints.map((s) => s.id);
 
-    // overId is either a sprint id, "BACKLOG", or another issue id
-    const allSprintIds = data.sprints.map((s) => s.id);
     let toContainer: string;
-
     if (overId === "BACKLOG" || allSprintIds.includes(overId)) {
       toContainer = overId;
     } else {
-      // dropped on another issue — find its container
       toContainer = findContainer(overId) ?? "BACKLOG";
     }
 
-    if (!fromContainer || fromContainer === toContainer) return;
+    if (!fromContainer) return;
 
-    // call moveToSprint
+    // same section reorder — no change here
+    if (fromContainer === toContainer) {
+      if (toContainer === "BACKLOG") {
+        const oldIndex = localBacklog.findIndex((i) => i.id === issueId);
+        const newIndex = localBacklog.findIndex((i) => i.id === overId);
+        if (oldIndex === -1 || newIndex === -1) return;
+        setLocalBacklog((prev) => arrayMove(prev, oldIndex, newIndex));
+      } else {
+        setLocalSprints((prev) =>
+          prev.map((sprint) => {
+            if (sprint.id !== fromContainer) return sprint;
+            const oldIndex = sprint.issues.findIndex((i) => i.id === issueId);
+            const newIndex = sprint.issues.findIndex((i) => i.id === overId);
+            if (oldIndex === -1 || newIndex === -1) return sprint;
+            return {
+              ...sprint,
+              issues: arrayMove(sprint.issues, oldIndex, newIndex),
+            };
+          }),
+        );
+      }
+      return;
+    }
+
+    // ✅ cross-section — update local state immediately (optimistic)
+    const movedIssue = findIssue(issueId);
+    if (!movedIssue) return;
+
+    // remove from source
+    if (fromContainer === "BACKLOG") {
+      setLocalBacklog((prev) => prev.filter((i) => i.id !== issueId));
+    } else {
+      setLocalSprints((prev) =>
+        prev.map((s) =>
+          s.id === fromContainer
+            ? { ...s, issues: s.issues.filter((i) => i.id !== issueId) }
+            : s,
+        ),
+      );
+    }
+
+    // add to destination
+    if (toContainer === "BACKLOG") {
+      setLocalBacklog((prev) => [...prev, movedIssue]);
+    } else {
+      setLocalSprints((prev) =>
+        prev.map((s) =>
+          s.id === toContainer
+            ? { ...s, issues: [...s.issues, movedIssue] }
+            : s,
+        ),
+      );
+    }
+
+    // fire API
     const sprintId = toContainer === "BACKLOG" ? null : toContainer;
     moveToSprint(
       { issueId, data: { sprintId } },
       {
-        onError: () => toast.error("Failed to move issue"),
+        onError: () => {
+          // rollback — re-sync from server data
+          if (data) {
+            setLocalSprints(data.sprints);
+            setLocalBacklog(data.backlogIssues);
+          }
+          toast.error("Failed to move issue");
+        },
       },
     );
   };
+
+  useEffect(() => {
+    if (!data) return;
+    setLocalSprints(data.sprints);
+    setLocalBacklog(data.backlogIssues);
+  }, [data]);
 
   if (isLoading) {
     return (
@@ -359,7 +431,7 @@ export function BacklogPage() {
           >
             <div className="flex flex-col gap-4">
               {/* Sprint sections */}
-              {data.sprints.map((sprint) => (
+              {localSprints.map((sprint: any) => (
                 <SprintSection
                   key={sprint.id}
                   sprint={sprint}
@@ -368,10 +440,7 @@ export function BacklogPage() {
               ))}
 
               {/* Backlog section */}
-              <BacklogSection
-                issues={data.backlogIssues}
-                onOpen={setSelectedIssue}
-              />
+              <BacklogSection issues={localBacklog} onOpen={setSelectedIssue} />
             </div>
 
             <DragOverlay>

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authenticate } from "../../middlewares/auth.middleware";
 import { attachIssueProject, requireProjectMember, requireProjectRole } from "../../middlewares/permission.middleware";
-import { createIssue, deleteIssue, getBacklogGrouped, getBacklogIssues, getBoardIssues, getIssueById, moveIssue, moveIssueToSprint, updateIssue } from "../../controllers/issue.controller";
+import { createIssue, createSubIssue, deleteIssue, getBacklogGrouped, getBacklogIssues, getBoardIssues, getIssueById, getSubIssues, moveIssue, moveIssueToSprint, updateIssue } from "../../controllers/issue.controller";
 
 const router = Router({ mergeParams: true });
 router.use(authenticate);
@@ -18,5 +18,10 @@ router.patch("/:id", attachIssueProject, requireProjectMember, updateIssue)
 router.patch("/:id/move", attachIssueProject, requireProjectMember, moveIssue)
 router.patch("/:id/move-to-sprint", attachIssueProject, requireProjectRole('LEAD'), moveIssueToSprint)
 router.delete("/:id", attachIssueProject, requireProjectRole("LEAD"), deleteIssue)
+
+
+// sub issues related
+router.post("/:id/children", attachIssueProject, requireProjectMember, createSubIssue)
+router.get("/:id/children", attachIssueProject, requireProjectMember, getSubIssues)
 
 export default router

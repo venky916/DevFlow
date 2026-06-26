@@ -6,6 +6,7 @@ import { sendCreated, sendNoContent, sendSuccess } from "../lib/apiResponse"
 import { createWorkspaceSchema, updateMemberRoleSchema, updateWorkspaceSchema, updateWorkspaceLogoSchema } from "@devflow/validators"
 import { generatePresignedDownloadUrl } from "@devflow/storage"
 import { getCache, setCache, CacheKeys, TTL, deleteCache } from "../lib/cache"
+import { buildUpdateData } from "../lib/updateBuilder"
 
 const getMember = async (workspaceId: string, userId: string) => {
     const member = await prisma.workspaceMember.findFirst({
@@ -144,7 +145,15 @@ export const getWorkspaceById = asyncHandler(async (req: Request, res: Response)
     if (!workspace) {
         throw ApiError.notFound(`Workspace not found`)
     }
-    sendSuccess(res, workspace, 'Workspace fetched successfully')
+
+    const activeSprintsCount = await prisma.sprint.count({
+        where: {
+            projectId: { in: workspace.projects.map(p => p.id) },
+            status: 'ACTIVE'
+        }
+    })
+
+    sendSuccess(res, { ...workspace, activeSprintsCount }, 'Workspace fetched successfully')
 
 })
 
@@ -164,10 +173,7 @@ export const updateWorkspace = asyncHandler(async (req: Request, res: Response) 
         where: {
             id: id as string
         },
-        data: {
-            ...(name && { name }),
-            ...(logoUrl && { logoUrl })
-        }
+        data: buildUpdateData({ name, logoUrl })
     })
 
     sendSuccess(res, workspace, 'Workspace updated successfully')

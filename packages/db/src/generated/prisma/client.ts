@@ -82,6 +82,16 @@ export type Sprint = Prisma.SprintModel
  */
 export type Issue = Prisma.IssueModel
 /**
+ * Model Label
+ * 
+ */
+export type Label = Prisma.LabelModel
+/**
+ * Model IssueLabel
+ * 
+ */
+export type IssueLabel = Prisma.IssueLabelModel
+/**
  * Model Comment
  * 
  */

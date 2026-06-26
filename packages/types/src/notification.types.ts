@@ -7,6 +7,8 @@ export enum NotificationType {
     SPRINT_COMPLETED = "SPRINT_COMPLETED",
     WORKSPACE_INVITED = "WORKSPACE_INVITED",
     PROJECT_ADDED = "PROJECT_ADDED",
+    MENTION = "MENTION",
+    OTHER = "OTHER"
 }
 
 export interface INotification {

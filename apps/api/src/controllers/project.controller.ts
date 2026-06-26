@@ -5,11 +5,15 @@ import { sendNoContent, sendSuccess } from "../lib/apiResponse";
 import { asyncHandler } from "../lib/asyncHandler";
 import { createProjectSchema, updateProjectSchema, updateProjectMemberRoleSchema, addProjectMemberSchema } from "@devflow/validators";
 import { getCache, setCache, CacheKeys, TTL, deleteCache } from "../lib/cache"
+import { createLabelSchema, updateLabelSchema } from "@devflow/validators"
+import { logActivity } from "../lib/logActivity"
+import { notificationQueue } from "@devflow/queues";
+import { ActivityActions, NotificationTypes } from "@devflow/types";
 
 // ─── POST /workspaces/:workspaceId/projects ───────────────────────
 export const createProject = asyncHandler(async (req: Request, res: Response) => {
     const { workspaceId } = req.params
-    const { name, slug, description } = createProjectSchema.parse(req.body)
+    const { name, slug, description, color } = createProjectSchema.parse(req.body)
     const userId = req.user!.id
 
     const existing = await prisma.project.findUnique({
@@ -28,7 +32,8 @@ export const createProject = asyncHandler(async (req: Request, res: Response) =>
                 name,
                 slug,
                 description,
-                workspaceId: workspaceId as string
+                workspaceId: workspaceId as string,
+                color
             }
         })
         await tx.projectMember.create({
@@ -123,6 +128,15 @@ export const getProjectById = asyncHandler(async (req: Request, res: Response) =
                 }
             },
             sprints: {
+                include: {
+                    _count: {
+                        select: { issues: true }
+                    },
+                    issues: {
+                        where: { status: 'DONE' },
+                        select: { id: true }
+                    }
+                },
                 orderBy: {
                     createdAt: 'desc'
                 }
@@ -141,13 +155,23 @@ export const getProjectById = asyncHandler(async (req: Request, res: Response) =
         throw ApiError.notFound('Project not found')
     }
 
-    sendSuccess(res, project, "Project fetched successfully")
+    const mapped = {
+        ...project,
+        sprints: project.sprints.map((sprint) => {
+            return {
+                ...sprint,
+                issues: sprint.issues.map((issue) => issue.id)
+            }
+        })
+    }
+
+    sendSuccess(res, mapped, "Project fetched successfully")
 })
 
 // ─── PATCH /projects/:id ──────────────────────────────────────────
 export const updateProject = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
-    const { name, description } = updateProjectSchema.parse(req.body)
+    const { name, description, color } = updateProjectSchema.parse(req.body)
 
     const project = await prisma.project.update({
         where: {
@@ -155,7 +179,8 @@ export const updateProject = asyncHandler(async (req: Request, res: Response) =>
         },
         data: {
             ...(name && { name }),
-            ...(description && { description })
+            ...(description && { description }),
+            ...(color && { color })
         }
     })
 
@@ -238,6 +263,22 @@ export const addProjectMember = asyncHandler(async (req: Request, res: Response)
             role: role || 'DEVELOPER'
         },
         include: { user: { select: { id: true, name: true, email: true } } }
+    })
+
+    await logActivity({
+        action: ActivityActions.MEMBER_ADDED,
+        scope: 'PROJECT',
+        userId: requester,
+        projectId: projectId as string,
+        meta: { addedUserId: userId, role }
+    })
+
+    await notificationQueue.add('notification', {
+        userId,
+        type: NotificationTypes.PROJECT_ADDED,
+        content: `You've been added to project`,
+        link: `/projects/${projectId}`,
+        triggeredBy: requester,
     })
 
     sendSuccess(res, member, 'Member added to project')
@@ -337,4 +378,117 @@ export const removeProjectMember = asyncHandler(async (req: Request, res: Respon
     await deleteCache(CacheKeys.projectMembers(id as string))
     sendNoContent(res)
 
+})
+
+// ─── POST /projects/:id/labels ────────────────────────────────────
+export const createLabel = asyncHandler(async (req: Request, res: Response) => {
+    const { id: projectId } = req.params
+    const { name, color } = createLabelSchema.parse(req.body)
+
+    const existing = await prisma.label.findUnique({
+        where: {
+            name_projectId: {
+                name,
+                projectId: projectId as string
+            }
+        }
+    })
+
+    if (existing) {
+        throw ApiError.conflict(`Label "${name}" already exists in this project`)
+    }
+
+    const label = await prisma.label.create({
+        data: {
+            name,
+            color: color as string,
+            projectId: projectId as string
+        }
+    })
+
+    sendSuccess(res, label, "Label created successfully")
+})
+
+// ─── GET /projects/:id/labels ─────────────────────────────────────
+export const getLabels = asyncHandler(async (req: Request, res: Response) => {
+    const { id: projectId } = req.params
+
+    const labels = await prisma.label.findMany({
+        where: {
+            projectId: projectId as string
+        },
+        orderBy: {
+            createdAt: 'asc'
+        }
+    })
+
+    sendSuccess(res, labels, "Labels fetched successfully")
+})
+
+// ─── PATCH /projects/:id/labels/:labelId ──────────────────────────
+export const updateLabel = asyncHandler(async (req: Request, res: Response) => {
+    const { id: projectId, labelId } = req.params
+    const { name, color } = updateLabelSchema.parse(req.body)
+
+    const label = await prisma.label.findUnique({
+        where: {
+            id: labelId as string
+        }
+    })
+
+    if (!label || label.projectId !== projectId) {
+        throw ApiError.notFound('Label not found')
+    }
+
+    if (name && name !== label.name) {
+        const duplicate = await prisma.label.findUnique({
+            where: {
+                name_projectId: {
+                    name,
+                    projectId: projectId as string
+                }
+            }
+        })
+
+        if (duplicate) {
+            throw ApiError.conflict(`Label "${name}" already exists in this project`)
+        }
+    }
+
+    const updated = await prisma.label.update({
+        where: {
+            id: labelId as string
+        },
+        data: {
+            ...(name && { name }),
+            ...(color && { color })
+        }
+    })
+
+    sendSuccess(res, updated, "Label updated successfully")
+
+})
+
+// ─── DELETE /projects/:id/labels/:labelId ───────────────────────
+export const deleteLabel = asyncHandler(async (req: Request, res: Response) => {
+    const { id: projectId, labelId } = req.params
+
+    const label = await prisma.label.findUnique({
+        where: {
+            id: labelId as string
+        }
+    })
+
+    if (!label || label.projectId !== projectId) {
+        throw ApiError.notFound('Label not found')
+    }
+
+    // IssueLabel rows clean up automatically via onDelete: Cascade
+    const deleted = await prisma.label.delete({
+        where: {
+            id: labelId as string
+        }
+    })
+
+    sendNoContent(res)
 })

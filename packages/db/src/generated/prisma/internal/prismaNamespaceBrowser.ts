@@ -59,6 +59,8 @@ export const ModelName = {
   ProjectMember: 'ProjectMember',
   Sprint: 'Sprint',
   Issue: 'Issue',
+  Label: 'Label',
+  IssueLabel: 'IssueLabel',
   Comment: 'Comment',
   ActivityLog: 'ActivityLog',
   Attachment: 'Attachment',
@@ -87,6 +89,7 @@ export const UserScalarFieldEnum = {
   email: 'email',
   name: 'name',
   avatarUrl: 'avatarUrl',
+  timezone: 'timezone',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -137,6 +140,7 @@ export const ProjectScalarFieldEnum = {
   name: 'name',
   slug: 'slug',
   description: 'description',
+  color: 'color',
   workspaceId: 'workspaceId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -174,10 +178,13 @@ export const IssueScalarFieldEnum = {
   id: 'id',
   title: 'title',
   description: 'description',
-  sprintId: 'sprintId',
   status: 'status',
   priority: 'priority',
+  type: 'type',
   position: 'position',
+  dueDate: 'dueDate',
+  parentId: 'parentId',
+  sprintId: 'sprintId',
   projectId: 'projectId',
   assigneeId: 'assigneeId',
   creatorId: 'creatorId',
@@ -186,6 +193,25 @@ export const IssueScalarFieldEnum = {
 } as const
 
 export type IssueScalarFieldEnum = (typeof IssueScalarFieldEnum)[keyof typeof IssueScalarFieldEnum]
+
+
+export const LabelScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  color: 'color',
+  projectId: 'projectId',
+  createdAt: 'createdAt'
+} as const
+
+export type LabelScalarFieldEnum = (typeof LabelScalarFieldEnum)[keyof typeof LabelScalarFieldEnum]
+
+
+export const IssueLabelScalarFieldEnum = {
+  issueId: 'issueId',
+  labelId: 'labelId'
+} as const
+
+export type IssueLabelScalarFieldEnum = (typeof IssueLabelScalarFieldEnum)[keyof typeof IssueLabelScalarFieldEnum]
 
 
 export const CommentScalarFieldEnum = {
@@ -203,6 +229,7 @@ export type CommentScalarFieldEnum = (typeof CommentScalarFieldEnum)[keyof typeo
 export const ActivityLogScalarFieldEnum = {
   id: 'id',
   action: 'action',
+  scope: 'scope',
   meta: 'meta',
   userId: 'userId',
   issueId: 'issueId',
@@ -221,6 +248,7 @@ export const AttachmentScalarFieldEnum = {
   fileSize: 'fileSize',
   mimeType: 'mimeType',
   issueId: 'issueId',
+  commentId: 'commentId',
   uploadedBy: 'uploadedBy',
   createdAt: 'createdAt'
 } as const

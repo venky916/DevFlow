@@ -30,6 +30,7 @@ export type UserMinAggregateOutputType = {
   email: string | null
   name: string | null
   avatarUrl: string | null
+  timezone: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -40,6 +41,7 @@ export type UserMaxAggregateOutputType = {
   email: string | null
   name: string | null
   avatarUrl: string | null
+  timezone: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -50,6 +52,7 @@ export type UserCountAggregateOutputType = {
   email: number
   name: number
   avatarUrl: number
+  timezone: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -62,6 +65,7 @@ export type UserMinAggregateInputType = {
   email?: true
   name?: true
   avatarUrl?: true
+  timezone?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -72,6 +76,7 @@ export type UserMaxAggregateInputType = {
   email?: true
   name?: true
   avatarUrl?: true
+  timezone?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -82,6 +87,7 @@ export type UserCountAggregateInputType = {
   email?: true
   name?: true
   avatarUrl?: true
+  timezone?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -165,6 +171,7 @@ export type UserGroupByOutputType = {
   email: string
   name: string | null
   avatarUrl: string | null
+  timezone: string
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -196,6 +203,7 @@ export type UserWhereInput = {
   email?: Prisma.StringFilter<"User"> | string
   name?: Prisma.StringNullableFilter<"User"> | string | null
   avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  timezone?: Prisma.StringFilter<"User"> | string
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   workspaces?: Prisma.WorkspaceMemberListRelationFilter
@@ -215,6 +223,7 @@ export type UserOrderByWithRelationInput = {
   email?: Prisma.SortOrder
   name?: Prisma.SortOrderInput | Prisma.SortOrder
   avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  timezone?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   workspaces?: Prisma.WorkspaceMemberOrderByRelationAggregateInput
@@ -237,6 +246,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   name?: Prisma.StringNullableFilter<"User"> | string | null
   avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  timezone?: Prisma.StringFilter<"User"> | string
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   workspaces?: Prisma.WorkspaceMemberListRelationFilter
@@ -256,6 +266,7 @@ export type UserOrderByWithAggregationInput = {
   email?: Prisma.SortOrder
   name?: Prisma.SortOrderInput | Prisma.SortOrder
   avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  timezone?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -272,6 +283,7 @@ export type UserScalarWhereWithAggregatesInput = {
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
   name?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   avatarUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  timezone?: Prisma.StringWithAggregatesFilter<"User"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -282,6 +294,7 @@ export type UserCreateInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaces?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
@@ -301,6 +314,7 @@ export type UserUncheckedCreateInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaces?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
@@ -320,6 +334,7 @@ export type UserUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaces?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
@@ -339,6 +354,7 @@ export type UserUncheckedUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaces?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
@@ -358,6 +374,7 @@ export type UserCreateManyInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -368,6 +385,7 @@ export type UserUpdateManyMutationInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -378,6 +396,7 @@ export type UserUncheckedUpdateManyInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -388,6 +407,7 @@ export type UserCountOrderByAggregateInput = {
   email?: Prisma.SortOrder
   name?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
+  timezone?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -398,6 +418,7 @@ export type UserMaxOrderByAggregateInput = {
   email?: Prisma.SortOrder
   name?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
+  timezone?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -408,6 +429,7 @@ export type UserMinOrderByAggregateInput = {
   email?: Prisma.SortOrder
   name?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
+  timezone?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -568,6 +590,7 @@ export type UserCreateWithoutSentInvitesInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaces?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
@@ -586,6 +609,7 @@ export type UserUncheckedCreateWithoutSentInvitesInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaces?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
@@ -620,6 +644,7 @@ export type UserUpdateWithoutSentInvitesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaces?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
@@ -638,6 +663,7 @@ export type UserUncheckedUpdateWithoutSentInvitesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaces?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
@@ -656,6 +682,7 @@ export type UserCreateWithoutWorkspacesInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   projects?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
@@ -674,6 +701,7 @@ export type UserUncheckedCreateWithoutWorkspacesInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   projects?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
@@ -708,6 +736,7 @@ export type UserUpdateWithoutWorkspacesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projects?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
@@ -726,6 +755,7 @@ export type UserUncheckedUpdateWithoutWorkspacesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projects?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
@@ -744,6 +774,7 @@ export type UserCreateWithoutProjectsInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaces?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
@@ -762,6 +793,7 @@ export type UserUncheckedCreateWithoutProjectsInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaces?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
@@ -796,6 +828,7 @@ export type UserUpdateWithoutProjectsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaces?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
@@ -814,6 +847,7 @@ export type UserUncheckedUpdateWithoutProjectsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaces?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
@@ -832,6 +866,7 @@ export type UserCreateWithoutCreatedIssuesInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaces?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
@@ -850,6 +885,7 @@ export type UserUncheckedCreateWithoutCreatedIssuesInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaces?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
@@ -873,6 +909,7 @@ export type UserCreateWithoutAssignedIssuesInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaces?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
@@ -891,6 +928,7 @@ export type UserUncheckedCreateWithoutAssignedIssuesInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaces?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
@@ -925,6 +963,7 @@ export type UserUpdateWithoutCreatedIssuesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaces?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
@@ -943,6 +982,7 @@ export type UserUncheckedUpdateWithoutCreatedIssuesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaces?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
@@ -972,6 +1012,7 @@ export type UserUpdateWithoutAssignedIssuesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaces?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
@@ -990,6 +1031,7 @@ export type UserUncheckedUpdateWithoutAssignedIssuesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaces?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
@@ -1008,6 +1050,7 @@ export type UserCreateWithoutCommentsInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaces?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
@@ -1026,6 +1069,7 @@ export type UserUncheckedCreateWithoutCommentsInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaces?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
@@ -1060,6 +1104,7 @@ export type UserUpdateWithoutCommentsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaces?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
@@ -1078,6 +1123,7 @@ export type UserUncheckedUpdateWithoutCommentsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaces?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
@@ -1096,6 +1142,7 @@ export type UserCreateWithoutActivitiesInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaces?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
@@ -1114,6 +1161,7 @@ export type UserUncheckedCreateWithoutActivitiesInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaces?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
@@ -1148,6 +1196,7 @@ export type UserUpdateWithoutActivitiesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaces?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
@@ -1166,6 +1215,7 @@ export type UserUncheckedUpdateWithoutActivitiesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaces?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
@@ -1184,6 +1234,7 @@ export type UserCreateWithoutAttachmentsInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaces?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
@@ -1202,6 +1253,7 @@ export type UserUncheckedCreateWithoutAttachmentsInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaces?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
@@ -1236,6 +1288,7 @@ export type UserUpdateWithoutAttachmentsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaces?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
@@ -1254,6 +1307,7 @@ export type UserUncheckedUpdateWithoutAttachmentsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaces?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
@@ -1272,6 +1326,7 @@ export type UserCreateWithoutNotificationsInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaces?: Prisma.WorkspaceMemberCreateNestedManyWithoutUserInput
@@ -1290,6 +1345,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   email: string
   name?: string | null
   avatarUrl?: string | null
+  timezone?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   workspaces?: Prisma.WorkspaceMemberUncheckedCreateNestedManyWithoutUserInput
@@ -1324,6 +1380,7 @@ export type UserUpdateWithoutNotificationsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaces?: Prisma.WorkspaceMemberUpdateManyWithoutUserNestedInput
@@ -1342,6 +1399,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   workspaces?: Prisma.WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
@@ -1463,6 +1521,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   email?: boolean
   name?: boolean
   avatarUrl?: boolean
+  timezone?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   workspaces?: boolean | Prisma.User$workspacesArgs<ExtArgs>
@@ -1483,6 +1542,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   email?: boolean
   name?: boolean
   avatarUrl?: boolean
+  timezone?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -1493,6 +1553,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   email?: boolean
   name?: boolean
   avatarUrl?: boolean
+  timezone?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -1503,11 +1564,12 @@ export type UserSelectScalar = {
   email?: boolean
   name?: boolean
   avatarUrl?: boolean
+  timezone?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firebaseUid" | "email" | "name" | "avatarUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firebaseUid" | "email" | "name" | "avatarUrl" | "timezone" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   workspaces?: boolean | Prisma.User$workspacesArgs<ExtArgs>
   projects?: boolean | Prisma.User$projectsArgs<ExtArgs>
@@ -1542,6 +1604,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     email: string
     name: string | null
     avatarUrl: string | null
+    timezone: string
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -1981,6 +2044,7 @@ export interface UserFieldRefs {
   readonly email: Prisma.FieldRef<"User", 'String'>
   readonly name: Prisma.FieldRef<"User", 'String'>
   readonly avatarUrl: Prisma.FieldRef<"User", 'String'>
+  readonly timezone: Prisma.FieldRef<"User", 'String'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }

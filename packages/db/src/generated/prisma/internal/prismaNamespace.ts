@@ -392,6 +392,8 @@ export const ModelName = {
   ProjectMember: 'ProjectMember',
   Sprint: 'Sprint',
   Issue: 'Issue',
+  Label: 'Label',
+  IssueLabel: 'IssueLabel',
   Comment: 'Comment',
   ActivityLog: 'ActivityLog',
   Attachment: 'Attachment',
@@ -411,7 +413,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "workspace" | "workspaceInvite" | "workspaceMember" | "project" | "projectMember" | "sprint" | "issue" | "comment" | "activityLog" | "attachment" | "notification"
+    modelProps: "user" | "workspace" | "workspaceInvite" | "workspaceMember" | "project" | "projectMember" | "sprint" | "issue" | "label" | "issueLabel" | "comment" | "activityLog" | "attachment" | "notification"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1007,6 +1009,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Label: {
+      payload: Prisma.$LabelPayload<ExtArgs>
+      fields: Prisma.LabelFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.LabelFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.LabelFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload>
+        }
+        findFirst: {
+          args: Prisma.LabelFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.LabelFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload>
+        }
+        findMany: {
+          args: Prisma.LabelFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload>[]
+        }
+        create: {
+          args: Prisma.LabelCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload>
+        }
+        createMany: {
+          args: Prisma.LabelCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.LabelCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload>[]
+        }
+        delete: {
+          args: Prisma.LabelDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload>
+        }
+        update: {
+          args: Prisma.LabelUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload>
+        }
+        deleteMany: {
+          args: Prisma.LabelDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.LabelUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.LabelUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload>[]
+        }
+        upsert: {
+          args: Prisma.LabelUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload>
+        }
+        aggregate: {
+          args: Prisma.LabelAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLabel>
+        }
+        groupBy: {
+          args: Prisma.LabelGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LabelGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.LabelCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LabelCountAggregateOutputType> | number
+        }
+      }
+    }
+    IssueLabel: {
+      payload: Prisma.$IssueLabelPayload<ExtArgs>
+      fields: Prisma.IssueLabelFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.IssueLabelFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IssueLabelPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.IssueLabelFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IssueLabelPayload>
+        }
+        findFirst: {
+          args: Prisma.IssueLabelFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IssueLabelPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.IssueLabelFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IssueLabelPayload>
+        }
+        findMany: {
+          args: Prisma.IssueLabelFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IssueLabelPayload>[]
+        }
+        create: {
+          args: Prisma.IssueLabelCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IssueLabelPayload>
+        }
+        createMany: {
+          args: Prisma.IssueLabelCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.IssueLabelCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IssueLabelPayload>[]
+        }
+        delete: {
+          args: Prisma.IssueLabelDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IssueLabelPayload>
+        }
+        update: {
+          args: Prisma.IssueLabelUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IssueLabelPayload>
+        }
+        deleteMany: {
+          args: Prisma.IssueLabelDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.IssueLabelUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.IssueLabelUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IssueLabelPayload>[]
+        }
+        upsert: {
+          args: Prisma.IssueLabelUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IssueLabelPayload>
+        }
+        aggregate: {
+          args: Prisma.IssueLabelAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateIssueLabel>
+        }
+        groupBy: {
+          args: Prisma.IssueLabelGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IssueLabelGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.IssueLabelCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IssueLabelCountAggregateOutputType> | number
+        }
+      }
+    }
     Comment: {
       payload: Prisma.$CommentPayload<ExtArgs>
       fields: Prisma.CommentFieldRefs
@@ -1348,6 +1498,7 @@ export const UserScalarFieldEnum = {
   email: 'email',
   name: 'name',
   avatarUrl: 'avatarUrl',
+  timezone: 'timezone',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1398,6 +1549,7 @@ export const ProjectScalarFieldEnum = {
   name: 'name',
   slug: 'slug',
   description: 'description',
+  color: 'color',
   workspaceId: 'workspaceId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1435,10 +1587,13 @@ export const IssueScalarFieldEnum = {
   id: 'id',
   title: 'title',
   description: 'description',
-  sprintId: 'sprintId',
   status: 'status',
   priority: 'priority',
+  type: 'type',
   position: 'position',
+  dueDate: 'dueDate',
+  parentId: 'parentId',
+  sprintId: 'sprintId',
   projectId: 'projectId',
   assigneeId: 'assigneeId',
   creatorId: 'creatorId',
@@ -1447,6 +1602,25 @@ export const IssueScalarFieldEnum = {
 } as const
 
 export type IssueScalarFieldEnum = (typeof IssueScalarFieldEnum)[keyof typeof IssueScalarFieldEnum]
+
+
+export const LabelScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  color: 'color',
+  projectId: 'projectId',
+  createdAt: 'createdAt'
+} as const
+
+export type LabelScalarFieldEnum = (typeof LabelScalarFieldEnum)[keyof typeof LabelScalarFieldEnum]
+
+
+export const IssueLabelScalarFieldEnum = {
+  issueId: 'issueId',
+  labelId: 'labelId'
+} as const
+
+export type IssueLabelScalarFieldEnum = (typeof IssueLabelScalarFieldEnum)[keyof typeof IssueLabelScalarFieldEnum]
 
 
 export const CommentScalarFieldEnum = {
@@ -1464,6 +1638,7 @@ export type CommentScalarFieldEnum = (typeof CommentScalarFieldEnum)[keyof typeo
 export const ActivityLogScalarFieldEnum = {
   id: 'id',
   action: 'action',
+  scope: 'scope',
   meta: 'meta',
   userId: 'userId',
   issueId: 'issueId',
@@ -1482,6 +1657,7 @@ export const AttachmentScalarFieldEnum = {
   fileSize: 'fileSize',
   mimeType: 'mimeType',
   issueId: 'issueId',
+  commentId: 'commentId',
   uploadedBy: 'uploadedBy',
   createdAt: 'createdAt'
 } as const
@@ -1650,16 +1826,30 @@ export type ListEnumIssuePriorityFieldRefInput<$PrismaModel> = FieldRefInputType
 
 
 /**
- * Reference to a field of type 'Float'
+ * Reference to a field of type 'IssueType'
  */
-export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+export type EnumIssueTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IssueType'>
     
 
 
 /**
- * Reference to a field of type 'Float[]'
+ * Reference to a field of type 'IssueType[]'
  */
-export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+export type ListEnumIssueTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IssueType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'ActivityScope'
+ */
+export type EnumActivityScopeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ActivityScope'>
+    
+
+
+/**
+ * Reference to a field of type 'ActivityScope[]'
+ */
+export type ListEnumActivityScopeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ActivityScope[]'>
     
 
 
@@ -1709,6 +1899,20 @@ export type ListEnumNotificationTypeFieldRefInput<$PrismaModel> = FieldRefInputT
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
+ * Reference to a field of type 'Float'
+ */
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+/**
+ * Reference to a field of type 'Float[]'
+ */
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
 
 /**
@@ -1829,6 +2033,8 @@ export type GlobalOmitConfig = {
   projectMember?: Prisma.ProjectMemberOmit
   sprint?: Prisma.SprintOmit
   issue?: Prisma.IssueOmit
+  label?: Prisma.LabelOmit
+  issueLabel?: Prisma.IssueLabelOmit
   comment?: Prisma.CommentOmit
   activityLog?: Prisma.ActivityLogOmit
   attachment?: Prisma.AttachmentOmit

@@ -27,6 +27,7 @@ export type AggregateActivityLog = {
 export type ActivityLogMinAggregateOutputType = {
   id: string | null
   action: string | null
+  scope: $Enums.ActivityScope | null
   userId: string | null
   issueId: string | null
   projectId: string | null
@@ -36,6 +37,7 @@ export type ActivityLogMinAggregateOutputType = {
 export type ActivityLogMaxAggregateOutputType = {
   id: string | null
   action: string | null
+  scope: $Enums.ActivityScope | null
   userId: string | null
   issueId: string | null
   projectId: string | null
@@ -45,6 +47,7 @@ export type ActivityLogMaxAggregateOutputType = {
 export type ActivityLogCountAggregateOutputType = {
   id: number
   action: number
+  scope: number
   meta: number
   userId: number
   issueId: number
@@ -57,6 +60,7 @@ export type ActivityLogCountAggregateOutputType = {
 export type ActivityLogMinAggregateInputType = {
   id?: true
   action?: true
+  scope?: true
   userId?: true
   issueId?: true
   projectId?: true
@@ -66,6 +70,7 @@ export type ActivityLogMinAggregateInputType = {
 export type ActivityLogMaxAggregateInputType = {
   id?: true
   action?: true
+  scope?: true
   userId?: true
   issueId?: true
   projectId?: true
@@ -75,6 +80,7 @@ export type ActivityLogMaxAggregateInputType = {
 export type ActivityLogCountAggregateInputType = {
   id?: true
   action?: true
+  scope?: true
   meta?: true
   userId?: true
   issueId?: true
@@ -158,6 +164,7 @@ export type ActivityLogGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inte
 export type ActivityLogGroupByOutputType = {
   id: string
   action: string
+  scope: $Enums.ActivityScope
   meta: runtime.JsonValue | null
   userId: string
   issueId: string | null
@@ -189,6 +196,7 @@ export type ActivityLogWhereInput = {
   NOT?: Prisma.ActivityLogWhereInput | Prisma.ActivityLogWhereInput[]
   id?: Prisma.StringFilter<"ActivityLog"> | string
   action?: Prisma.StringFilter<"ActivityLog"> | string
+  scope?: Prisma.EnumActivityScopeFilter<"ActivityLog"> | $Enums.ActivityScope
   meta?: Prisma.JsonNullableFilter<"ActivityLog">
   userId?: Prisma.StringFilter<"ActivityLog"> | string
   issueId?: Prisma.StringNullableFilter<"ActivityLog"> | string | null
@@ -196,12 +204,13 @@ export type ActivityLogWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"ActivityLog"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
-  issues?: Prisma.XOR<Prisma.IssueNullableScalarRelationFilter, Prisma.IssueWhereInput> | null
+  issue?: Prisma.XOR<Prisma.IssueNullableScalarRelationFilter, Prisma.IssueWhereInput> | null
 }
 
 export type ActivityLogOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   action?: Prisma.SortOrder
+  scope?: Prisma.SortOrder
   meta?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrder
   issueId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -209,7 +218,7 @@ export type ActivityLogOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   project?: Prisma.ProjectOrderByWithRelationInput
-  issues?: Prisma.IssueOrderByWithRelationInput
+  issue?: Prisma.IssueOrderByWithRelationInput
 }
 
 export type ActivityLogWhereUniqueInput = Prisma.AtLeast<{
@@ -218,6 +227,7 @@ export type ActivityLogWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ActivityLogWhereInput[]
   NOT?: Prisma.ActivityLogWhereInput | Prisma.ActivityLogWhereInput[]
   action?: Prisma.StringFilter<"ActivityLog"> | string
+  scope?: Prisma.EnumActivityScopeFilter<"ActivityLog"> | $Enums.ActivityScope
   meta?: Prisma.JsonNullableFilter<"ActivityLog">
   userId?: Prisma.StringFilter<"ActivityLog"> | string
   issueId?: Prisma.StringNullableFilter<"ActivityLog"> | string | null
@@ -225,12 +235,13 @@ export type ActivityLogWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"ActivityLog"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
-  issues?: Prisma.XOR<Prisma.IssueNullableScalarRelationFilter, Prisma.IssueWhereInput> | null
+  issue?: Prisma.XOR<Prisma.IssueNullableScalarRelationFilter, Prisma.IssueWhereInput> | null
 }, "id">
 
 export type ActivityLogOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   action?: Prisma.SortOrder
+  scope?: Prisma.SortOrder
   meta?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrder
   issueId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -247,6 +258,7 @@ export type ActivityLogScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ActivityLogScalarWhereWithAggregatesInput | Prisma.ActivityLogScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"ActivityLog"> | string
   action?: Prisma.StringWithAggregatesFilter<"ActivityLog"> | string
+  scope?: Prisma.EnumActivityScopeWithAggregatesFilter<"ActivityLog"> | $Enums.ActivityScope
   meta?: Prisma.JsonNullableWithAggregatesFilter<"ActivityLog">
   userId?: Prisma.StringWithAggregatesFilter<"ActivityLog"> | string
   issueId?: Prisma.StringNullableWithAggregatesFilter<"ActivityLog"> | string | null
@@ -257,16 +269,18 @@ export type ActivityLogScalarWhereWithAggregatesInput = {
 export type ActivityLogCreateInput = {
   id?: string
   action: string
+  scope: $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutActivitiesInput
   project: Prisma.ProjectCreateNestedOneWithoutActivitiesInput
-  issues?: Prisma.IssueCreateNestedOneWithoutActivitiesInput
+  issue?: Prisma.IssueCreateNestedOneWithoutActivitiesInput
 }
 
 export type ActivityLogUncheckedCreateInput = {
   id?: string
   action: string
+  scope: $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   userId: string
   issueId?: string | null
@@ -277,16 +291,18 @@ export type ActivityLogUncheckedCreateInput = {
 export type ActivityLogUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   action?: Prisma.StringFieldUpdateOperationsInput | string
+  scope?: Prisma.EnumActivityScopeFieldUpdateOperationsInput | $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutActivitiesNestedInput
   project?: Prisma.ProjectUpdateOneRequiredWithoutActivitiesNestedInput
-  issues?: Prisma.IssueUpdateOneWithoutActivitiesNestedInput
+  issue?: Prisma.IssueUpdateOneWithoutActivitiesNestedInput
 }
 
 export type ActivityLogUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   action?: Prisma.StringFieldUpdateOperationsInput | string
+  scope?: Prisma.EnumActivityScopeFieldUpdateOperationsInput | $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   issueId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -297,6 +313,7 @@ export type ActivityLogUncheckedUpdateInput = {
 export type ActivityLogCreateManyInput = {
   id?: string
   action: string
+  scope: $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   userId: string
   issueId?: string | null
@@ -307,6 +324,7 @@ export type ActivityLogCreateManyInput = {
 export type ActivityLogUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   action?: Prisma.StringFieldUpdateOperationsInput | string
+  scope?: Prisma.EnumActivityScopeFieldUpdateOperationsInput | $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -314,6 +332,7 @@ export type ActivityLogUpdateManyMutationInput = {
 export type ActivityLogUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   action?: Prisma.StringFieldUpdateOperationsInput | string
+  scope?: Prisma.EnumActivityScopeFieldUpdateOperationsInput | $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   issueId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -334,6 +353,7 @@ export type ActivityLogOrderByRelationAggregateInput = {
 export type ActivityLogCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   action?: Prisma.SortOrder
+  scope?: Prisma.SortOrder
   meta?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   issueId?: Prisma.SortOrder
@@ -344,6 +364,7 @@ export type ActivityLogCountOrderByAggregateInput = {
 export type ActivityLogMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   action?: Prisma.SortOrder
+  scope?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   issueId?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
@@ -353,6 +374,7 @@ export type ActivityLogMaxOrderByAggregateInput = {
 export type ActivityLogMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   action?: Prisma.SortOrder
+  scope?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   issueId?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
@@ -443,60 +465,66 @@ export type ActivityLogUncheckedUpdateManyWithoutProjectNestedInput = {
   deleteMany?: Prisma.ActivityLogScalarWhereInput | Prisma.ActivityLogScalarWhereInput[]
 }
 
-export type ActivityLogCreateNestedManyWithoutIssuesInput = {
-  create?: Prisma.XOR<Prisma.ActivityLogCreateWithoutIssuesInput, Prisma.ActivityLogUncheckedCreateWithoutIssuesInput> | Prisma.ActivityLogCreateWithoutIssuesInput[] | Prisma.ActivityLogUncheckedCreateWithoutIssuesInput[]
-  connectOrCreate?: Prisma.ActivityLogCreateOrConnectWithoutIssuesInput | Prisma.ActivityLogCreateOrConnectWithoutIssuesInput[]
-  createMany?: Prisma.ActivityLogCreateManyIssuesInputEnvelope
+export type ActivityLogCreateNestedManyWithoutIssueInput = {
+  create?: Prisma.XOR<Prisma.ActivityLogCreateWithoutIssueInput, Prisma.ActivityLogUncheckedCreateWithoutIssueInput> | Prisma.ActivityLogCreateWithoutIssueInput[] | Prisma.ActivityLogUncheckedCreateWithoutIssueInput[]
+  connectOrCreate?: Prisma.ActivityLogCreateOrConnectWithoutIssueInput | Prisma.ActivityLogCreateOrConnectWithoutIssueInput[]
+  createMany?: Prisma.ActivityLogCreateManyIssueInputEnvelope
   connect?: Prisma.ActivityLogWhereUniqueInput | Prisma.ActivityLogWhereUniqueInput[]
 }
 
-export type ActivityLogUncheckedCreateNestedManyWithoutIssuesInput = {
-  create?: Prisma.XOR<Prisma.ActivityLogCreateWithoutIssuesInput, Prisma.ActivityLogUncheckedCreateWithoutIssuesInput> | Prisma.ActivityLogCreateWithoutIssuesInput[] | Prisma.ActivityLogUncheckedCreateWithoutIssuesInput[]
-  connectOrCreate?: Prisma.ActivityLogCreateOrConnectWithoutIssuesInput | Prisma.ActivityLogCreateOrConnectWithoutIssuesInput[]
-  createMany?: Prisma.ActivityLogCreateManyIssuesInputEnvelope
+export type ActivityLogUncheckedCreateNestedManyWithoutIssueInput = {
+  create?: Prisma.XOR<Prisma.ActivityLogCreateWithoutIssueInput, Prisma.ActivityLogUncheckedCreateWithoutIssueInput> | Prisma.ActivityLogCreateWithoutIssueInput[] | Prisma.ActivityLogUncheckedCreateWithoutIssueInput[]
+  connectOrCreate?: Prisma.ActivityLogCreateOrConnectWithoutIssueInput | Prisma.ActivityLogCreateOrConnectWithoutIssueInput[]
+  createMany?: Prisma.ActivityLogCreateManyIssueInputEnvelope
   connect?: Prisma.ActivityLogWhereUniqueInput | Prisma.ActivityLogWhereUniqueInput[]
 }
 
-export type ActivityLogUpdateManyWithoutIssuesNestedInput = {
-  create?: Prisma.XOR<Prisma.ActivityLogCreateWithoutIssuesInput, Prisma.ActivityLogUncheckedCreateWithoutIssuesInput> | Prisma.ActivityLogCreateWithoutIssuesInput[] | Prisma.ActivityLogUncheckedCreateWithoutIssuesInput[]
-  connectOrCreate?: Prisma.ActivityLogCreateOrConnectWithoutIssuesInput | Prisma.ActivityLogCreateOrConnectWithoutIssuesInput[]
-  upsert?: Prisma.ActivityLogUpsertWithWhereUniqueWithoutIssuesInput | Prisma.ActivityLogUpsertWithWhereUniqueWithoutIssuesInput[]
-  createMany?: Prisma.ActivityLogCreateManyIssuesInputEnvelope
+export type ActivityLogUpdateManyWithoutIssueNestedInput = {
+  create?: Prisma.XOR<Prisma.ActivityLogCreateWithoutIssueInput, Prisma.ActivityLogUncheckedCreateWithoutIssueInput> | Prisma.ActivityLogCreateWithoutIssueInput[] | Prisma.ActivityLogUncheckedCreateWithoutIssueInput[]
+  connectOrCreate?: Prisma.ActivityLogCreateOrConnectWithoutIssueInput | Prisma.ActivityLogCreateOrConnectWithoutIssueInput[]
+  upsert?: Prisma.ActivityLogUpsertWithWhereUniqueWithoutIssueInput | Prisma.ActivityLogUpsertWithWhereUniqueWithoutIssueInput[]
+  createMany?: Prisma.ActivityLogCreateManyIssueInputEnvelope
   set?: Prisma.ActivityLogWhereUniqueInput | Prisma.ActivityLogWhereUniqueInput[]
   disconnect?: Prisma.ActivityLogWhereUniqueInput | Prisma.ActivityLogWhereUniqueInput[]
   delete?: Prisma.ActivityLogWhereUniqueInput | Prisma.ActivityLogWhereUniqueInput[]
   connect?: Prisma.ActivityLogWhereUniqueInput | Prisma.ActivityLogWhereUniqueInput[]
-  update?: Prisma.ActivityLogUpdateWithWhereUniqueWithoutIssuesInput | Prisma.ActivityLogUpdateWithWhereUniqueWithoutIssuesInput[]
-  updateMany?: Prisma.ActivityLogUpdateManyWithWhereWithoutIssuesInput | Prisma.ActivityLogUpdateManyWithWhereWithoutIssuesInput[]
+  update?: Prisma.ActivityLogUpdateWithWhereUniqueWithoutIssueInput | Prisma.ActivityLogUpdateWithWhereUniqueWithoutIssueInput[]
+  updateMany?: Prisma.ActivityLogUpdateManyWithWhereWithoutIssueInput | Prisma.ActivityLogUpdateManyWithWhereWithoutIssueInput[]
   deleteMany?: Prisma.ActivityLogScalarWhereInput | Prisma.ActivityLogScalarWhereInput[]
 }
 
-export type ActivityLogUncheckedUpdateManyWithoutIssuesNestedInput = {
-  create?: Prisma.XOR<Prisma.ActivityLogCreateWithoutIssuesInput, Prisma.ActivityLogUncheckedCreateWithoutIssuesInput> | Prisma.ActivityLogCreateWithoutIssuesInput[] | Prisma.ActivityLogUncheckedCreateWithoutIssuesInput[]
-  connectOrCreate?: Prisma.ActivityLogCreateOrConnectWithoutIssuesInput | Prisma.ActivityLogCreateOrConnectWithoutIssuesInput[]
-  upsert?: Prisma.ActivityLogUpsertWithWhereUniqueWithoutIssuesInput | Prisma.ActivityLogUpsertWithWhereUniqueWithoutIssuesInput[]
-  createMany?: Prisma.ActivityLogCreateManyIssuesInputEnvelope
+export type ActivityLogUncheckedUpdateManyWithoutIssueNestedInput = {
+  create?: Prisma.XOR<Prisma.ActivityLogCreateWithoutIssueInput, Prisma.ActivityLogUncheckedCreateWithoutIssueInput> | Prisma.ActivityLogCreateWithoutIssueInput[] | Prisma.ActivityLogUncheckedCreateWithoutIssueInput[]
+  connectOrCreate?: Prisma.ActivityLogCreateOrConnectWithoutIssueInput | Prisma.ActivityLogCreateOrConnectWithoutIssueInput[]
+  upsert?: Prisma.ActivityLogUpsertWithWhereUniqueWithoutIssueInput | Prisma.ActivityLogUpsertWithWhereUniqueWithoutIssueInput[]
+  createMany?: Prisma.ActivityLogCreateManyIssueInputEnvelope
   set?: Prisma.ActivityLogWhereUniqueInput | Prisma.ActivityLogWhereUniqueInput[]
   disconnect?: Prisma.ActivityLogWhereUniqueInput | Prisma.ActivityLogWhereUniqueInput[]
   delete?: Prisma.ActivityLogWhereUniqueInput | Prisma.ActivityLogWhereUniqueInput[]
   connect?: Prisma.ActivityLogWhereUniqueInput | Prisma.ActivityLogWhereUniqueInput[]
-  update?: Prisma.ActivityLogUpdateWithWhereUniqueWithoutIssuesInput | Prisma.ActivityLogUpdateWithWhereUniqueWithoutIssuesInput[]
-  updateMany?: Prisma.ActivityLogUpdateManyWithWhereWithoutIssuesInput | Prisma.ActivityLogUpdateManyWithWhereWithoutIssuesInput[]
+  update?: Prisma.ActivityLogUpdateWithWhereUniqueWithoutIssueInput | Prisma.ActivityLogUpdateWithWhereUniqueWithoutIssueInput[]
+  updateMany?: Prisma.ActivityLogUpdateManyWithWhereWithoutIssueInput | Prisma.ActivityLogUpdateManyWithWhereWithoutIssueInput[]
   deleteMany?: Prisma.ActivityLogScalarWhereInput | Prisma.ActivityLogScalarWhereInput[]
+}
+
+export type EnumActivityScopeFieldUpdateOperationsInput = {
+  set?: $Enums.ActivityScope
 }
 
 export type ActivityLogCreateWithoutUserInput = {
   id?: string
   action: string
+  scope: $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   project: Prisma.ProjectCreateNestedOneWithoutActivitiesInput
-  issues?: Prisma.IssueCreateNestedOneWithoutActivitiesInput
+  issue?: Prisma.IssueCreateNestedOneWithoutActivitiesInput
 }
 
 export type ActivityLogUncheckedCreateWithoutUserInput = {
   id?: string
   action: string
+  scope: $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   issueId?: string | null
   projectId: string
@@ -535,6 +563,7 @@ export type ActivityLogScalarWhereInput = {
   NOT?: Prisma.ActivityLogScalarWhereInput | Prisma.ActivityLogScalarWhereInput[]
   id?: Prisma.StringFilter<"ActivityLog"> | string
   action?: Prisma.StringFilter<"ActivityLog"> | string
+  scope?: Prisma.EnumActivityScopeFilter<"ActivityLog"> | $Enums.ActivityScope
   meta?: Prisma.JsonNullableFilter<"ActivityLog">
   userId?: Prisma.StringFilter<"ActivityLog"> | string
   issueId?: Prisma.StringNullableFilter<"ActivityLog"> | string | null
@@ -545,15 +574,17 @@ export type ActivityLogScalarWhereInput = {
 export type ActivityLogCreateWithoutProjectInput = {
   id?: string
   action: string
+  scope: $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutActivitiesInput
-  issues?: Prisma.IssueCreateNestedOneWithoutActivitiesInput
+  issue?: Prisma.IssueCreateNestedOneWithoutActivitiesInput
 }
 
 export type ActivityLogUncheckedCreateWithoutProjectInput = {
   id?: string
   action: string
+  scope: $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   userId: string
   issueId?: string | null
@@ -586,53 +617,56 @@ export type ActivityLogUpdateManyWithWhereWithoutProjectInput = {
   data: Prisma.XOR<Prisma.ActivityLogUpdateManyMutationInput, Prisma.ActivityLogUncheckedUpdateManyWithoutProjectInput>
 }
 
-export type ActivityLogCreateWithoutIssuesInput = {
+export type ActivityLogCreateWithoutIssueInput = {
   id?: string
   action: string
+  scope: $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutActivitiesInput
   project: Prisma.ProjectCreateNestedOneWithoutActivitiesInput
 }
 
-export type ActivityLogUncheckedCreateWithoutIssuesInput = {
+export type ActivityLogUncheckedCreateWithoutIssueInput = {
   id?: string
   action: string
+  scope: $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   userId: string
   projectId: string
   createdAt?: Date | string
 }
 
-export type ActivityLogCreateOrConnectWithoutIssuesInput = {
+export type ActivityLogCreateOrConnectWithoutIssueInput = {
   where: Prisma.ActivityLogWhereUniqueInput
-  create: Prisma.XOR<Prisma.ActivityLogCreateWithoutIssuesInput, Prisma.ActivityLogUncheckedCreateWithoutIssuesInput>
+  create: Prisma.XOR<Prisma.ActivityLogCreateWithoutIssueInput, Prisma.ActivityLogUncheckedCreateWithoutIssueInput>
 }
 
-export type ActivityLogCreateManyIssuesInputEnvelope = {
-  data: Prisma.ActivityLogCreateManyIssuesInput | Prisma.ActivityLogCreateManyIssuesInput[]
+export type ActivityLogCreateManyIssueInputEnvelope = {
+  data: Prisma.ActivityLogCreateManyIssueInput | Prisma.ActivityLogCreateManyIssueInput[]
   skipDuplicates?: boolean
 }
 
-export type ActivityLogUpsertWithWhereUniqueWithoutIssuesInput = {
+export type ActivityLogUpsertWithWhereUniqueWithoutIssueInput = {
   where: Prisma.ActivityLogWhereUniqueInput
-  update: Prisma.XOR<Prisma.ActivityLogUpdateWithoutIssuesInput, Prisma.ActivityLogUncheckedUpdateWithoutIssuesInput>
-  create: Prisma.XOR<Prisma.ActivityLogCreateWithoutIssuesInput, Prisma.ActivityLogUncheckedCreateWithoutIssuesInput>
+  update: Prisma.XOR<Prisma.ActivityLogUpdateWithoutIssueInput, Prisma.ActivityLogUncheckedUpdateWithoutIssueInput>
+  create: Prisma.XOR<Prisma.ActivityLogCreateWithoutIssueInput, Prisma.ActivityLogUncheckedCreateWithoutIssueInput>
 }
 
-export type ActivityLogUpdateWithWhereUniqueWithoutIssuesInput = {
+export type ActivityLogUpdateWithWhereUniqueWithoutIssueInput = {
   where: Prisma.ActivityLogWhereUniqueInput
-  data: Prisma.XOR<Prisma.ActivityLogUpdateWithoutIssuesInput, Prisma.ActivityLogUncheckedUpdateWithoutIssuesInput>
+  data: Prisma.XOR<Prisma.ActivityLogUpdateWithoutIssueInput, Prisma.ActivityLogUncheckedUpdateWithoutIssueInput>
 }
 
-export type ActivityLogUpdateManyWithWhereWithoutIssuesInput = {
+export type ActivityLogUpdateManyWithWhereWithoutIssueInput = {
   where: Prisma.ActivityLogScalarWhereInput
-  data: Prisma.XOR<Prisma.ActivityLogUpdateManyMutationInput, Prisma.ActivityLogUncheckedUpdateManyWithoutIssuesInput>
+  data: Prisma.XOR<Prisma.ActivityLogUpdateManyMutationInput, Prisma.ActivityLogUncheckedUpdateManyWithoutIssueInput>
 }
 
 export type ActivityLogCreateManyUserInput = {
   id?: string
   action: string
+  scope: $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   issueId?: string | null
   projectId: string
@@ -642,15 +676,17 @@ export type ActivityLogCreateManyUserInput = {
 export type ActivityLogUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   action?: Prisma.StringFieldUpdateOperationsInput | string
+  scope?: Prisma.EnumActivityScopeFieldUpdateOperationsInput | $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   project?: Prisma.ProjectUpdateOneRequiredWithoutActivitiesNestedInput
-  issues?: Prisma.IssueUpdateOneWithoutActivitiesNestedInput
+  issue?: Prisma.IssueUpdateOneWithoutActivitiesNestedInput
 }
 
 export type ActivityLogUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   action?: Prisma.StringFieldUpdateOperationsInput | string
+  scope?: Prisma.EnumActivityScopeFieldUpdateOperationsInput | $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   issueId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -660,6 +696,7 @@ export type ActivityLogUncheckedUpdateWithoutUserInput = {
 export type ActivityLogUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   action?: Prisma.StringFieldUpdateOperationsInput | string
+  scope?: Prisma.EnumActivityScopeFieldUpdateOperationsInput | $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   issueId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -669,6 +706,7 @@ export type ActivityLogUncheckedUpdateManyWithoutUserInput = {
 export type ActivityLogCreateManyProjectInput = {
   id?: string
   action: string
+  scope: $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   userId: string
   issueId?: string | null
@@ -678,15 +716,17 @@ export type ActivityLogCreateManyProjectInput = {
 export type ActivityLogUpdateWithoutProjectInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   action?: Prisma.StringFieldUpdateOperationsInput | string
+  scope?: Prisma.EnumActivityScopeFieldUpdateOperationsInput | $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutActivitiesNestedInput
-  issues?: Prisma.IssueUpdateOneWithoutActivitiesNestedInput
+  issue?: Prisma.IssueUpdateOneWithoutActivitiesNestedInput
 }
 
 export type ActivityLogUncheckedUpdateWithoutProjectInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   action?: Prisma.StringFieldUpdateOperationsInput | string
+  scope?: Prisma.EnumActivityScopeFieldUpdateOperationsInput | $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   issueId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -696,42 +736,47 @@ export type ActivityLogUncheckedUpdateWithoutProjectInput = {
 export type ActivityLogUncheckedUpdateManyWithoutProjectInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   action?: Prisma.StringFieldUpdateOperationsInput | string
+  scope?: Prisma.EnumActivityScopeFieldUpdateOperationsInput | $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   issueId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type ActivityLogCreateManyIssuesInput = {
+export type ActivityLogCreateManyIssueInput = {
   id?: string
   action: string
+  scope: $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   userId: string
   projectId: string
   createdAt?: Date | string
 }
 
-export type ActivityLogUpdateWithoutIssuesInput = {
+export type ActivityLogUpdateWithoutIssueInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   action?: Prisma.StringFieldUpdateOperationsInput | string
+  scope?: Prisma.EnumActivityScopeFieldUpdateOperationsInput | $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutActivitiesNestedInput
   project?: Prisma.ProjectUpdateOneRequiredWithoutActivitiesNestedInput
 }
 
-export type ActivityLogUncheckedUpdateWithoutIssuesInput = {
+export type ActivityLogUncheckedUpdateWithoutIssueInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   action?: Prisma.StringFieldUpdateOperationsInput | string
+  scope?: Prisma.EnumActivityScopeFieldUpdateOperationsInput | $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type ActivityLogUncheckedUpdateManyWithoutIssuesInput = {
+export type ActivityLogUncheckedUpdateManyWithoutIssueInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   action?: Prisma.StringFieldUpdateOperationsInput | string
+  scope?: Prisma.EnumActivityScopeFieldUpdateOperationsInput | $Enums.ActivityScope
   meta?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -743,6 +788,7 @@ export type ActivityLogUncheckedUpdateManyWithoutIssuesInput = {
 export type ActivityLogSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   action?: boolean
+  scope?: boolean
   meta?: boolean
   userId?: boolean
   issueId?: boolean
@@ -750,12 +796,13 @@ export type ActivityLogSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
-  issues?: boolean | Prisma.ActivityLog$issuesArgs<ExtArgs>
+  issue?: boolean | Prisma.ActivityLog$issueArgs<ExtArgs>
 }, ExtArgs["result"]["activityLog"]>
 
 export type ActivityLogSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   action?: boolean
+  scope?: boolean
   meta?: boolean
   userId?: boolean
   issueId?: boolean
@@ -763,12 +810,13 @@ export type ActivityLogSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
-  issues?: boolean | Prisma.ActivityLog$issuesArgs<ExtArgs>
+  issue?: boolean | Prisma.ActivityLog$issueArgs<ExtArgs>
 }, ExtArgs["result"]["activityLog"]>
 
 export type ActivityLogSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   action?: boolean
+  scope?: boolean
   meta?: boolean
   userId?: boolean
   issueId?: boolean
@@ -776,12 +824,13 @@ export type ActivityLogSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
-  issues?: boolean | Prisma.ActivityLog$issuesArgs<ExtArgs>
+  issue?: boolean | Prisma.ActivityLog$issueArgs<ExtArgs>
 }, ExtArgs["result"]["activityLog"]>
 
 export type ActivityLogSelectScalar = {
   id?: boolean
   action?: boolean
+  scope?: boolean
   meta?: boolean
   userId?: boolean
   issueId?: boolean
@@ -789,21 +838,21 @@ export type ActivityLogSelectScalar = {
   createdAt?: boolean
 }
 
-export type ActivityLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "action" | "meta" | "userId" | "issueId" | "projectId" | "createdAt", ExtArgs["result"]["activityLog"]>
+export type ActivityLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "action" | "scope" | "meta" | "userId" | "issueId" | "projectId" | "createdAt", ExtArgs["result"]["activityLog"]>
 export type ActivityLogInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
-  issues?: boolean | Prisma.ActivityLog$issuesArgs<ExtArgs>
+  issue?: boolean | Prisma.ActivityLog$issueArgs<ExtArgs>
 }
 export type ActivityLogIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
-  issues?: boolean | Prisma.ActivityLog$issuesArgs<ExtArgs>
+  issue?: boolean | Prisma.ActivityLog$issueArgs<ExtArgs>
 }
 export type ActivityLogIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
-  issues?: boolean | Prisma.ActivityLog$issuesArgs<ExtArgs>
+  issue?: boolean | Prisma.ActivityLog$issueArgs<ExtArgs>
 }
 
 export type $ActivityLogPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -811,11 +860,12 @@ export type $ActivityLogPayload<ExtArgs extends runtime.Types.Extensions.Interna
   objects: {
     user: Prisma.$UserPayload<ExtArgs>
     project: Prisma.$ProjectPayload<ExtArgs>
-    issues: Prisma.$IssuePayload<ExtArgs> | null
+    issue: Prisma.$IssuePayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     action: string
+    scope: $Enums.ActivityScope
     meta: runtime.JsonValue | null
     userId: string
     issueId: string | null
@@ -1217,7 +1267,7 @@ export interface Prisma__ActivityLogClient<T, Null = never, ExtArgs extends runt
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   project<T extends Prisma.ProjectDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProjectDefaultArgs<ExtArgs>>): Prisma.Prisma__ProjectClient<runtime.Types.Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  issues<T extends Prisma.ActivityLog$issuesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ActivityLog$issuesArgs<ExtArgs>>): Prisma.Prisma__IssueClient<runtime.Types.Result.GetResult<Prisma.$IssuePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  issue<T extends Prisma.ActivityLog$issueArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ActivityLog$issueArgs<ExtArgs>>): Prisma.Prisma__IssueClient<runtime.Types.Result.GetResult<Prisma.$IssuePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1249,6 +1299,7 @@ export interface Prisma__ActivityLogClient<T, Null = never, ExtArgs extends runt
 export interface ActivityLogFieldRefs {
   readonly id: Prisma.FieldRef<"ActivityLog", 'String'>
   readonly action: Prisma.FieldRef<"ActivityLog", 'String'>
+  readonly scope: Prisma.FieldRef<"ActivityLog", 'ActivityScope'>
   readonly meta: Prisma.FieldRef<"ActivityLog", 'Json'>
   readonly userId: Prisma.FieldRef<"ActivityLog", 'String'>
   readonly issueId: Prisma.FieldRef<"ActivityLog", 'String'>
@@ -1655,9 +1706,9 @@ export type ActivityLogDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.I
 }
 
 /**
- * ActivityLog.issues
+ * ActivityLog.issue
  */
-export type ActivityLog$issuesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type ActivityLog$issueArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
    * Select specific fields to fetch from the Issue
    */

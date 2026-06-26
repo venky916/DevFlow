@@ -4,13 +4,14 @@ import { logger } from "@devflow/backend-common";
 import { ActivityJobData, createRedisConnection } from "@devflow/queues";
 
 async function activityFunction(job: Job<ActivityJobData>) {
-    const { action, userId, projectId, issueId, meta } = job.data;
+    const { action, userId, projectId, issueId, meta, scope } = job.data;
 
     logger.info({ jobId: job.id, action }, "Processing activity job")
 
     await prisma.activityLog.create({
         data: {
             action,
+            scope: scope ?? "PROJECT",
             userId,
             projectId,
             issueId: issueId ?? null,

@@ -49,6 +49,17 @@ export const IssuePriority = {
 export type IssuePriority = (typeof IssuePriority)[keyof typeof IssuePriority]
 
 
+export const IssueType = {
+  BUG: 'BUG',
+  FEATURE: 'FEATURE',
+  TASK: 'TASK',
+  IMPROVEMENT: 'IMPROVEMENT',
+  OTHER: 'OTHER'
+} as const
+
+export type IssueType = (typeof IssueType)[keyof typeof IssueType]
+
+
 export const SprintStatus = {
   PLANNED: 'PLANNED',
   ACTIVE: 'ACTIVE',
@@ -64,7 +75,17 @@ export const NotificationType = {
   SPRINT_STARTED: 'SPRINT_STARTED',
   SPRINT_COMPLETED: 'SPRINT_COMPLETED',
   WORKSPACE_INVITED: 'WORKSPACE_INVITED',
-  PROJECT_ADDED: 'PROJECT_ADDED'
+  PROJECT_ADDED: 'PROJECT_ADDED',
+  MENTION: 'MENTION',
+  OTHER: 'OTHER'
 } as const
 
 export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType]
+
+
+export const ActivityScope = {
+  ISSUE: 'ISSUE',
+  PROJECT: 'PROJECT'
+} as const
+
+export type ActivityScope = (typeof ActivityScope)[keyof typeof ActivityScope]

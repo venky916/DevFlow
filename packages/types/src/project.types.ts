@@ -7,6 +7,7 @@ export interface IProject {
     name: string;
     slug: string;
     description: string | null;
+    color: string | null;
     workspaceId: string;
     createdAt: Date;
     updatedAt: Date;

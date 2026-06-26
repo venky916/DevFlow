@@ -14,6 +14,7 @@ api.interceptors.request.use(async (config) => {
         const user = auth.currentUser;
         if (user) {
             const token = await user.getIdToken();
+            console.log("[axios] token:", token);
             config.headers.Authorization = `Bearer ${token}`;
         }
     } catch (err) {

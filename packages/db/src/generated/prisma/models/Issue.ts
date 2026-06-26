@@ -20,28 +20,21 @@ export type IssueModel = runtime.Types.Result.DefaultSelection<Prisma.$IssuePayl
 
 export type AggregateIssue = {
   _count: IssueCountAggregateOutputType | null
-  _avg: IssueAvgAggregateOutputType | null
-  _sum: IssueSumAggregateOutputType | null
   _min: IssueMinAggregateOutputType | null
   _max: IssueMaxAggregateOutputType | null
-}
-
-export type IssueAvgAggregateOutputType = {
-  position: number | null
-}
-
-export type IssueSumAggregateOutputType = {
-  position: number | null
 }
 
 export type IssueMinAggregateOutputType = {
   id: string | null
   title: string | null
   description: string | null
-  sprintId: string | null
   status: $Enums.IssueStatus | null
   priority: $Enums.IssuePriority | null
-  position: number | null
+  type: $Enums.IssueType | null
+  position: string | null
+  dueDate: Date | null
+  parentId: string | null
+  sprintId: string | null
   projectId: string | null
   assigneeId: string | null
   creatorId: string | null
@@ -53,10 +46,13 @@ export type IssueMaxAggregateOutputType = {
   id: string | null
   title: string | null
   description: string | null
-  sprintId: string | null
   status: $Enums.IssueStatus | null
   priority: $Enums.IssuePriority | null
-  position: number | null
+  type: $Enums.IssueType | null
+  position: string | null
+  dueDate: Date | null
+  parentId: string | null
+  sprintId: string | null
   projectId: string | null
   assigneeId: string | null
   creatorId: string | null
@@ -68,10 +64,13 @@ export type IssueCountAggregateOutputType = {
   id: number
   title: number
   description: number
-  sprintId: number
   status: number
   priority: number
+  type: number
   position: number
+  dueDate: number
+  parentId: number
+  sprintId: number
   projectId: number
   assigneeId: number
   creatorId: number
@@ -81,22 +80,17 @@ export type IssueCountAggregateOutputType = {
 }
 
 
-export type IssueAvgAggregateInputType = {
-  position?: true
-}
-
-export type IssueSumAggregateInputType = {
-  position?: true
-}
-
 export type IssueMinAggregateInputType = {
   id?: true
   title?: true
   description?: true
-  sprintId?: true
   status?: true
   priority?: true
+  type?: true
   position?: true
+  dueDate?: true
+  parentId?: true
+  sprintId?: true
   projectId?: true
   assigneeId?: true
   creatorId?: true
@@ -108,10 +102,13 @@ export type IssueMaxAggregateInputType = {
   id?: true
   title?: true
   description?: true
-  sprintId?: true
   status?: true
   priority?: true
+  type?: true
   position?: true
+  dueDate?: true
+  parentId?: true
+  sprintId?: true
   projectId?: true
   assigneeId?: true
   creatorId?: true
@@ -123,10 +120,13 @@ export type IssueCountAggregateInputType = {
   id?: true
   title?: true
   description?: true
-  sprintId?: true
   status?: true
   priority?: true
+  type?: true
   position?: true
+  dueDate?: true
+  parentId?: true
+  sprintId?: true
   projectId?: true
   assigneeId?: true
   creatorId?: true
@@ -173,18 +173,6 @@ export type IssueAggregateArgs<ExtArgs extends runtime.Types.Extensions.Internal
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
-   * Select which fields to average
-  **/
-  _avg?: IssueAvgAggregateInputType
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   * 
-   * Select which fields to sum
-  **/
-  _sum?: IssueSumAggregateInputType
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   * 
    * Select which fields to find the minimum value
   **/
   _min?: IssueMinAggregateInputType
@@ -215,8 +203,6 @@ export type IssueGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
   take?: number
   skip?: number
   _count?: IssueCountAggregateInputType | true
-  _avg?: IssueAvgAggregateInputType
-  _sum?: IssueSumAggregateInputType
   _min?: IssueMinAggregateInputType
   _max?: IssueMaxAggregateInputType
 }
@@ -225,18 +211,19 @@ export type IssueGroupByOutputType = {
   id: string
   title: string
   description: string | null
-  sprintId: string | null
   status: $Enums.IssueStatus
   priority: $Enums.IssuePriority
-  position: number
+  type: $Enums.IssueType
+  position: string
+  dueDate: Date | null
+  parentId: string | null
+  sprintId: string | null
   projectId: string
   assigneeId: string | null
   creatorId: string
   createdAt: Date
   updatedAt: Date
   _count: IssueCountAggregateOutputType | null
-  _avg: IssueAvgAggregateOutputType | null
-  _sum: IssueSumAggregateOutputType | null
   _min: IssueMinAggregateOutputType | null
   _max: IssueMaxAggregateOutputType | null
 }
@@ -263,18 +250,24 @@ export type IssueWhereInput = {
   id?: Prisma.StringFilter<"Issue"> | string
   title?: Prisma.StringFilter<"Issue"> | string
   description?: Prisma.StringNullableFilter<"Issue"> | string | null
-  sprintId?: Prisma.StringNullableFilter<"Issue"> | string | null
   status?: Prisma.EnumIssueStatusFilter<"Issue"> | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFilter<"Issue"> | $Enums.IssuePriority
-  position?: Prisma.FloatFilter<"Issue"> | number
+  type?: Prisma.EnumIssueTypeFilter<"Issue"> | $Enums.IssueType
+  position?: Prisma.StringFilter<"Issue"> | string
+  dueDate?: Prisma.DateTimeNullableFilter<"Issue"> | Date | string | null
+  parentId?: Prisma.StringNullableFilter<"Issue"> | string | null
+  sprintId?: Prisma.StringNullableFilter<"Issue"> | string | null
   projectId?: Prisma.StringFilter<"Issue"> | string
   assigneeId?: Prisma.StringNullableFilter<"Issue"> | string | null
   creatorId?: Prisma.StringFilter<"Issue"> | string
   createdAt?: Prisma.DateTimeFilter<"Issue"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Issue"> | Date | string
+  parent?: Prisma.XOR<Prisma.IssueNullableScalarRelationFilter, Prisma.IssueWhereInput> | null
+  children?: Prisma.IssueListRelationFilter
   comments?: Prisma.CommentListRelationFilter
   attachments?: Prisma.AttachmentListRelationFilter
   activities?: Prisma.ActivityLogListRelationFilter
+  labels?: Prisma.IssueLabelListRelationFilter
   sprint?: Prisma.XOR<Prisma.SprintNullableScalarRelationFilter, Prisma.SprintWhereInput> | null
   project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
   creator?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -285,18 +278,24 @@ export type IssueOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
-  sprintId?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   priority?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   position?: Prisma.SortOrder
+  dueDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  parentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  sprintId?: Prisma.SortOrderInput | Prisma.SortOrder
   projectId?: Prisma.SortOrder
   assigneeId?: Prisma.SortOrderInput | Prisma.SortOrder
   creatorId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  parent?: Prisma.IssueOrderByWithRelationInput
+  children?: Prisma.IssueOrderByRelationAggregateInput
   comments?: Prisma.CommentOrderByRelationAggregateInput
   attachments?: Prisma.AttachmentOrderByRelationAggregateInput
   activities?: Prisma.ActivityLogOrderByRelationAggregateInput
+  labels?: Prisma.IssueLabelOrderByRelationAggregateInput
   sprint?: Prisma.SprintOrderByWithRelationInput
   project?: Prisma.ProjectOrderByWithRelationInput
   creator?: Prisma.UserOrderByWithRelationInput
@@ -310,18 +309,24 @@ export type IssueWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.IssueWhereInput | Prisma.IssueWhereInput[]
   title?: Prisma.StringFilter<"Issue"> | string
   description?: Prisma.StringNullableFilter<"Issue"> | string | null
-  sprintId?: Prisma.StringNullableFilter<"Issue"> | string | null
   status?: Prisma.EnumIssueStatusFilter<"Issue"> | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFilter<"Issue"> | $Enums.IssuePriority
-  position?: Prisma.FloatFilter<"Issue"> | number
+  type?: Prisma.EnumIssueTypeFilter<"Issue"> | $Enums.IssueType
+  position?: Prisma.StringFilter<"Issue"> | string
+  dueDate?: Prisma.DateTimeNullableFilter<"Issue"> | Date | string | null
+  parentId?: Prisma.StringNullableFilter<"Issue"> | string | null
+  sprintId?: Prisma.StringNullableFilter<"Issue"> | string | null
   projectId?: Prisma.StringFilter<"Issue"> | string
   assigneeId?: Prisma.StringNullableFilter<"Issue"> | string | null
   creatorId?: Prisma.StringFilter<"Issue"> | string
   createdAt?: Prisma.DateTimeFilter<"Issue"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Issue"> | Date | string
+  parent?: Prisma.XOR<Prisma.IssueNullableScalarRelationFilter, Prisma.IssueWhereInput> | null
+  children?: Prisma.IssueListRelationFilter
   comments?: Prisma.CommentListRelationFilter
   attachments?: Prisma.AttachmentListRelationFilter
   activities?: Prisma.ActivityLogListRelationFilter
+  labels?: Prisma.IssueLabelListRelationFilter
   sprint?: Prisma.XOR<Prisma.SprintNullableScalarRelationFilter, Prisma.SprintWhereInput> | null
   project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
   creator?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -332,20 +337,21 @@ export type IssueOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
-  sprintId?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   priority?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   position?: Prisma.SortOrder
+  dueDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  parentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  sprintId?: Prisma.SortOrderInput | Prisma.SortOrder
   projectId?: Prisma.SortOrder
   assigneeId?: Prisma.SortOrderInput | Prisma.SortOrder
   creatorId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.IssueCountOrderByAggregateInput
-  _avg?: Prisma.IssueAvgOrderByAggregateInput
   _max?: Prisma.IssueMaxOrderByAggregateInput
   _min?: Prisma.IssueMinOrderByAggregateInput
-  _sum?: Prisma.IssueSumOrderByAggregateInput
 }
 
 export type IssueScalarWhereWithAggregatesInput = {
@@ -355,10 +361,13 @@ export type IssueScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Issue"> | string
   title?: Prisma.StringWithAggregatesFilter<"Issue"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"Issue"> | string | null
-  sprintId?: Prisma.StringNullableWithAggregatesFilter<"Issue"> | string | null
   status?: Prisma.EnumIssueStatusWithAggregatesFilter<"Issue"> | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityWithAggregatesFilter<"Issue"> | $Enums.IssuePriority
-  position?: Prisma.FloatWithAggregatesFilter<"Issue"> | number
+  type?: Prisma.EnumIssueTypeWithAggregatesFilter<"Issue"> | $Enums.IssueType
+  position?: Prisma.StringWithAggregatesFilter<"Issue"> | string
+  dueDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Issue"> | Date | string | null
+  parentId?: Prisma.StringNullableWithAggregatesFilter<"Issue"> | string | null
+  sprintId?: Prisma.StringNullableWithAggregatesFilter<"Issue"> | string | null
   projectId?: Prisma.StringWithAggregatesFilter<"Issue"> | string
   assigneeId?: Prisma.StringNullableWithAggregatesFilter<"Issue"> | string | null
   creatorId?: Prisma.StringWithAggregatesFilter<"Issue"> | string
@@ -372,12 +381,17 @@ export type IssueCreateInput = {
   description?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  parent?: Prisma.IssueCreateNestedOneWithoutChildrenInput
+  children?: Prisma.IssueCreateNestedManyWithoutParentInput
   comments?: Prisma.CommentCreateNestedManyWithoutIssueInput
   attachments?: Prisma.AttachmentCreateNestedManyWithoutIssueInput
-  activities?: Prisma.ActivityLogCreateNestedManyWithoutIssuesInput
+  activities?: Prisma.ActivityLogCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelCreateNestedManyWithoutIssueInput
   sprint?: Prisma.SprintCreateNestedOneWithoutIssuesInput
   project: Prisma.ProjectCreateNestedOneWithoutIssuesInput
   creator: Prisma.UserCreateNestedOneWithoutCreatedIssuesInput
@@ -388,18 +402,23 @@ export type IssueUncheckedCreateInput = {
   id?: string
   title: string
   description?: string | null
-  sprintId?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  parentId?: string | null
+  sprintId?: string | null
   projectId: string
   assigneeId?: string | null
   creatorId: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  children?: Prisma.IssueUncheckedCreateNestedManyWithoutParentInput
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutIssueInput
   attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutIssueInput
-  activities?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutIssuesInput
+  activities?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelUncheckedCreateNestedManyWithoutIssueInput
 }
 
 export type IssueUpdateInput = {
@@ -408,12 +427,17 @@ export type IssueUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parent?: Prisma.IssueUpdateOneWithoutChildrenNestedInput
+  children?: Prisma.IssueUpdateManyWithoutParentNestedInput
   comments?: Prisma.CommentUpdateManyWithoutIssueNestedInput
   attachments?: Prisma.AttachmentUpdateManyWithoutIssueNestedInput
-  activities?: Prisma.ActivityLogUpdateManyWithoutIssuesNestedInput
+  activities?: Prisma.ActivityLogUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUpdateManyWithoutIssueNestedInput
   sprint?: Prisma.SprintUpdateOneWithoutIssuesNestedInput
   project?: Prisma.ProjectUpdateOneRequiredWithoutIssuesNestedInput
   creator?: Prisma.UserUpdateOneRequiredWithoutCreatedIssuesNestedInput
@@ -424,28 +448,36 @@ export type IssueUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   assigneeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   creatorId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  children?: Prisma.IssueUncheckedUpdateManyWithoutParentNestedInput
   comments?: Prisma.CommentUncheckedUpdateManyWithoutIssueNestedInput
   attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutIssueNestedInput
-  activities?: Prisma.ActivityLogUncheckedUpdateManyWithoutIssuesNestedInput
+  activities?: Prisma.ActivityLogUncheckedUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUncheckedUpdateManyWithoutIssueNestedInput
 }
 
 export type IssueCreateManyInput = {
   id?: string
   title: string
   description?: string | null
-  sprintId?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  parentId?: string | null
+  sprintId?: string | null
   projectId: string
   assigneeId?: string | null
   creatorId: string
@@ -459,7 +491,9 @@ export type IssueUpdateManyMutationInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -468,10 +502,13 @@ export type IssueUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   assigneeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   creatorId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -489,14 +526,22 @@ export type IssueOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type IssueNullableScalarRelationFilter = {
+  is?: Prisma.IssueWhereInput | null
+  isNot?: Prisma.IssueWhereInput | null
+}
+
 export type IssueCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
-  sprintId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   priority?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   position?: Prisma.SortOrder
+  dueDate?: Prisma.SortOrder
+  parentId?: Prisma.SortOrder
+  sprintId?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   assigneeId?: Prisma.SortOrder
   creatorId?: Prisma.SortOrder
@@ -504,18 +549,17 @@ export type IssueCountOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
 }
 
-export type IssueAvgOrderByAggregateInput = {
-  position?: Prisma.SortOrder
-}
-
 export type IssueMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
-  sprintId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   priority?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   position?: Prisma.SortOrder
+  dueDate?: Prisma.SortOrder
+  parentId?: Prisma.SortOrder
+  sprintId?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   assigneeId?: Prisma.SortOrder
   creatorId?: Prisma.SortOrder
@@ -527,10 +571,13 @@ export type IssueMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
-  sprintId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   priority?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   position?: Prisma.SortOrder
+  dueDate?: Prisma.SortOrder
+  parentId?: Prisma.SortOrder
+  sprintId?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   assigneeId?: Prisma.SortOrder
   creatorId?: Prisma.SortOrder
@@ -538,18 +585,9 @@ export type IssueMinOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
 }
 
-export type IssueSumOrderByAggregateInput = {
-  position?: Prisma.SortOrder
-}
-
 export type IssueScalarRelationFilter = {
   is?: Prisma.IssueWhereInput
   isNot?: Prisma.IssueWhereInput
-}
-
-export type IssueNullableScalarRelationFilter = {
-  is?: Prisma.IssueWhereInput | null
-  isNot?: Prisma.IssueWhereInput | null
 }
 
 export type IssueCreateNestedManyWithoutCreatorInput = {
@@ -720,6 +758,26 @@ export type IssueUncheckedUpdateManyWithoutSprintNestedInput = {
   deleteMany?: Prisma.IssueScalarWhereInput | Prisma.IssueScalarWhereInput[]
 }
 
+export type IssueCreateNestedOneWithoutChildrenInput = {
+  create?: Prisma.XOR<Prisma.IssueCreateWithoutChildrenInput, Prisma.IssueUncheckedCreateWithoutChildrenInput>
+  connectOrCreate?: Prisma.IssueCreateOrConnectWithoutChildrenInput
+  connect?: Prisma.IssueWhereUniqueInput
+}
+
+export type IssueCreateNestedManyWithoutParentInput = {
+  create?: Prisma.XOR<Prisma.IssueCreateWithoutParentInput, Prisma.IssueUncheckedCreateWithoutParentInput> | Prisma.IssueCreateWithoutParentInput[] | Prisma.IssueUncheckedCreateWithoutParentInput[]
+  connectOrCreate?: Prisma.IssueCreateOrConnectWithoutParentInput | Prisma.IssueCreateOrConnectWithoutParentInput[]
+  createMany?: Prisma.IssueCreateManyParentInputEnvelope
+  connect?: Prisma.IssueWhereUniqueInput | Prisma.IssueWhereUniqueInput[]
+}
+
+export type IssueUncheckedCreateNestedManyWithoutParentInput = {
+  create?: Prisma.XOR<Prisma.IssueCreateWithoutParentInput, Prisma.IssueUncheckedCreateWithoutParentInput> | Prisma.IssueCreateWithoutParentInput[] | Prisma.IssueUncheckedCreateWithoutParentInput[]
+  connectOrCreate?: Prisma.IssueCreateOrConnectWithoutParentInput | Prisma.IssueCreateOrConnectWithoutParentInput[]
+  createMany?: Prisma.IssueCreateManyParentInputEnvelope
+  connect?: Prisma.IssueWhereUniqueInput | Prisma.IssueWhereUniqueInput[]
+}
+
 export type EnumIssueStatusFieldUpdateOperationsInput = {
   set?: $Enums.IssueStatus
 }
@@ -728,12 +786,60 @@ export type EnumIssuePriorityFieldUpdateOperationsInput = {
   set?: $Enums.IssuePriority
 }
 
-export type FloatFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
+export type EnumIssueTypeFieldUpdateOperationsInput = {
+  set?: $Enums.IssueType
+}
+
+export type IssueUpdateOneWithoutChildrenNestedInput = {
+  create?: Prisma.XOR<Prisma.IssueCreateWithoutChildrenInput, Prisma.IssueUncheckedCreateWithoutChildrenInput>
+  connectOrCreate?: Prisma.IssueCreateOrConnectWithoutChildrenInput
+  upsert?: Prisma.IssueUpsertWithoutChildrenInput
+  disconnect?: Prisma.IssueWhereInput | boolean
+  delete?: Prisma.IssueWhereInput | boolean
+  connect?: Prisma.IssueWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.IssueUpdateToOneWithWhereWithoutChildrenInput, Prisma.IssueUpdateWithoutChildrenInput>, Prisma.IssueUncheckedUpdateWithoutChildrenInput>
+}
+
+export type IssueUpdateManyWithoutParentNestedInput = {
+  create?: Prisma.XOR<Prisma.IssueCreateWithoutParentInput, Prisma.IssueUncheckedCreateWithoutParentInput> | Prisma.IssueCreateWithoutParentInput[] | Prisma.IssueUncheckedCreateWithoutParentInput[]
+  connectOrCreate?: Prisma.IssueCreateOrConnectWithoutParentInput | Prisma.IssueCreateOrConnectWithoutParentInput[]
+  upsert?: Prisma.IssueUpsertWithWhereUniqueWithoutParentInput | Prisma.IssueUpsertWithWhereUniqueWithoutParentInput[]
+  createMany?: Prisma.IssueCreateManyParentInputEnvelope
+  set?: Prisma.IssueWhereUniqueInput | Prisma.IssueWhereUniqueInput[]
+  disconnect?: Prisma.IssueWhereUniqueInput | Prisma.IssueWhereUniqueInput[]
+  delete?: Prisma.IssueWhereUniqueInput | Prisma.IssueWhereUniqueInput[]
+  connect?: Prisma.IssueWhereUniqueInput | Prisma.IssueWhereUniqueInput[]
+  update?: Prisma.IssueUpdateWithWhereUniqueWithoutParentInput | Prisma.IssueUpdateWithWhereUniqueWithoutParentInput[]
+  updateMany?: Prisma.IssueUpdateManyWithWhereWithoutParentInput | Prisma.IssueUpdateManyWithWhereWithoutParentInput[]
+  deleteMany?: Prisma.IssueScalarWhereInput | Prisma.IssueScalarWhereInput[]
+}
+
+export type IssueUncheckedUpdateManyWithoutParentNestedInput = {
+  create?: Prisma.XOR<Prisma.IssueCreateWithoutParentInput, Prisma.IssueUncheckedCreateWithoutParentInput> | Prisma.IssueCreateWithoutParentInput[] | Prisma.IssueUncheckedCreateWithoutParentInput[]
+  connectOrCreate?: Prisma.IssueCreateOrConnectWithoutParentInput | Prisma.IssueCreateOrConnectWithoutParentInput[]
+  upsert?: Prisma.IssueUpsertWithWhereUniqueWithoutParentInput | Prisma.IssueUpsertWithWhereUniqueWithoutParentInput[]
+  createMany?: Prisma.IssueCreateManyParentInputEnvelope
+  set?: Prisma.IssueWhereUniqueInput | Prisma.IssueWhereUniqueInput[]
+  disconnect?: Prisma.IssueWhereUniqueInput | Prisma.IssueWhereUniqueInput[]
+  delete?: Prisma.IssueWhereUniqueInput | Prisma.IssueWhereUniqueInput[]
+  connect?: Prisma.IssueWhereUniqueInput | Prisma.IssueWhereUniqueInput[]
+  update?: Prisma.IssueUpdateWithWhereUniqueWithoutParentInput | Prisma.IssueUpdateWithWhereUniqueWithoutParentInput[]
+  updateMany?: Prisma.IssueUpdateManyWithWhereWithoutParentInput | Prisma.IssueUpdateManyWithWhereWithoutParentInput[]
+  deleteMany?: Prisma.IssueScalarWhereInput | Prisma.IssueScalarWhereInput[]
+}
+
+export type IssueCreateNestedOneWithoutLabelsInput = {
+  create?: Prisma.XOR<Prisma.IssueCreateWithoutLabelsInput, Prisma.IssueUncheckedCreateWithoutLabelsInput>
+  connectOrCreate?: Prisma.IssueCreateOrConnectWithoutLabelsInput
+  connect?: Prisma.IssueWhereUniqueInput
+}
+
+export type IssueUpdateOneRequiredWithoutLabelsNestedInput = {
+  create?: Prisma.XOR<Prisma.IssueCreateWithoutLabelsInput, Prisma.IssueUncheckedCreateWithoutLabelsInput>
+  connectOrCreate?: Prisma.IssueCreateOrConnectWithoutLabelsInput
+  upsert?: Prisma.IssueUpsertWithoutLabelsInput
+  connect?: Prisma.IssueWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.IssueUpdateToOneWithWhereWithoutLabelsInput, Prisma.IssueUpdateWithoutLabelsInput>, Prisma.IssueUncheckedUpdateWithoutLabelsInput>
 }
 
 export type IssueCreateNestedOneWithoutCommentsInput = {
@@ -772,10 +878,12 @@ export type IssueCreateNestedOneWithoutAttachmentsInput = {
   connect?: Prisma.IssueWhereUniqueInput
 }
 
-export type IssueUpdateOneRequiredWithoutAttachmentsNestedInput = {
+export type IssueUpdateOneWithoutAttachmentsNestedInput = {
   create?: Prisma.XOR<Prisma.IssueCreateWithoutAttachmentsInput, Prisma.IssueUncheckedCreateWithoutAttachmentsInput>
   connectOrCreate?: Prisma.IssueCreateOrConnectWithoutAttachmentsInput
   upsert?: Prisma.IssueUpsertWithoutAttachmentsInput
+  disconnect?: Prisma.IssueWhereInput | boolean
+  delete?: Prisma.IssueWhereInput | boolean
   connect?: Prisma.IssueWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.IssueUpdateToOneWithWhereWithoutAttachmentsInput, Prisma.IssueUpdateWithoutAttachmentsInput>, Prisma.IssueUncheckedUpdateWithoutAttachmentsInput>
 }
@@ -786,12 +894,17 @@ export type IssueCreateWithoutCreatorInput = {
   description?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  parent?: Prisma.IssueCreateNestedOneWithoutChildrenInput
+  children?: Prisma.IssueCreateNestedManyWithoutParentInput
   comments?: Prisma.CommentCreateNestedManyWithoutIssueInput
   attachments?: Prisma.AttachmentCreateNestedManyWithoutIssueInput
-  activities?: Prisma.ActivityLogCreateNestedManyWithoutIssuesInput
+  activities?: Prisma.ActivityLogCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelCreateNestedManyWithoutIssueInput
   sprint?: Prisma.SprintCreateNestedOneWithoutIssuesInput
   project: Prisma.ProjectCreateNestedOneWithoutIssuesInput
   assignee?: Prisma.UserCreateNestedOneWithoutAssignedIssuesInput
@@ -801,17 +914,22 @@ export type IssueUncheckedCreateWithoutCreatorInput = {
   id?: string
   title: string
   description?: string | null
-  sprintId?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  parentId?: string | null
+  sprintId?: string | null
   projectId: string
   assigneeId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  children?: Prisma.IssueUncheckedCreateNestedManyWithoutParentInput
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutIssueInput
   attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutIssueInput
-  activities?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutIssuesInput
+  activities?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelUncheckedCreateNestedManyWithoutIssueInput
 }
 
 export type IssueCreateOrConnectWithoutCreatorInput = {
@@ -830,12 +948,17 @@ export type IssueCreateWithoutAssigneeInput = {
   description?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  parent?: Prisma.IssueCreateNestedOneWithoutChildrenInput
+  children?: Prisma.IssueCreateNestedManyWithoutParentInput
   comments?: Prisma.CommentCreateNestedManyWithoutIssueInput
   attachments?: Prisma.AttachmentCreateNestedManyWithoutIssueInput
-  activities?: Prisma.ActivityLogCreateNestedManyWithoutIssuesInput
+  activities?: Prisma.ActivityLogCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelCreateNestedManyWithoutIssueInput
   sprint?: Prisma.SprintCreateNestedOneWithoutIssuesInput
   project: Prisma.ProjectCreateNestedOneWithoutIssuesInput
   creator: Prisma.UserCreateNestedOneWithoutCreatedIssuesInput
@@ -845,17 +968,22 @@ export type IssueUncheckedCreateWithoutAssigneeInput = {
   id?: string
   title: string
   description?: string | null
-  sprintId?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  parentId?: string | null
+  sprintId?: string | null
   projectId: string
   creatorId: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  children?: Prisma.IssueUncheckedCreateNestedManyWithoutParentInput
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutIssueInput
   attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutIssueInput
-  activities?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutIssuesInput
+  activities?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelUncheckedCreateNestedManyWithoutIssueInput
 }
 
 export type IssueCreateOrConnectWithoutAssigneeInput = {
@@ -891,10 +1019,13 @@ export type IssueScalarWhereInput = {
   id?: Prisma.StringFilter<"Issue"> | string
   title?: Prisma.StringFilter<"Issue"> | string
   description?: Prisma.StringNullableFilter<"Issue"> | string | null
-  sprintId?: Prisma.StringNullableFilter<"Issue"> | string | null
   status?: Prisma.EnumIssueStatusFilter<"Issue"> | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFilter<"Issue"> | $Enums.IssuePriority
-  position?: Prisma.FloatFilter<"Issue"> | number
+  type?: Prisma.EnumIssueTypeFilter<"Issue"> | $Enums.IssueType
+  position?: Prisma.StringFilter<"Issue"> | string
+  dueDate?: Prisma.DateTimeNullableFilter<"Issue"> | Date | string | null
+  parentId?: Prisma.StringNullableFilter<"Issue"> | string | null
+  sprintId?: Prisma.StringNullableFilter<"Issue"> | string | null
   projectId?: Prisma.StringFilter<"Issue"> | string
   assigneeId?: Prisma.StringNullableFilter<"Issue"> | string | null
   creatorId?: Prisma.StringFilter<"Issue"> | string
@@ -924,12 +1055,17 @@ export type IssueCreateWithoutProjectInput = {
   description?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  parent?: Prisma.IssueCreateNestedOneWithoutChildrenInput
+  children?: Prisma.IssueCreateNestedManyWithoutParentInput
   comments?: Prisma.CommentCreateNestedManyWithoutIssueInput
   attachments?: Prisma.AttachmentCreateNestedManyWithoutIssueInput
-  activities?: Prisma.ActivityLogCreateNestedManyWithoutIssuesInput
+  activities?: Prisma.ActivityLogCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelCreateNestedManyWithoutIssueInput
   sprint?: Prisma.SprintCreateNestedOneWithoutIssuesInput
   creator: Prisma.UserCreateNestedOneWithoutCreatedIssuesInput
   assignee?: Prisma.UserCreateNestedOneWithoutAssignedIssuesInput
@@ -939,17 +1075,22 @@ export type IssueUncheckedCreateWithoutProjectInput = {
   id?: string
   title: string
   description?: string | null
-  sprintId?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  parentId?: string | null
+  sprintId?: string | null
   assigneeId?: string | null
   creatorId: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  children?: Prisma.IssueUncheckedCreateNestedManyWithoutParentInput
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutIssueInput
   attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutIssueInput
-  activities?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutIssuesInput
+  activities?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelUncheckedCreateNestedManyWithoutIssueInput
 }
 
 export type IssueCreateOrConnectWithoutProjectInput = {
@@ -984,12 +1125,17 @@ export type IssueCreateWithoutSprintInput = {
   description?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  parent?: Prisma.IssueCreateNestedOneWithoutChildrenInput
+  children?: Prisma.IssueCreateNestedManyWithoutParentInput
   comments?: Prisma.CommentCreateNestedManyWithoutIssueInput
   attachments?: Prisma.AttachmentCreateNestedManyWithoutIssueInput
-  activities?: Prisma.ActivityLogCreateNestedManyWithoutIssuesInput
+  activities?: Prisma.ActivityLogCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelCreateNestedManyWithoutIssueInput
   project: Prisma.ProjectCreateNestedOneWithoutIssuesInput
   creator: Prisma.UserCreateNestedOneWithoutCreatedIssuesInput
   assignee?: Prisma.UserCreateNestedOneWithoutAssignedIssuesInput
@@ -1001,15 +1147,20 @@ export type IssueUncheckedCreateWithoutSprintInput = {
   description?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  parentId?: string | null
   projectId: string
   assigneeId?: string | null
   creatorId: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  children?: Prisma.IssueUncheckedCreateNestedManyWithoutParentInput
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutIssueInput
   attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutIssueInput
-  activities?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutIssuesInput
+  activities?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelUncheckedCreateNestedManyWithoutIssueInput
 }
 
 export type IssueCreateOrConnectWithoutSprintInput = {
@@ -1038,17 +1189,300 @@ export type IssueUpdateManyWithWhereWithoutSprintInput = {
   data: Prisma.XOR<Prisma.IssueUpdateManyMutationInput, Prisma.IssueUncheckedUpdateManyWithoutSprintInput>
 }
 
+export type IssueCreateWithoutChildrenInput = {
+  id?: string
+  title: string
+  description?: string | null
+  status?: $Enums.IssueStatus
+  priority?: $Enums.IssuePriority
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  parent?: Prisma.IssueCreateNestedOneWithoutChildrenInput
+  comments?: Prisma.CommentCreateNestedManyWithoutIssueInput
+  attachments?: Prisma.AttachmentCreateNestedManyWithoutIssueInput
+  activities?: Prisma.ActivityLogCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelCreateNestedManyWithoutIssueInput
+  sprint?: Prisma.SprintCreateNestedOneWithoutIssuesInput
+  project: Prisma.ProjectCreateNestedOneWithoutIssuesInput
+  creator: Prisma.UserCreateNestedOneWithoutCreatedIssuesInput
+  assignee?: Prisma.UserCreateNestedOneWithoutAssignedIssuesInput
+}
+
+export type IssueUncheckedCreateWithoutChildrenInput = {
+  id?: string
+  title: string
+  description?: string | null
+  status?: $Enums.IssueStatus
+  priority?: $Enums.IssuePriority
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  parentId?: string | null
+  sprintId?: string | null
+  projectId: string
+  assigneeId?: string | null
+  creatorId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  comments?: Prisma.CommentUncheckedCreateNestedManyWithoutIssueInput
+  attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutIssueInput
+  activities?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelUncheckedCreateNestedManyWithoutIssueInput
+}
+
+export type IssueCreateOrConnectWithoutChildrenInput = {
+  where: Prisma.IssueWhereUniqueInput
+  create: Prisma.XOR<Prisma.IssueCreateWithoutChildrenInput, Prisma.IssueUncheckedCreateWithoutChildrenInput>
+}
+
+export type IssueCreateWithoutParentInput = {
+  id?: string
+  title: string
+  description?: string | null
+  status?: $Enums.IssueStatus
+  priority?: $Enums.IssuePriority
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  children?: Prisma.IssueCreateNestedManyWithoutParentInput
+  comments?: Prisma.CommentCreateNestedManyWithoutIssueInput
+  attachments?: Prisma.AttachmentCreateNestedManyWithoutIssueInput
+  activities?: Prisma.ActivityLogCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelCreateNestedManyWithoutIssueInput
+  sprint?: Prisma.SprintCreateNestedOneWithoutIssuesInput
+  project: Prisma.ProjectCreateNestedOneWithoutIssuesInput
+  creator: Prisma.UserCreateNestedOneWithoutCreatedIssuesInput
+  assignee?: Prisma.UserCreateNestedOneWithoutAssignedIssuesInput
+}
+
+export type IssueUncheckedCreateWithoutParentInput = {
+  id?: string
+  title: string
+  description?: string | null
+  status?: $Enums.IssueStatus
+  priority?: $Enums.IssuePriority
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  sprintId?: string | null
+  projectId: string
+  assigneeId?: string | null
+  creatorId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  children?: Prisma.IssueUncheckedCreateNestedManyWithoutParentInput
+  comments?: Prisma.CommentUncheckedCreateNestedManyWithoutIssueInput
+  attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutIssueInput
+  activities?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelUncheckedCreateNestedManyWithoutIssueInput
+}
+
+export type IssueCreateOrConnectWithoutParentInput = {
+  where: Prisma.IssueWhereUniqueInput
+  create: Prisma.XOR<Prisma.IssueCreateWithoutParentInput, Prisma.IssueUncheckedCreateWithoutParentInput>
+}
+
+export type IssueCreateManyParentInputEnvelope = {
+  data: Prisma.IssueCreateManyParentInput | Prisma.IssueCreateManyParentInput[]
+  skipDuplicates?: boolean
+}
+
+export type IssueUpsertWithoutChildrenInput = {
+  update: Prisma.XOR<Prisma.IssueUpdateWithoutChildrenInput, Prisma.IssueUncheckedUpdateWithoutChildrenInput>
+  create: Prisma.XOR<Prisma.IssueCreateWithoutChildrenInput, Prisma.IssueUncheckedCreateWithoutChildrenInput>
+  where?: Prisma.IssueWhereInput
+}
+
+export type IssueUpdateToOneWithWhereWithoutChildrenInput = {
+  where?: Prisma.IssueWhereInput
+  data: Prisma.XOR<Prisma.IssueUpdateWithoutChildrenInput, Prisma.IssueUncheckedUpdateWithoutChildrenInput>
+}
+
+export type IssueUpdateWithoutChildrenInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
+  priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parent?: Prisma.IssueUpdateOneWithoutChildrenNestedInput
+  comments?: Prisma.CommentUpdateManyWithoutIssueNestedInput
+  attachments?: Prisma.AttachmentUpdateManyWithoutIssueNestedInput
+  activities?: Prisma.ActivityLogUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUpdateManyWithoutIssueNestedInput
+  sprint?: Prisma.SprintUpdateOneWithoutIssuesNestedInput
+  project?: Prisma.ProjectUpdateOneRequiredWithoutIssuesNestedInput
+  creator?: Prisma.UserUpdateOneRequiredWithoutCreatedIssuesNestedInput
+  assignee?: Prisma.UserUpdateOneWithoutAssignedIssuesNestedInput
+}
+
+export type IssueUncheckedUpdateWithoutChildrenInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
+  priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  assigneeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  comments?: Prisma.CommentUncheckedUpdateManyWithoutIssueNestedInput
+  attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutIssueNestedInput
+  activities?: Prisma.ActivityLogUncheckedUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUncheckedUpdateManyWithoutIssueNestedInput
+}
+
+export type IssueUpsertWithWhereUniqueWithoutParentInput = {
+  where: Prisma.IssueWhereUniqueInput
+  update: Prisma.XOR<Prisma.IssueUpdateWithoutParentInput, Prisma.IssueUncheckedUpdateWithoutParentInput>
+  create: Prisma.XOR<Prisma.IssueCreateWithoutParentInput, Prisma.IssueUncheckedCreateWithoutParentInput>
+}
+
+export type IssueUpdateWithWhereUniqueWithoutParentInput = {
+  where: Prisma.IssueWhereUniqueInput
+  data: Prisma.XOR<Prisma.IssueUpdateWithoutParentInput, Prisma.IssueUncheckedUpdateWithoutParentInput>
+}
+
+export type IssueUpdateManyWithWhereWithoutParentInput = {
+  where: Prisma.IssueScalarWhereInput
+  data: Prisma.XOR<Prisma.IssueUpdateManyMutationInput, Prisma.IssueUncheckedUpdateManyWithoutParentInput>
+}
+
+export type IssueCreateWithoutLabelsInput = {
+  id?: string
+  title: string
+  description?: string | null
+  status?: $Enums.IssueStatus
+  priority?: $Enums.IssuePriority
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  parent?: Prisma.IssueCreateNestedOneWithoutChildrenInput
+  children?: Prisma.IssueCreateNestedManyWithoutParentInput
+  comments?: Prisma.CommentCreateNestedManyWithoutIssueInput
+  attachments?: Prisma.AttachmentCreateNestedManyWithoutIssueInput
+  activities?: Prisma.ActivityLogCreateNestedManyWithoutIssueInput
+  sprint?: Prisma.SprintCreateNestedOneWithoutIssuesInput
+  project: Prisma.ProjectCreateNestedOneWithoutIssuesInput
+  creator: Prisma.UserCreateNestedOneWithoutCreatedIssuesInput
+  assignee?: Prisma.UserCreateNestedOneWithoutAssignedIssuesInput
+}
+
+export type IssueUncheckedCreateWithoutLabelsInput = {
+  id?: string
+  title: string
+  description?: string | null
+  status?: $Enums.IssueStatus
+  priority?: $Enums.IssuePriority
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  parentId?: string | null
+  sprintId?: string | null
+  projectId: string
+  assigneeId?: string | null
+  creatorId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  children?: Prisma.IssueUncheckedCreateNestedManyWithoutParentInput
+  comments?: Prisma.CommentUncheckedCreateNestedManyWithoutIssueInput
+  attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutIssueInput
+  activities?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutIssueInput
+}
+
+export type IssueCreateOrConnectWithoutLabelsInput = {
+  where: Prisma.IssueWhereUniqueInput
+  create: Prisma.XOR<Prisma.IssueCreateWithoutLabelsInput, Prisma.IssueUncheckedCreateWithoutLabelsInput>
+}
+
+export type IssueUpsertWithoutLabelsInput = {
+  update: Prisma.XOR<Prisma.IssueUpdateWithoutLabelsInput, Prisma.IssueUncheckedUpdateWithoutLabelsInput>
+  create: Prisma.XOR<Prisma.IssueCreateWithoutLabelsInput, Prisma.IssueUncheckedCreateWithoutLabelsInput>
+  where?: Prisma.IssueWhereInput
+}
+
+export type IssueUpdateToOneWithWhereWithoutLabelsInput = {
+  where?: Prisma.IssueWhereInput
+  data: Prisma.XOR<Prisma.IssueUpdateWithoutLabelsInput, Prisma.IssueUncheckedUpdateWithoutLabelsInput>
+}
+
+export type IssueUpdateWithoutLabelsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
+  priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parent?: Prisma.IssueUpdateOneWithoutChildrenNestedInput
+  children?: Prisma.IssueUpdateManyWithoutParentNestedInput
+  comments?: Prisma.CommentUpdateManyWithoutIssueNestedInput
+  attachments?: Prisma.AttachmentUpdateManyWithoutIssueNestedInput
+  activities?: Prisma.ActivityLogUpdateManyWithoutIssueNestedInput
+  sprint?: Prisma.SprintUpdateOneWithoutIssuesNestedInput
+  project?: Prisma.ProjectUpdateOneRequiredWithoutIssuesNestedInput
+  creator?: Prisma.UserUpdateOneRequiredWithoutCreatedIssuesNestedInput
+  assignee?: Prisma.UserUpdateOneWithoutAssignedIssuesNestedInput
+}
+
+export type IssueUncheckedUpdateWithoutLabelsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
+  priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  assigneeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  children?: Prisma.IssueUncheckedUpdateManyWithoutParentNestedInput
+  comments?: Prisma.CommentUncheckedUpdateManyWithoutIssueNestedInput
+  attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutIssueNestedInput
+  activities?: Prisma.ActivityLogUncheckedUpdateManyWithoutIssueNestedInput
+}
+
 export type IssueCreateWithoutCommentsInput = {
   id?: string
   title: string
   description?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  parent?: Prisma.IssueCreateNestedOneWithoutChildrenInput
+  children?: Prisma.IssueCreateNestedManyWithoutParentInput
   attachments?: Prisma.AttachmentCreateNestedManyWithoutIssueInput
-  activities?: Prisma.ActivityLogCreateNestedManyWithoutIssuesInput
+  activities?: Prisma.ActivityLogCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelCreateNestedManyWithoutIssueInput
   sprint?: Prisma.SprintCreateNestedOneWithoutIssuesInput
   project: Prisma.ProjectCreateNestedOneWithoutIssuesInput
   creator: Prisma.UserCreateNestedOneWithoutCreatedIssuesInput
@@ -1059,17 +1493,22 @@ export type IssueUncheckedCreateWithoutCommentsInput = {
   id?: string
   title: string
   description?: string | null
-  sprintId?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  parentId?: string | null
+  sprintId?: string | null
   projectId: string
   assigneeId?: string | null
   creatorId: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  children?: Prisma.IssueUncheckedCreateNestedManyWithoutParentInput
   attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutIssueInput
-  activities?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutIssuesInput
+  activities?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelUncheckedCreateNestedManyWithoutIssueInput
 }
 
 export type IssueCreateOrConnectWithoutCommentsInput = {
@@ -1094,11 +1533,16 @@ export type IssueUpdateWithoutCommentsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parent?: Prisma.IssueUpdateOneWithoutChildrenNestedInput
+  children?: Prisma.IssueUpdateManyWithoutParentNestedInput
   attachments?: Prisma.AttachmentUpdateManyWithoutIssueNestedInput
-  activities?: Prisma.ActivityLogUpdateManyWithoutIssuesNestedInput
+  activities?: Prisma.ActivityLogUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUpdateManyWithoutIssueNestedInput
   sprint?: Prisma.SprintUpdateOneWithoutIssuesNestedInput
   project?: Prisma.ProjectUpdateOneRequiredWithoutIssuesNestedInput
   creator?: Prisma.UserUpdateOneRequiredWithoutCreatedIssuesNestedInput
@@ -1109,17 +1553,22 @@ export type IssueUncheckedUpdateWithoutCommentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   assigneeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   creatorId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  children?: Prisma.IssueUncheckedUpdateManyWithoutParentNestedInput
   attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutIssueNestedInput
-  activities?: Prisma.ActivityLogUncheckedUpdateManyWithoutIssuesNestedInput
+  activities?: Prisma.ActivityLogUncheckedUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUncheckedUpdateManyWithoutIssueNestedInput
 }
 
 export type IssueCreateWithoutActivitiesInput = {
@@ -1128,11 +1577,16 @@ export type IssueCreateWithoutActivitiesInput = {
   description?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  parent?: Prisma.IssueCreateNestedOneWithoutChildrenInput
+  children?: Prisma.IssueCreateNestedManyWithoutParentInput
   comments?: Prisma.CommentCreateNestedManyWithoutIssueInput
   attachments?: Prisma.AttachmentCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelCreateNestedManyWithoutIssueInput
   sprint?: Prisma.SprintCreateNestedOneWithoutIssuesInput
   project: Prisma.ProjectCreateNestedOneWithoutIssuesInput
   creator: Prisma.UserCreateNestedOneWithoutCreatedIssuesInput
@@ -1143,17 +1597,22 @@ export type IssueUncheckedCreateWithoutActivitiesInput = {
   id?: string
   title: string
   description?: string | null
-  sprintId?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  parentId?: string | null
+  sprintId?: string | null
   projectId: string
   assigneeId?: string | null
   creatorId: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  children?: Prisma.IssueUncheckedCreateNestedManyWithoutParentInput
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutIssueInput
   attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelUncheckedCreateNestedManyWithoutIssueInput
 }
 
 export type IssueCreateOrConnectWithoutActivitiesInput = {
@@ -1178,11 +1637,16 @@ export type IssueUpdateWithoutActivitiesInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parent?: Prisma.IssueUpdateOneWithoutChildrenNestedInput
+  children?: Prisma.IssueUpdateManyWithoutParentNestedInput
   comments?: Prisma.CommentUpdateManyWithoutIssueNestedInput
   attachments?: Prisma.AttachmentUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUpdateManyWithoutIssueNestedInput
   sprint?: Prisma.SprintUpdateOneWithoutIssuesNestedInput
   project?: Prisma.ProjectUpdateOneRequiredWithoutIssuesNestedInput
   creator?: Prisma.UserUpdateOneRequiredWithoutCreatedIssuesNestedInput
@@ -1193,17 +1657,22 @@ export type IssueUncheckedUpdateWithoutActivitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   assigneeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   creatorId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  children?: Prisma.IssueUncheckedUpdateManyWithoutParentNestedInput
   comments?: Prisma.CommentUncheckedUpdateManyWithoutIssueNestedInput
   attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUncheckedUpdateManyWithoutIssueNestedInput
 }
 
 export type IssueCreateWithoutAttachmentsInput = {
@@ -1212,11 +1681,16 @@ export type IssueCreateWithoutAttachmentsInput = {
   description?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  parent?: Prisma.IssueCreateNestedOneWithoutChildrenInput
+  children?: Prisma.IssueCreateNestedManyWithoutParentInput
   comments?: Prisma.CommentCreateNestedManyWithoutIssueInput
-  activities?: Prisma.ActivityLogCreateNestedManyWithoutIssuesInput
+  activities?: Prisma.ActivityLogCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelCreateNestedManyWithoutIssueInput
   sprint?: Prisma.SprintCreateNestedOneWithoutIssuesInput
   project: Prisma.ProjectCreateNestedOneWithoutIssuesInput
   creator: Prisma.UserCreateNestedOneWithoutCreatedIssuesInput
@@ -1227,17 +1701,22 @@ export type IssueUncheckedCreateWithoutAttachmentsInput = {
   id?: string
   title: string
   description?: string | null
-  sprintId?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  parentId?: string | null
+  sprintId?: string | null
   projectId: string
   assigneeId?: string | null
   creatorId: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  children?: Prisma.IssueUncheckedCreateNestedManyWithoutParentInput
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutIssueInput
-  activities?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutIssuesInput
+  activities?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutIssueInput
+  labels?: Prisma.IssueLabelUncheckedCreateNestedManyWithoutIssueInput
 }
 
 export type IssueCreateOrConnectWithoutAttachmentsInput = {
@@ -1262,11 +1741,16 @@ export type IssueUpdateWithoutAttachmentsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parent?: Prisma.IssueUpdateOneWithoutChildrenNestedInput
+  children?: Prisma.IssueUpdateManyWithoutParentNestedInput
   comments?: Prisma.CommentUpdateManyWithoutIssueNestedInput
-  activities?: Prisma.ActivityLogUpdateManyWithoutIssuesNestedInput
+  activities?: Prisma.ActivityLogUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUpdateManyWithoutIssueNestedInput
   sprint?: Prisma.SprintUpdateOneWithoutIssuesNestedInput
   project?: Prisma.ProjectUpdateOneRequiredWithoutIssuesNestedInput
   creator?: Prisma.UserUpdateOneRequiredWithoutCreatedIssuesNestedInput
@@ -1277,27 +1761,35 @@ export type IssueUncheckedUpdateWithoutAttachmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   assigneeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   creatorId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  children?: Prisma.IssueUncheckedUpdateManyWithoutParentNestedInput
   comments?: Prisma.CommentUncheckedUpdateManyWithoutIssueNestedInput
-  activities?: Prisma.ActivityLogUncheckedUpdateManyWithoutIssuesNestedInput
+  activities?: Prisma.ActivityLogUncheckedUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUncheckedUpdateManyWithoutIssueNestedInput
 }
 
 export type IssueCreateManyCreatorInput = {
   id?: string
   title: string
   description?: string | null
-  sprintId?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  parentId?: string | null
+  sprintId?: string | null
   projectId: string
   assigneeId?: string | null
   createdAt?: Date | string
@@ -1308,10 +1800,13 @@ export type IssueCreateManyAssigneeInput = {
   id?: string
   title: string
   description?: string | null
-  sprintId?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  parentId?: string | null
+  sprintId?: string | null
   projectId: string
   creatorId: string
   createdAt?: Date | string
@@ -1324,12 +1819,17 @@ export type IssueUpdateWithoutCreatorInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parent?: Prisma.IssueUpdateOneWithoutChildrenNestedInput
+  children?: Prisma.IssueUpdateManyWithoutParentNestedInput
   comments?: Prisma.CommentUpdateManyWithoutIssueNestedInput
   attachments?: Prisma.AttachmentUpdateManyWithoutIssueNestedInput
-  activities?: Prisma.ActivityLogUpdateManyWithoutIssuesNestedInput
+  activities?: Prisma.ActivityLogUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUpdateManyWithoutIssueNestedInput
   sprint?: Prisma.SprintUpdateOneWithoutIssuesNestedInput
   project?: Prisma.ProjectUpdateOneRequiredWithoutIssuesNestedInput
   assignee?: Prisma.UserUpdateOneWithoutAssignedIssuesNestedInput
@@ -1339,27 +1839,35 @@ export type IssueUncheckedUpdateWithoutCreatorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   assigneeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  children?: Prisma.IssueUncheckedUpdateManyWithoutParentNestedInput
   comments?: Prisma.CommentUncheckedUpdateManyWithoutIssueNestedInput
   attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutIssueNestedInput
-  activities?: Prisma.ActivityLogUncheckedUpdateManyWithoutIssuesNestedInput
+  activities?: Prisma.ActivityLogUncheckedUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUncheckedUpdateManyWithoutIssueNestedInput
 }
 
 export type IssueUncheckedUpdateManyWithoutCreatorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   assigneeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1372,12 +1880,17 @@ export type IssueUpdateWithoutAssigneeInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parent?: Prisma.IssueUpdateOneWithoutChildrenNestedInput
+  children?: Prisma.IssueUpdateManyWithoutParentNestedInput
   comments?: Prisma.CommentUpdateManyWithoutIssueNestedInput
   attachments?: Prisma.AttachmentUpdateManyWithoutIssueNestedInput
-  activities?: Prisma.ActivityLogUpdateManyWithoutIssuesNestedInput
+  activities?: Prisma.ActivityLogUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUpdateManyWithoutIssueNestedInput
   sprint?: Prisma.SprintUpdateOneWithoutIssuesNestedInput
   project?: Prisma.ProjectUpdateOneRequiredWithoutIssuesNestedInput
   creator?: Prisma.UserUpdateOneRequiredWithoutCreatedIssuesNestedInput
@@ -1387,27 +1900,35 @@ export type IssueUncheckedUpdateWithoutAssigneeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   creatorId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  children?: Prisma.IssueUncheckedUpdateManyWithoutParentNestedInput
   comments?: Prisma.CommentUncheckedUpdateManyWithoutIssueNestedInput
   attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutIssueNestedInput
-  activities?: Prisma.ActivityLogUncheckedUpdateManyWithoutIssuesNestedInput
+  activities?: Prisma.ActivityLogUncheckedUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUncheckedUpdateManyWithoutIssueNestedInput
 }
 
 export type IssueUncheckedUpdateManyWithoutAssigneeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   creatorId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1418,10 +1939,13 @@ export type IssueCreateManyProjectInput = {
   id?: string
   title: string
   description?: string | null
-  sprintId?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  parentId?: string | null
+  sprintId?: string | null
   assigneeId?: string | null
   creatorId: string
   createdAt?: Date | string
@@ -1434,12 +1958,17 @@ export type IssueUpdateWithoutProjectInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parent?: Prisma.IssueUpdateOneWithoutChildrenNestedInput
+  children?: Prisma.IssueUpdateManyWithoutParentNestedInput
   comments?: Prisma.CommentUpdateManyWithoutIssueNestedInput
   attachments?: Prisma.AttachmentUpdateManyWithoutIssueNestedInput
-  activities?: Prisma.ActivityLogUpdateManyWithoutIssuesNestedInput
+  activities?: Prisma.ActivityLogUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUpdateManyWithoutIssueNestedInput
   sprint?: Prisma.SprintUpdateOneWithoutIssuesNestedInput
   creator?: Prisma.UserUpdateOneRequiredWithoutCreatedIssuesNestedInput
   assignee?: Prisma.UserUpdateOneWithoutAssignedIssuesNestedInput
@@ -1449,27 +1978,35 @@ export type IssueUncheckedUpdateWithoutProjectInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assigneeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   creatorId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  children?: Prisma.IssueUncheckedUpdateManyWithoutParentNestedInput
   comments?: Prisma.CommentUncheckedUpdateManyWithoutIssueNestedInput
   attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutIssueNestedInput
-  activities?: Prisma.ActivityLogUncheckedUpdateManyWithoutIssuesNestedInput
+  activities?: Prisma.ActivityLogUncheckedUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUncheckedUpdateManyWithoutIssueNestedInput
 }
 
 export type IssueUncheckedUpdateManyWithoutProjectInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assigneeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   creatorId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1482,7 +2019,10 @@ export type IssueCreateManySprintInput = {
   description?: string | null
   status?: $Enums.IssueStatus
   priority?: $Enums.IssuePriority
-  position?: number
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  parentId?: string | null
   projectId: string
   assigneeId?: string | null
   creatorId: string
@@ -1496,12 +2036,17 @@ export type IssueUpdateWithoutSprintInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  parent?: Prisma.IssueUpdateOneWithoutChildrenNestedInput
+  children?: Prisma.IssueUpdateManyWithoutParentNestedInput
   comments?: Prisma.CommentUpdateManyWithoutIssueNestedInput
   attachments?: Prisma.AttachmentUpdateManyWithoutIssueNestedInput
-  activities?: Prisma.ActivityLogUpdateManyWithoutIssuesNestedInput
+  activities?: Prisma.ActivityLogUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUpdateManyWithoutIssueNestedInput
   project?: Prisma.ProjectUpdateOneRequiredWithoutIssuesNestedInput
   creator?: Prisma.UserUpdateOneRequiredWithoutCreatedIssuesNestedInput
   assignee?: Prisma.UserUpdateOneWithoutAssignedIssuesNestedInput
@@ -1513,15 +2058,20 @@ export type IssueUncheckedUpdateWithoutSprintInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   assigneeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   creatorId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  children?: Prisma.IssueUncheckedUpdateManyWithoutParentNestedInput
   comments?: Prisma.CommentUncheckedUpdateManyWithoutIssueNestedInput
   attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutIssueNestedInput
-  activities?: Prisma.ActivityLogUncheckedUpdateManyWithoutIssuesNestedInput
+  activities?: Prisma.ActivityLogUncheckedUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUncheckedUpdateManyWithoutIssueNestedInput
 }
 
 export type IssueUncheckedUpdateManyWithoutSprintInput = {
@@ -1530,7 +2080,88 @@ export type IssueUncheckedUpdateManyWithoutSprintInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
   priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
-  position?: Prisma.FloatFieldUpdateOperationsInput | number
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  assigneeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type IssueCreateManyParentInput = {
+  id?: string
+  title: string
+  description?: string | null
+  status?: $Enums.IssueStatus
+  priority?: $Enums.IssuePriority
+  type?: $Enums.IssueType
+  position?: string
+  dueDate?: Date | string | null
+  sprintId?: string | null
+  projectId: string
+  assigneeId?: string | null
+  creatorId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type IssueUpdateWithoutParentInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
+  priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  children?: Prisma.IssueUpdateManyWithoutParentNestedInput
+  comments?: Prisma.CommentUpdateManyWithoutIssueNestedInput
+  attachments?: Prisma.AttachmentUpdateManyWithoutIssueNestedInput
+  activities?: Prisma.ActivityLogUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUpdateManyWithoutIssueNestedInput
+  sprint?: Prisma.SprintUpdateOneWithoutIssuesNestedInput
+  project?: Prisma.ProjectUpdateOneRequiredWithoutIssuesNestedInput
+  creator?: Prisma.UserUpdateOneRequiredWithoutCreatedIssuesNestedInput
+  assignee?: Prisma.UserUpdateOneWithoutAssignedIssuesNestedInput
+}
+
+export type IssueUncheckedUpdateWithoutParentInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
+  priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  assigneeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  creatorId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  children?: Prisma.IssueUncheckedUpdateManyWithoutParentNestedInput
+  comments?: Prisma.CommentUncheckedUpdateManyWithoutIssueNestedInput
+  attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutIssueNestedInput
+  activities?: Prisma.ActivityLogUncheckedUpdateManyWithoutIssueNestedInput
+  labels?: Prisma.IssueLabelUncheckedUpdateManyWithoutIssueNestedInput
+}
+
+export type IssueUncheckedUpdateManyWithoutParentInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumIssueStatusFieldUpdateOperationsInput | $Enums.IssueStatus
+  priority?: Prisma.EnumIssuePriorityFieldUpdateOperationsInput | $Enums.IssuePriority
+  type?: Prisma.EnumIssueTypeFieldUpdateOperationsInput | $Enums.IssueType
+  position?: Prisma.StringFieldUpdateOperationsInput | string
+  dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  sprintId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   assigneeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   creatorId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1544,15 +2175,19 @@ export type IssueUncheckedUpdateManyWithoutSprintInput = {
  */
 
 export type IssueCountOutputType = {
+  children: number
   comments: number
   attachments: number
   activities: number
+  labels: number
 }
 
 export type IssueCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  children?: boolean | IssueCountOutputTypeCountChildrenArgs
   comments?: boolean | IssueCountOutputTypeCountCommentsArgs
   attachments?: boolean | IssueCountOutputTypeCountAttachmentsArgs
   activities?: boolean | IssueCountOutputTypeCountActivitiesArgs
+  labels?: boolean | IssueCountOutputTypeCountLabelsArgs
 }
 
 /**
@@ -1563,6 +2198,13 @@ export type IssueCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extens
    * Select specific fields to fetch from the IssueCountOutputType
    */
   select?: Prisma.IssueCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * IssueCountOutputType without action
+ */
+export type IssueCountOutputTypeCountChildrenArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.IssueWhereInput
 }
 
 /**
@@ -1586,23 +2228,36 @@ export type IssueCountOutputTypeCountActivitiesArgs<ExtArgs extends runtime.Type
   where?: Prisma.ActivityLogWhereInput
 }
 
+/**
+ * IssueCountOutputType without action
+ */
+export type IssueCountOutputTypeCountLabelsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.IssueLabelWhereInput
+}
+
 
 export type IssueSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   title?: boolean
   description?: boolean
-  sprintId?: boolean
   status?: boolean
   priority?: boolean
+  type?: boolean
   position?: boolean
+  dueDate?: boolean
+  parentId?: boolean
+  sprintId?: boolean
   projectId?: boolean
   assigneeId?: boolean
   creatorId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  parent?: boolean | Prisma.Issue$parentArgs<ExtArgs>
+  children?: boolean | Prisma.Issue$childrenArgs<ExtArgs>
   comments?: boolean | Prisma.Issue$commentsArgs<ExtArgs>
   attachments?: boolean | Prisma.Issue$attachmentsArgs<ExtArgs>
   activities?: boolean | Prisma.Issue$activitiesArgs<ExtArgs>
+  labels?: boolean | Prisma.Issue$labelsArgs<ExtArgs>
   sprint?: boolean | Prisma.Issue$sprintArgs<ExtArgs>
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1614,15 +2269,19 @@ export type IssueSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   id?: boolean
   title?: boolean
   description?: boolean
-  sprintId?: boolean
   status?: boolean
   priority?: boolean
+  type?: boolean
   position?: boolean
+  dueDate?: boolean
+  parentId?: boolean
+  sprintId?: boolean
   projectId?: boolean
   assigneeId?: boolean
   creatorId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  parent?: boolean | Prisma.Issue$parentArgs<ExtArgs>
   sprint?: boolean | Prisma.Issue$sprintArgs<ExtArgs>
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1633,15 +2292,19 @@ export type IssueSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   id?: boolean
   title?: boolean
   description?: boolean
-  sprintId?: boolean
   status?: boolean
   priority?: boolean
+  type?: boolean
   position?: boolean
+  dueDate?: boolean
+  parentId?: boolean
+  sprintId?: boolean
   projectId?: boolean
   assigneeId?: boolean
   creatorId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  parent?: boolean | Prisma.Issue$parentArgs<ExtArgs>
   sprint?: boolean | Prisma.Issue$sprintArgs<ExtArgs>
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1652,10 +2315,13 @@ export type IssueSelectScalar = {
   id?: boolean
   title?: boolean
   description?: boolean
-  sprintId?: boolean
   status?: boolean
   priority?: boolean
+  type?: boolean
   position?: boolean
+  dueDate?: boolean
+  parentId?: boolean
+  sprintId?: boolean
   projectId?: boolean
   assigneeId?: boolean
   creatorId?: boolean
@@ -1663,11 +2329,14 @@ export type IssueSelectScalar = {
   updatedAt?: boolean
 }
 
-export type IssueOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "sprintId" | "status" | "priority" | "position" | "projectId" | "assigneeId" | "creatorId" | "createdAt" | "updatedAt", ExtArgs["result"]["issue"]>
+export type IssueOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "status" | "priority" | "type" | "position" | "dueDate" | "parentId" | "sprintId" | "projectId" | "assigneeId" | "creatorId" | "createdAt" | "updatedAt", ExtArgs["result"]["issue"]>
 export type IssueInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  parent?: boolean | Prisma.Issue$parentArgs<ExtArgs>
+  children?: boolean | Prisma.Issue$childrenArgs<ExtArgs>
   comments?: boolean | Prisma.Issue$commentsArgs<ExtArgs>
   attachments?: boolean | Prisma.Issue$attachmentsArgs<ExtArgs>
   activities?: boolean | Prisma.Issue$activitiesArgs<ExtArgs>
+  labels?: boolean | Prisma.Issue$labelsArgs<ExtArgs>
   sprint?: boolean | Prisma.Issue$sprintArgs<ExtArgs>
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1675,12 +2344,14 @@ export type IssueInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   _count?: boolean | Prisma.IssueCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type IssueIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  parent?: boolean | Prisma.Issue$parentArgs<ExtArgs>
   sprint?: boolean | Prisma.Issue$sprintArgs<ExtArgs>
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   assignee?: boolean | Prisma.Issue$assigneeArgs<ExtArgs>
 }
 export type IssueIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  parent?: boolean | Prisma.Issue$parentArgs<ExtArgs>
   sprint?: boolean | Prisma.Issue$sprintArgs<ExtArgs>
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
   creator?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1690,9 +2361,12 @@ export type IssueIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
 export type $IssuePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Issue"
   objects: {
+    parent: Prisma.$IssuePayload<ExtArgs> | null
+    children: Prisma.$IssuePayload<ExtArgs>[]
     comments: Prisma.$CommentPayload<ExtArgs>[]
     attachments: Prisma.$AttachmentPayload<ExtArgs>[]
     activities: Prisma.$ActivityLogPayload<ExtArgs>[]
+    labels: Prisma.$IssueLabelPayload<ExtArgs>[]
     sprint: Prisma.$SprintPayload<ExtArgs> | null
     project: Prisma.$ProjectPayload<ExtArgs>
     creator: Prisma.$UserPayload<ExtArgs>
@@ -1702,10 +2376,13 @@ export type $IssuePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     id: string
     title: string
     description: string | null
-    sprintId: string | null
     status: $Enums.IssueStatus
     priority: $Enums.IssuePriority
-    position: number
+    type: $Enums.IssueType
+    position: string
+    dueDate: Date | null
+    parentId: string | null
+    sprintId: string | null
     projectId: string
     assigneeId: string | null
     creatorId: string
@@ -2105,9 +2782,12 @@ readonly fields: IssueFieldRefs;
  */
 export interface Prisma__IssueClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  parent<T extends Prisma.Issue$parentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Issue$parentArgs<ExtArgs>>): Prisma.Prisma__IssueClient<runtime.Types.Result.GetResult<Prisma.$IssuePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  children<T extends Prisma.Issue$childrenArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Issue$childrenArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IssuePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   comments<T extends Prisma.Issue$commentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Issue$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   attachments<T extends Prisma.Issue$attachmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Issue$attachmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AttachmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   activities<T extends Prisma.Issue$activitiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Issue$activitiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ActivityLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  labels<T extends Prisma.Issue$labelsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Issue$labelsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IssueLabelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   sprint<T extends Prisma.Issue$sprintArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Issue$sprintArgs<ExtArgs>>): Prisma.Prisma__SprintClient<runtime.Types.Result.GetResult<Prisma.$SprintPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   project<T extends Prisma.ProjectDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProjectDefaultArgs<ExtArgs>>): Prisma.Prisma__ProjectClient<runtime.Types.Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   creator<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
@@ -2144,10 +2824,13 @@ export interface IssueFieldRefs {
   readonly id: Prisma.FieldRef<"Issue", 'String'>
   readonly title: Prisma.FieldRef<"Issue", 'String'>
   readonly description: Prisma.FieldRef<"Issue", 'String'>
-  readonly sprintId: Prisma.FieldRef<"Issue", 'String'>
   readonly status: Prisma.FieldRef<"Issue", 'IssueStatus'>
   readonly priority: Prisma.FieldRef<"Issue", 'IssuePriority'>
-  readonly position: Prisma.FieldRef<"Issue", 'Float'>
+  readonly type: Prisma.FieldRef<"Issue", 'IssueType'>
+  readonly position: Prisma.FieldRef<"Issue", 'String'>
+  readonly dueDate: Prisma.FieldRef<"Issue", 'DateTime'>
+  readonly parentId: Prisma.FieldRef<"Issue", 'String'>
+  readonly sprintId: Prisma.FieldRef<"Issue", 'String'>
   readonly projectId: Prisma.FieldRef<"Issue", 'String'>
   readonly assigneeId: Prisma.FieldRef<"Issue", 'String'>
   readonly creatorId: Prisma.FieldRef<"Issue", 'String'>
@@ -2554,6 +3237,49 @@ export type IssueDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
 }
 
 /**
+ * Issue.parent
+ */
+export type Issue$parentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Issue
+   */
+  select?: Prisma.IssueSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Issue
+   */
+  omit?: Prisma.IssueOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.IssueInclude<ExtArgs> | null
+  where?: Prisma.IssueWhereInput
+}
+
+/**
+ * Issue.children
+ */
+export type Issue$childrenArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Issue
+   */
+  select?: Prisma.IssueSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Issue
+   */
+  omit?: Prisma.IssueOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.IssueInclude<ExtArgs> | null
+  where?: Prisma.IssueWhereInput
+  orderBy?: Prisma.IssueOrderByWithRelationInput | Prisma.IssueOrderByWithRelationInput[]
+  cursor?: Prisma.IssueWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.IssueScalarFieldEnum | Prisma.IssueScalarFieldEnum[]
+}
+
+/**
  * Issue.comments
  */
 export type Issue$commentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2623,6 +3349,30 @@ export type Issue$activitiesArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.ActivityLogScalarFieldEnum | Prisma.ActivityLogScalarFieldEnum[]
+}
+
+/**
+ * Issue.labels
+ */
+export type Issue$labelsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the IssueLabel
+   */
+  select?: Prisma.IssueLabelSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the IssueLabel
+   */
+  omit?: Prisma.IssueLabelOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.IssueLabelInclude<ExtArgs> | null
+  where?: Prisma.IssueLabelWhereInput
+  orderBy?: Prisma.IssueLabelOrderByWithRelationInput | Prisma.IssueLabelOrderByWithRelationInput[]
+  cursor?: Prisma.IssueLabelWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.IssueLabelScalarFieldEnum | Prisma.IssueLabelScalarFieldEnum[]
 }
 
 /**

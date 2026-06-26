@@ -13,7 +13,7 @@ router.post("/", attachIssueProject, requireProjectMember, createComment)
 router.get("/", attachIssueProject, requireProjectMember, getComments)
 
 // /comments/:id
-router.patch("/:id", updateComment)
+router.patch("/:id", attachIssueProject, updateComment)
 router.delete("/:id", deleteComment)
 
 

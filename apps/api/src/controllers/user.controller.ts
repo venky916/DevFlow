@@ -5,6 +5,7 @@ import { ApiError } from "../lib/ApiError";
 import { sendSuccess } from "../lib/apiResponse";
 import { generatePresignedDownloadUrl } from "@devflow/storage";
 import { updateProfileSchema, updateAvatarSchema } from "@devflow/validators";
+import { buildUpdateData } from "../lib/updateBuilder";
 
 // ─── GET MY PROFILE ───────────────────────────────────────────
 export const getMe = asyncHandler(async (req: Request, res: Response) => {
@@ -19,6 +20,7 @@ export const getMe = asyncHandler(async (req: Request, res: Response) => {
             avatarUrl: true,
             firebaseUid: true,
             createdAt: true,
+            timezone: true
         }
     })
 
@@ -41,23 +43,21 @@ export const getMe = asyncHandler(async (req: Request, res: Response) => {
 
 // ─── UPDATE PROFILE ───────────────────────────────────────────
 export const updateProfile = asyncHandler(async (req: Request, res: Response) => {
-    const { name, avatarUrl } = updateProfileSchema.parse(req.body)
+    const { name, avatarUrl, timezone } = updateProfileSchema.parse(req.body)
 
     const user = await prisma.user.update({
         where: {
             id: req.user!.id
         },
-        data: {
-            ...(name && { name }),
-            ...(avatarUrl && { avatarUrl })
-        },
+        data: buildUpdateData({ name, avatarUrl, timezone }),
         select: {
             id: true,
             email: true,
             name: true,
             avatarUrl: true,
             firebaseUid: true,
-            createdAt: true
+            createdAt: true,
+            timezone: true
         }
     })
     sendSuccess(res, user, 'Profile updated successfully')
@@ -81,7 +81,8 @@ export const updateAvatar = asyncHandler(async (req: Request, res: Response) => 
             name: true,
             avatarUrl: true,
             firebaseUid: true,
-            createdAt: true
+            createdAt: true,
+            timezone: true
         }
     })
     sendSuccess(res, user, 'Avatar updated successfully')

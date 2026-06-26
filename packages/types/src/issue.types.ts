@@ -5,13 +5,18 @@ export type IssueStatus = "BACKLOG" | "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DO
 
 export type IssuePriority = "NO_PRIORITY" | "URGENT" | "HIGH" | "MEDIUM" | "LOW";
 
+export type IssueType = "BUG" | "TASK" | "FEATURE" | "IMPROVEMENT" | "OTHER";
+
 export interface IIssue {
     id: string;
     title: string;
     description: string | null;
     status: IssueStatus;
     priority: IssuePriority;
-    position: number;
+    position: string;
+    type: IssueType;
+    dueDate: Date | null;
+    parentId: string | null;
     projectId: string;
     sprintId: string | null;
     assigneeId: string | null;

@@ -10,9 +10,10 @@ import userRoutes from "./user.routes"
 import commentRoutes from './comment.routes';
 import activityRoutes from './activity.routes';
 import notificationRoutes from "./notification.routes"
-import { getProjectActivities } from '../../controllers/activity.controller';
-import { requireProjectMember } from '../../middlewares/permission.middleware';
+import { getAllProjectActivities, getProjectActivities } from '../../controllers/activity.controller';
+import { requireProjectMember, requireWorkspaceMember } from '../../middlewares/permission.middleware';
 import { acceptInvite } from "../../controllers/invite.controller";
+import { getProjectAnalytics, getWorkspaceAnalytics } from "../../controllers/analytics.contoller";
 
 const router = Router();
 
@@ -39,6 +40,27 @@ router.get(
     requireProjectMember,
     getProjectActivities
 );
+// add alongside existing project activities route:
+router.get(
+    '/projects/:id/activities/all',
+    authenticate,
+    requireProjectMember,
+    getAllProjectActivities
+)
+
+router.get(
+    '/projects/:id/analytics',
+    authenticate,
+    requireProjectMember,
+    getProjectAnalytics
+)
+
+router.get(
+    '/workspaces/:id/analytics',
+    authenticate,
+    requireWorkspaceMember,
+    getWorkspaceAnalytics
+)
 
 // upload + attachments
 router.use("/", uploadRouter)

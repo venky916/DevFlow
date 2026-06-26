@@ -52,6 +52,9 @@ export const requireWorkspaceRole = (...roles: WorkspaceRole[]) => {
         const userId = req.user!.id
         const workspaceId = req.params.workspaceId ?? req.params.id
 
+        const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId as string } });
+        if (!workspace) throw ApiError.notFound('Workspace not found');
+
         const member = await prisma.workspaceMember.findUnique({
             where: {
                 workspaceId_userId: {
@@ -111,6 +114,9 @@ export const requireProjectRole = (...roles: ProjectRole[]) => {
         const userId = req.user!.id
         const projectId = req.params.projectId ?? req.params.id
 
+        const project = await prisma.project.findUnique({ where: { id: projectId as string } });
+        if (!project) throw ApiError.notFound('Project not found');
+
         const member = await prisma.projectMember.findUnique({
             where: { projectId_userId: { projectId: projectId as string, userId } },
         });
@@ -132,6 +138,9 @@ export const requireWorkspaceMember = asyncHandler(async (req: Request, res: Res
     const userId = req.user!.id;
     const workspaceId = req.params.workspaceId ?? req.params.id;
 
+    const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId as string } });
+    if (!workspace) throw ApiError.notFound('Workspace not found');
+
     const member = await prisma.workspaceMember.findUnique({
         where: { workspaceId_userId: { workspaceId: workspaceId as string, userId } },
     });
@@ -147,6 +156,9 @@ export const requireWorkspaceMember = asyncHandler(async (req: Request, res: Res
 export const requireProjectMember = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.user!.id;
     const projectId = req.params.projectId ?? req.params.id;
+
+    const project = await prisma.project.findUnique({ where: { id: projectId as string } });
+    if (!project) throw ApiError.notFound('Project not found');
 
     const member = await prisma.projectMember.findUnique({
         where: { projectId_userId: { projectId: projectId as string, userId } },
