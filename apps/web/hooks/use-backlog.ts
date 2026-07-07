@@ -2,28 +2,28 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import type { IIssueWithRelations, ISprint } from "@devflow/types";
 import type { MoveIssueToSprintInput } from "@devflow/validators";
+import type { IssueFilters } from "../components/shared/filter-bar";
 
-export function useBacklog(projectId: string) {
-    return useQuery<IIssueWithRelations[]>({
-        queryKey: ["backlog", projectId],
-        queryFn: async () => {
-            const res = await api.get(`/projects/${projectId}/issues/backlog`);
-            return res.data.data;
-        },
-        enabled: !!projectId,
-    });
-}
-
-export interface BacklogGroup {
+interface BacklogGroupedResponse {
     sprints: (ISprint & { issues: IIssueWithRelations[] })[];
     backlogIssues: IIssueWithRelations[];
 }
 
-export function useBacklogGrouped(projectId: string) {
-    return useQuery<BacklogGroup>({
-        queryKey: ["backlog-grouped", projectId],
+export function useBacklogGrouped(projectId: string, filters: IssueFilters = {}) {
+    return useQuery<BacklogGroupedResponse>({
+        queryKey: ["backlog-grouped", projectId, filters],
         queryFn: async () => {
-            const res = await api.get(`/projects/${projectId}/issues/backlog/grouped`);
+            const res = await api.get(`/projects/${projectId}/issues/backlog/grouped`, {
+                params: {
+                    assigneeId: filters.assigneeId,
+                    labelId: filters.labelId,
+                    priority: filters.priority,
+                    type: filters.type,
+                    dueDateFrom: filters.dueDateFrom,
+                    dueDateTo: filters.dueDateTo,
+                    noDueDate: filters.noDueDate,
+                },
+            });
             return res.data.data;
         },
         enabled: !!projectId,

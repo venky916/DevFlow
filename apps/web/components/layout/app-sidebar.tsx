@@ -552,7 +552,7 @@ export function AppSidebar() {
           <DropdownItem
             onClick={() => {
               setProfileMenuOpen(false);
-              router.push(`/${activeWorkspaceSlug}/profile`);
+              router.push(`/profile`);
             }}
             icon={User}
             label="Profile"

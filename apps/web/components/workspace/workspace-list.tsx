@@ -66,12 +66,20 @@ export function WorkspacesList() {
                 onClick={() => router.push(`/${ws.slug}`)}
                 className="flex items-center gap-3 p-4 rounded-[4px] border border-border-default bg-bg-surface hover:border-border-emphasis hover:bg-bg-hover transition-colors text-left w-full"
               >
-                {/* Icon */}
-                <div className="h-[38px] w-[38px] rounded-[5px] bg-accent-subtle flex items-center justify-center shrink-0">
-                  <span className="text-accent text-[16px] font-bold font-mono">
-                    {ws.name?.[0]?.toUpperCase()}
-                  </span>
-                </div>
+                {ws.logoUrl ? (
+                  <img
+                    src={ws.logoUrl}
+                    alt={ws.name}
+                    className="h-[38px] w-[38px] rounded-[5px] object-cover"
+                  />
+                ) : (
+                  // icon
+                  <div className="h-[38px] w-[38px] rounded-[5px] bg-accent-subtle flex items-center justify-center shrink-0">
+                    <span className="text-accent text-[16px] font-bold font-mono">
+                      {ws.name?.[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                )}
 
                 {/* Info */}
                 <div className="flex flex-col gap-0.5 flex-1 min-w-0">
@@ -93,9 +101,9 @@ export function WorkspacesList() {
                     <FolderKanban className="h-3 w-3" />
                     {ws._count?.projects ?? 0}
                   </div>
-                  <span className="text-[11px] text-text-muted font-mono uppercase">
-                    {ws.role}
-                  </span>
+                  {/* <span className="text-[11px] text-text-muted font-mono uppercase">
+                    {ws.role} api not sending role yet
+                  </span> */}
                 </div>
               </button>
             ))}

@@ -1,8 +1,10 @@
 "use client";
 
-import { Loader2, Play, CheckCheck } from "lucide-react";
+import { useState } from "react";
+import { Loader2, Play, CheckCheck, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@devflow/ui/components/button";
 import { Badge } from "@devflow/ui/components/badge";
+import { ConfirmModal } from "@devflow/ui/components/confirm-modal";
 import { cn } from "@devflow/ui/lib/cn";
 import type { ISprintWithCount } from "@devflow/types";
 
@@ -11,8 +13,11 @@ interface Props {
   active?: boolean;
   onStart?: () => void;
   onComplete?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   starting?: boolean;
   completing?: boolean;
+  deleting?: boolean;
   hasActiveSprint?: boolean;
 }
 
@@ -21,11 +26,17 @@ export function SprintCard({
   active,
   onStart,
   onComplete,
+  onEdit,
+  onDelete,
   starting,
   completing,
+  deleting,
   hasActiveSprint,
 }: Props) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   const issueCount = sprint._count?.issues ?? 0;
+  const isCompleted = sprint.status === "COMPLETED";
 
   const formatDate = (date: Date | null) => {
     if (!date) return "—";
@@ -75,6 +86,26 @@ export function SprintCard({
 
         {/* Right — actions */}
         <div className="flex items-center gap-2">
+          {!isCompleted && onEdit && (
+            <button
+              onClick={onEdit}
+              title="Edit sprint"
+              className="flex h-7 w-7 items-center justify-center rounded-[4px] text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+          )}
+
+          {!isCompleted && !active && onDelete && (
+            <button
+              onClick={() => setConfirmOpen(true)}
+              title="Delete sprint"
+              className="flex h-7 w-7 items-center justify-center rounded-[4px] text-text-muted hover:text-danger-text hover:bg-bg-hover transition-colors"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
+
           {active && onComplete && (
             <Button
               variant="secondary"
@@ -129,6 +160,20 @@ export function SprintCard({
           </span>
         </div>
       )}
+
+      <ConfirmModal
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          onDelete?.();
+          setConfirmOpen(false);
+        }}
+        title="Delete sprint?"
+        description={`This will permanently delete "${sprint.name}". Issues in this sprint will move back to the backlog.`}
+        confirmLabel="Delete"
+        isLoading={deleting}
+        variant="danger"
+      />
     </div>
   );
 }

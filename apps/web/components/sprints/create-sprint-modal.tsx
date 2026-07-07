@@ -1,16 +1,18 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { Modal } from "@devflow/ui/components/modal";
 import { Button } from "@devflow/ui/components/button";
 import { Input } from "@devflow/ui/components/input";
+import { DatePicker } from "@devflow/ui/components/date-picker";
 import { useCreateSprint } from "../../hooks/use-sprints";
 import {
   createSprintSchema,
   type CreateSprintInput,
+  type CreateSprintOutput,
 } from "@devflow/validators";
 
 interface Props {
@@ -25,13 +27,14 @@ export function CreateSprintModal({ open, onClose, projectId }: Props) {
   const {
     register,
     handleSubmit,
+    control,
     reset,
     formState: { errors },
-  } = useForm<CreateSprintInput>({
+  } = useForm<CreateSprintInput, any, CreateSprintOutput>({
     resolver: zodResolver(createSprintSchema),
   });
 
-  const onSubmit = async (data: CreateSprintInput) => {
+  const onSubmit = async (data: CreateSprintOutput) => {
     try {
       await mutateAsync(data);
       toast.success("Sprint created!");
@@ -57,17 +60,29 @@ export function CreateSprintModal({ open, onClose, projectId }: Props) {
           {...register("name")}
         />
         <div className="grid grid-cols-2 gap-3">
-          <Input
-            label="Start date"
-            type="date"
-            error={errors.startDate?.message}
-            {...register("startDate")}
+          <Controller
+            name="startDate"
+            control={control}
+            render={({ field }) => (
+              <DatePicker
+                label="Start date"
+                value={(field.value as Date | null) ?? null}
+                onChange={field.onChange}
+                error={errors.startDate?.message}
+              />
+            )}
           />
-          <Input
-            label="End date"
-            type="date"
-            error={errors.endDate?.message}
-            {...register("endDate")}
+          <Controller
+            name="endDate"
+            control={control}
+            render={({ field }) => (
+              <DatePicker
+                label="End date"
+                value={(field.value as Date | null) ?? null}
+                onChange={field.onChange}
+                error={errors.endDate?.message}
+              />
+            )}
           />
         </div>
         <div className="flex justify-end gap-2 mt-2">

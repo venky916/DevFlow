@@ -17,19 +17,14 @@ import { KanbanColumn } from "./kanban-column";
 import { IssueCard } from "./issue-card";
 import { useBoardStore } from "../../stores/board.store";
 import { useMoveIssue } from "../../hooks/use-board";
+import { getFractionalPosition } from "../../lib/fractional-position";
 import type { IIssueWithRelations, IssueStatus } from "@devflow/types";
 
-const STATUSES: IssueStatus[] = [
-  "BACKLOG",
-  "TODO",
-  "IN_PROGRESS",
-  "IN_REVIEW",
-  "DONE",
-];
+const STATUSES: IssueStatus[] = ["TODO", "IN_PROGRESS", "IN_REVIEW", "DONE"];
 
 interface Props {
   projectId: string;
-  onIssueClick: (issue: IIssueWithRelations) => void;
+  onIssueClick: (issueId: string) => void;
 }
 
 export function KanbanBoard({ projectId, onIssueClick }: Props) {
@@ -42,12 +37,9 @@ export function KanbanBoard({ projectId, onIssueClick }: Props) {
   );
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 5 },
-    }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
 
-  // find which column an issue belongs to
   function findColumnOfIssue(issueId: string): IssueStatus | null {
     return (
       STATUSES.find((s) => columns[s]?.some((i) => i.id === issueId)) ?? null
@@ -58,8 +50,7 @@ export function KanbanBoard({ projectId, onIssueClick }: Props) {
     const issueId = event.active.id as string;
     const fromStatus = findColumnOfIssue(issueId);
     if (!fromStatus) return;
-    const issue = columns[fromStatus].find((i) => i.id === issueId) ?? null;
-    setActiveIssue(issue);
+    setActiveIssue(columns[fromStatus].find((i) => i.id === issueId) ?? null);
   };
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -68,24 +59,36 @@ export function KanbanBoard({ projectId, onIssueClick }: Props) {
 
     const issueId = active.id as string;
     const overId = over.id as string;
+    if (issueId === overId) return;
 
     const fromStatus = findColumnOfIssue(issueId);
     if (!fromStatus) return;
 
-    // overId is either a column status or another issue id
     const toStatus = STATUSES.includes(overId as IssueStatus)
       ? (overId as IssueStatus)
       : findColumnOfIssue(overId);
+    if (!toStatus) return;
 
-    if (!toStatus || fromStatus === toStatus) return;
+    if (fromStatus === toStatus) {
+      // same-column reorder — keep local array order in sync during drag
+      // so handleDragEnd computes neighbors against the ACTUAL drop position,
+      // not the card's original index
+      const col = columns[fromStatus];
+      const oldIndex = col.findIndex((i) => i.id === issueId);
+      const newIndex = col.findIndex((i) => i.id === overId);
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+      setColumns({
+        ...columns,
+        [fromStatus]: arrayMove(col, oldIndex, newIndex),
+      });
+      return;
+    }
 
-    // move issue across columns optimistically in local state
     const fromCol = [...columns[fromStatus]];
     const toCol = [...columns[toStatus]];
     const issueIndex = fromCol.findIndex((i) => i.id === issueId);
     const [movedIssue] = fromCol.splice(issueIndex, 1);
 
-    // insert at position of the over-card, or end of column
     const overIndex = toCol.findIndex((i) => i.id === overId);
     if (overIndex >= 0) {
       toCol.splice(overIndex, 0, movedIssue as IIssueWithRelations);
@@ -93,11 +96,7 @@ export function KanbanBoard({ projectId, onIssueClick }: Props) {
       toCol.push(movedIssue as IIssueWithRelations);
     }
 
-    setColumns({
-      ...columns,
-      [fromStatus]: fromCol,
-      [toStatus]: toCol,
-    });
+    setColumns({ ...columns, [fromStatus]: fromCol, [toStatus]: toCol });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -111,16 +110,19 @@ export function KanbanBoard({ projectId, onIssueClick }: Props) {
     const toStatus = STATUSES.includes(overId as IssueStatus)
       ? (overId as IssueStatus)
       : findColumnOfIssue(overId);
-
     if (!toStatus) return;
 
     const toCol = columns[toStatus];
-    const newPosition = toCol.findIndex((i) => i.id === issueId);
+    const index = toCol.findIndex((i) => i.id === issueId);
+    if (index === -1) return;
 
-    moveIssue({
-      issueId,
-      data: { status: toStatus, position: Math.max(0, newPosition) },
-    });
+    // destination list already has the dragged item IN it at `index`
+    // (handleDragOver kept it in sync) — pass the list with it removed
+    const listWithoutDragged = toCol.filter((i) => i.id !== issueId);
+    const dropIndex = toCol.findIndex((i) => i.id === issueId);
+    const newPosition = getFractionalPosition(listWithoutDragged, dropIndex);
+
+    moveIssue({ issueId, data: { status: toStatus, position: newPosition } });
   };
 
   return (
@@ -141,8 +143,6 @@ export function KanbanBoard({ projectId, onIssueClick }: Props) {
           />
         ))}
       </div>
-
-      {/* Drag overlay — renders the card being dragged */}
       <DragOverlay>
         {activeIssue && <IssueCard issue={activeIssue} onClick={() => {}} />}
       </DragOverlay>

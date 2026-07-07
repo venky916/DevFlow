@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { X, ExternalLink, Loader2 } from "lucide-react";
 import { cn } from "@devflow/ui/lib/cn";
 import { Badge } from "@devflow/ui/components/badge";
+import { useRouter } from "next/navigation";
 import { useIssueById } from "../../hooks/use-issues";
 import { IssueFields } from "./issue-fields";
 import { ActivityPanel } from "./activity-panel";
-import { useRouter } from "next/navigation";
+import { STATUS_LABELS, getStatusVariant } from "../../lib/issue-constants";
+import type { IssueStatus } from "@devflow/types";
 
 interface Props {
   issueId: string | null;
@@ -17,7 +19,13 @@ interface Props {
   projectSlug: string;
 }
 
-export function IssueSlideOver({ issueId, onClose, projectId, workspaceSlug, projectSlug }: Props) {
+export function IssueSlideOver({
+  issueId,
+  onClose,
+  projectId,
+  workspaceSlug,
+  projectSlug,
+}: Props) {
   const isOpen = !!issueId;
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -45,7 +53,6 @@ export function IssueSlideOver({ issueId, onClose, projectId, workspaceSlug, pro
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className={cn(
           "fixed inset-0 z-30 transition-opacity duration-200",
@@ -56,7 +63,6 @@ export function IssueSlideOver({ issueId, onClose, projectId, workspaceSlug, pro
         onClick={onClose}
       />
 
-      {/* Panel */}
       <div
         className={cn(
           "fixed top-[38px] right-0 bottom-0 z-40 w-1/2 bg-bg-surface border-l border-border-default flex flex-col transition-transform duration-200 ease-out",
@@ -69,14 +75,13 @@ export function IssueSlideOver({ issueId, onClose, projectId, workspaceSlug, pro
           </div>
         ) : issue ? (
           <>
-            {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border-default shrink-0">
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-mono text-accent">
                   #{issue.id.slice(-6).toUpperCase()}
                 </span>
-                <Badge variant={getStatusVariant(issue.status)}>
-                  {STATUS_LABELS[issue.status]}
+                <Badge variant={getStatusVariant(issue.status as IssueStatus)}>
+                  {STATUS_LABELS[issue.status as IssueStatus]}
                 </Badge>
               </div>
               <div className="flex items-center gap-2">
@@ -87,9 +92,11 @@ export function IssueSlideOver({ issueId, onClose, projectId, workspaceSlug, pro
                   </span>
                 )}
                 <button
-                  onClick={() => {
-                    router.push(`/${workspaceSlug}/${projectSlug}/issues/${issue.id}`);
-                  }}
+                  onClick={() =>
+                    router.push(
+                      `/${workspaceSlug}/${projectSlug}/issues/${issue.id}`,
+                    )
+                  }
                   className="text-text-muted hover:text-text-primary transition-colors cursor-pointer"
                 >
                   <ExternalLink className="h-4 w-4" />
@@ -103,13 +110,15 @@ export function IssueSlideOver({ issueId, onClose, projectId, workspaceSlug, pro
               </div>
             </div>
 
-            {/* Body */}
             <div className="flex flex-1 overflow-hidden">
               <div className="flex-1 overflow-y-auto p-4">
                 <IssueFields
                   issue={issue}
                   projectId={projectId}
                   onSaving={setSaving}
+                  onNavigate={(id) =>
+                    router.push(`/${workspaceSlug}/${projectSlug}/issues/${id}`)
+                  }
                 />
               </div>
               <div className="w-[250px] border-l border-border-default overflow-y-auto p-3 shrink-0">
@@ -121,25 +130,4 @@ export function IssueSlideOver({ issueId, onClose, projectId, workspaceSlug, pro
       </div>
     </>
   );
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  BACKLOG: "Backlog",
-  TODO: "Todo",
-  IN_PROGRESS: "In Progress",
-  IN_REVIEW: "In Review",
-  DONE: "Done",
-};
-
-function getStatusVariant(status: string) {
-  switch (status) {
-    case "DONE":
-      return "success" as const;
-    case "IN_PROGRESS":
-      return "info" as const;
-    case "IN_REVIEW":
-      return "warning" as const;
-    default:
-      return "neutral" as const;
-  }
 }

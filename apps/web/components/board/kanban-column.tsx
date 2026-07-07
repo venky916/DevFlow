@@ -20,14 +20,14 @@ const COLUMN_LABELS: Record<IssueStatus, string> = {
 interface Props {
   status: IssueStatus;
   issues: IIssueWithRelations[];
-  onIssueClick: (issue: IIssueWithRelations) => void;
+  onIssueClick: (issueId: string) => void;
 }
 
 export function KanbanColumn({ status, issues, onIssueClick }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   return (
-    <div className="flex flex-col gap-2 min-w-[220px] w-[220px]">
+    <div className="flex flex-col gap-2 min-w-[260px] w-[260px]">
       {/* Column header */}
       <div className="flex items-center justify-between px-1">
         <span className="text-[11px] uppercase tracking-[0.04em] font-mono text-text-muted">

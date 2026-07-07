@@ -5,20 +5,33 @@ import { useBoardStore } from "../stores/board.store";
 import type { IIssueWithRelations, IssueStatus, ISprint } from "@devflow/types";
 import type { MoveIssueInput } from "@devflow/validators";
 import { toast } from "sonner";
+import type { IssueFilters } from "../components/shared/filter-bar";
 
 interface BoardResponse {
     activeSprint: ISprint | null;
     columns: Record<IssueStatus, IIssueWithRelations[]>;
 }
 
-export function useBoard(projectId: string) {
+export function useBoard(projectId: string, filters: IssueFilters = {}) {
     const setColumns = useBoardStore((s) => s.setColumns);
     const setActiveSprint = useBoardStore((s) => s.setActiveSprint);
 
     const query = useQuery<BoardResponse>({
-        queryKey: ["board", projectId],
+        // filters in the key — different filter combos cache separately,
+        // and changing filters triggers a real refetch automatically
+        queryKey: ["board", projectId, filters],
         queryFn: async () => {
-            const res = await api.get(`/projects/${projectId}/issues/board`);
+            const res = await api.get(`/projects/${projectId}/issues/board`, {
+                params: {
+                    assigneeId: filters.assigneeId,
+                    labelId: filters.labelId,
+                    priority: filters.priority,
+                    type: filters.type,
+                    dueDateFrom: filters.dueDateFrom,
+                    dueDateTo: filters.dueDateTo,
+                    noDueDate: filters.noDueDate,
+                },
+            });
             return res.data.data;
         },
         enabled: !!projectId,

@@ -4,11 +4,10 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Plus, FolderKanban, Users, Zap } from "lucide-react";
 import { Button } from "@devflow/ui/components/button";
-import { Badge } from "@devflow/ui/components/badge";
 import { useWorkspaces } from "../../hooks/use-workspaces";
 import { useProjects } from "../../hooks/use-projects";
-import { CreateProjectModal } from "./create-project-modal";
-import type { IProjectWithMembers } from "@devflow/types";
+import { CreateProjectModal } from "../projects/create-project-modal";
+import { ProjectCard } from "../projects/project-card";
 
 export function WorkspaceHome() {
   const { workspaceSlug } = useParams<{ workspaceSlug: string }>();
@@ -87,56 +86,5 @@ export function WorkspaceHome() {
         workspaceSlug={workspaceSlug}
       />
     </div>
-  );
-}
-
-function ProjectCard({
-  project,
-  onClick,
-}: {
-  project: IProjectWithMembers;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex flex-col gap-3 p-4 rounded-[4px] border border-border-default bg-bg-surface hover:border-border-emphasis hover:bg-bg-hover transition-colors text-left"
-    >
-      {/* Top */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-[13px] font-medium text-text-primary">
-            {project.name}
-          </span>
-          <span className="text-[11px] text-text-muted font-mono">
-            {project.slug}
-          </span>
-        </div>
-        <Badge variant="neutral">{project._count?.sprints ?? 0} sprints</Badge>
-      </div>
-
-      {/* Description */}
-      {project.description && (
-        <p className="text-[12px] text-text-muted line-clamp-2">
-          {project.description}
-        </p>
-      )}
-
-      {/* Footer */}
-      <div className="flex items-center gap-4 mt-auto pt-1">
-        <div className="flex items-center gap-1 text-[11px] text-text-muted">
-          <FolderKanban className="h-3 w-3" />
-          {project._count?.issues ?? 0} issues
-        </div>
-        <div className="flex items-center gap-1 text-[11px] text-text-muted">
-          <Users className="h-3 w-3" />
-          {project._count?.members ?? 0} members
-        </div>
-        <div className="flex items-center gap-1 text-[11px] text-text-muted">
-          <Zap className="h-3 w-3" />
-          {project._count?.sprints ?? 0} sprints
-        </div>
-      </div>
-    </button>
   );
 }

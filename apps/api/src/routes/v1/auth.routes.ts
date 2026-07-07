@@ -4,6 +4,7 @@ import {me} from "../../controllers/auth.controller.js";
 
 const router = Router();
 
+// /auth
 router.get('/me', authenticate, me);
 
 export default router

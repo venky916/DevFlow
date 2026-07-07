@@ -1,7 +1,10 @@
 "use client";
 
-import { useIssueActivities } from "../../hooks/use-issues";
+import { formatDistanceToNow } from "date-fns";
 import { Loader2 } from "lucide-react";
+import { Avatar } from "@devflow/ui/components/avatar";
+import { useIssueActivities } from "../../hooks/use-issues";
+import { activityText } from "../../lib/issue-constants";
 
 interface Props {
   issueId: string;
@@ -28,13 +31,21 @@ export function ActivityPanel({ issueId }: Props) {
       ) : (
         <div className="flex flex-col gap-3">
           {activities.map((activity: any) => (
-            <div key={activity.id} className="flex flex-col gap-0.5">
-              <p className="text-[11px] text-text-secondary leading-snug">
-                {activity.action.replace(/_/g, " ").toLowerCase()}
-              </p>
-              <p className="text-[10px] text-text-disabled font-mono">
-                {new Date(activity.createdAt).toLocaleDateString()}
-              </p>
+            <div key={activity.id} className="flex items-start gap-2">
+              <Avatar name={activity.user?.name ?? "?"} size="sm" />
+              <div className="flex flex-col gap-0.5">
+                <p className="text-[12px] text-text-secondary leading-snug">
+                  <span className="text-text-primary font-medium">
+                    {activity.user?.name ?? "Someone"}
+                  </span>{" "}
+                  {activityText(activity.action, activity.meta)}
+                </p>
+                <span className="text-[10px] text-text-muted font-mono">
+                  {formatDistanceToNow(new Date(activity.createdAt), {
+                    addSuffix: true,
+                  })}
+                </span>
+              </div>
             </div>
           ))}
         </div>

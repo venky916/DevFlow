@@ -32,7 +32,26 @@ export function useUpdateSprint(projectId: string) {
             const res = await api.patch(`/sprints/${sprintId}`, data);
             return res.data.data;
         },
-        onSuccess: () => qc.invalidateQueries({ queryKey: ["sprints", projectId] }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ["sprints", projectId] });
+            qc.invalidateQueries({ queryKey: ["board", projectId] });
+            qc.invalidateQueries({ queryKey: ["backlog-grouped", projectId] });
+        },
+    });
+}
+
+export function useDeleteSprint(projectId: string) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: async (sprintId: string) => {
+            const res = await api.delete(`/sprints/${sprintId}`);
+            return res.data.data;
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ["sprints", projectId] });
+            qc.invalidateQueries({ queryKey: ["board", projectId] });
+            qc.invalidateQueries({ queryKey: ["backlog-grouped", projectId] });
+        },
     });
 }
 

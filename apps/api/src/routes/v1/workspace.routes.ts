@@ -8,6 +8,8 @@ const router = Router();
 
 router.use(authenticate);
 
+// /workspaces
+
 // Workspace CRUD
 router.post("/", createWorkspace);
 router.get("/", getMyWorkspaces);

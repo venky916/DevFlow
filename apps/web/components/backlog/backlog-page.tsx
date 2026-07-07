@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { Plus, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, ChevronDown, ChevronRight, RotateCw } from "lucide-react";
 import { Button } from "@devflow/ui/components/button";
 import { Badge } from "@devflow/ui/components/badge";
 import { cn } from "@devflow/ui/lib/cn";
@@ -15,102 +15,33 @@ import {
   useSensor,
   useSensors,
   closestCorners,
+  useDroppable,
 } from "@dnd-kit/core";
 import {
   SortableContext,
-  useSortable,
   verticalListSortingStrategy,
+  arrayMove,
 } from "@dnd-kit/sortable";
-import { useDroppable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
 import { toast } from "sonner";
 import { useWorkspaces } from "../../hooks/use-workspaces";
 import { useProjects } from "../../hooks/use-projects";
 import { useBacklogGrouped, useMoveToSprint } from "../../hooks/use-backlog";
-import { CreateIssueModal } from "../board/create-issue-modal";
-import { IssueSlideOver } from "../issue/issue-slide-over";
+import { useMoveIssue } from "../../hooks/use-board";
 import { useProjectMembers, useProjectSprints } from "../../hooks/use-issues";
-import type {
-  IIssueWithRelations,
-  IssuePriority,
-  ISprint,
-} from "@devflow/types";
-import { arrayMove } from "@dnd-kit/sortable";
+import { CreateIssueModal } from "../issue/create-issue-modal";
+import { IssueSlideOver } from "../issue/issue-slide-over";
+import { IssueRow } from "./issue-row";
+import { FilterBar, type IssueFilters } from "../shared/filter-bar";
+import { getFractionalPosition } from "../../lib/fractional-position";
+import { PRIORITY_COLORS } from "../../lib/issue-constants";
+import type { IIssueWithRelations, ISprint } from "@devflow/types";
 
-// ─── Priority dot colors ──────────────────────────────────────────
-const PRIORITY_COLORS: Record<IssuePriority, string> = {
-  URGENT: "#E24B4A",
-  HIGH: "#EF9F27",
-  MEDIUM: "#639922",
-  LOW: "#555555",
-  NO_PRIORITY: "#333333",
-};
-
-// ─── Draggable issue row ──────────────────────────────────────────
-function IssueRow({
-  issue,
-  onOpen,
-}: {
-  issue: IIssueWithRelations;
-  onOpen: (issue: IIssueWithRelations) => void;
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: issue.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : 1,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className="flex items-center gap-3 px-3 py-2 rounded-[4px] border border-transparent hover:border-border-default hover:bg-bg-surface transition-colors group cursor-pointer"
-      onClick={() => onOpen(issue)}
-    >
-      {/* Priority dot */}
-      <div
-        className="h-[5px] w-[5px] rounded-full shrink-0"
-        style={{ backgroundColor: PRIORITY_COLORS[issue.priority] }}
-      />
-
-      {/* Title */}
-      <span className="flex-1 text-[13px] text-text-primary truncate">
-        {issue.title}
-      </span>
-
-      {/* ID */}
-      <span className="text-[11px] font-mono text-accent shrink-0">
-        #{issue.id.slice(-6).toUpperCase()}
-      </span>
-
-      {/* Assignee */}
-      {issue.assignee && (
-        <div className="h-[18px] w-[18px] rounded-full bg-accent-subtle flex items-center justify-center text-accent text-[9px] font-medium shrink-0">
-          {issue.assignee.name?.[0]?.toUpperCase() ?? "?"}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Droppable sprint section ─────────────────────────────────────
 function SprintSection({
   sprint,
   onOpen,
 }: {
   sprint: ISprint & { issues: IIssueWithRelations[] };
-  onOpen: (issue: IIssueWithRelations) => void;
+  onOpen: (issueId: string) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const { setNodeRef, isOver } = useDroppable({ id: sprint.id });
@@ -137,16 +68,14 @@ function SprintSection({
         </span>
       </button>
 
-      {/* ✅ always rendered — never unmounts, so ref stays alive */}
       <div
         ref={setNodeRef}
         className={cn(
           "flex flex-col ml-5 rounded-[4px] transition-colors",
           isOver && "bg-bg-hover",
-          collapsed ? "min-h-0" : "min-h-[32px]", // shrink when collapsed
+          collapsed ? "min-h-0" : "min-h-[32px]",
         )}
       >
-        {/* ✅ content hidden via CSS, not unmounted */}
         <div className={collapsed ? "hidden" : "flex flex-col"}>
           <SortableContext
             items={sprint.issues.map((i) => i.id)}
@@ -168,13 +97,12 @@ function SprintSection({
   );
 }
 
-// ─── Droppable backlog section ────────────────────────────────────
 function BacklogSection({
   issues,
   onOpen,
 }: {
   issues: IIssueWithRelations[];
-  onOpen: (issue: IIssueWithRelations) => void;
+  onOpen: (issueId: string) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const { setNodeRef, isOver } = useDroppable({ id: "BACKLOG" });
@@ -198,7 +126,6 @@ function BacklogSection({
         </span>
       </button>
 
-      {/* ✅ same fix — always rendered */}
       <div
         ref={setNodeRef}
         className={cn(
@@ -228,7 +155,6 @@ function BacklogSection({
   );
 }
 
-// ─── Main BacklogPage ─────────────────────────────────────────────
 export function BacklogPage() {
   const { workspaceSlug, projectSlug } = useParams<{
     workspaceSlug: string;
@@ -236,33 +162,35 @@ export function BacklogPage() {
   }>();
 
   const [showCreate, setShowCreate] = useState(false);
-  const [selectedIssue, setSelectedIssue] =
-    useState<IIssueWithRelations | null>(null);
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [activeIssue, setActiveIssue] = useState<IIssueWithRelations | null>(
     null,
   );
+  const [filters, setFilters] = useState<IssueFilters>({});
 
   const { data: workspaces } = useWorkspaces();
   const workspace = workspaces?.find((w) => w.slug === workspaceSlug);
   const { data: projects } = useProjects(workspace?.id ?? "");
   const project = projects?.find((p) => p.slug === projectSlug);
 
-  const { data, isLoading } = useBacklogGrouped(project?.id ?? "");
-
+  const { data, isLoading, isFetching, refetch } = useBacklogGrouped(
+    project?.id ?? "",
+    filters,
+  );
   const { data: sprints } = useProjectSprints(project?.id ?? "");
   const { data: members } = useProjectMembers(project?.id ?? "");
   const { mutate: moveToSprint } = useMoveToSprint(project?.id ?? "");
+  const { mutate: moveIssue } = useMoveIssue();
+
   const [localSprints, setLocalSprints] = useState<
     (ISprint & { issues: IIssueWithRelations[] })[]
   >([]);
-
   const [localBacklog, setLocalBacklog] = useState<IIssueWithRelations[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
 
-  // find issue across all sections
   function findIssue(issueId: string): IIssueWithRelations | null {
     for (const sprint of localSprints) {
       const found = sprint.issues.find((i) => i.id === issueId);
@@ -271,13 +199,17 @@ export function BacklogPage() {
     return localBacklog.find((i) => i.id === issueId) ?? null;
   }
 
-  // find which container (sprintId or "BACKLOG") an issue is in
   function findContainer(issueId: string): string | null {
     for (const sprint of localSprints) {
       if (sprint.issues.some((i) => i.id === issueId)) return sprint.id;
     }
     if (localBacklog.some((i) => i.id === issueId)) return "BACKLOG";
     return null;
+  }
+
+  function getListFor(containerId: string): IIssueWithRelations[] {
+    if (containerId === "BACKLOG") return localBacklog;
+    return localSprints.find((s) => s.id === containerId)?.issues ?? [];
   }
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -291,6 +223,7 @@ export function BacklogPage() {
 
     const issueId = active.id as string;
     const overId = over.id as string;
+    if (issueId === overId) return;
 
     const fromContainer = findContainer(issueId);
     const allSprintIds = localSprints.map((s) => s.id);
@@ -301,38 +234,60 @@ export function BacklogPage() {
     } else {
       toContainer = findContainer(overId) ?? "BACKLOG";
     }
-
     if (!fromContainer) return;
 
-    // same section reorder — no change here
-    if (fromContainer === toContainer) {
-      if (toContainer === "BACKLOG") {
-        const oldIndex = localBacklog.findIndex((i) => i.id === issueId);
-        const newIndex = localBacklog.findIndex((i) => i.id === overId);
-        if (oldIndex === -1 || newIndex === -1) return;
-        setLocalBacklog((prev) => arrayMove(prev, oldIndex, newIndex));
-      } else {
-        setLocalSprints((prev) =>
-          prev.map((sprint) => {
-            if (sprint.id !== fromContainer) return sprint;
-            const oldIndex = sprint.issues.findIndex((i) => i.id === issueId);
-            const newIndex = sprint.issues.findIndex((i) => i.id === overId);
-            if (oldIndex === -1 || newIndex === -1) return sprint;
-            return {
-              ...sprint,
-              issues: arrayMove(sprint.issues, oldIndex, newIndex),
-            };
-          }),
-        );
-      }
-      return;
-    }
-
-    // ✅ cross-section — update local state immediately (optimistic)
     const movedIssue = findIssue(issueId);
     if (!movedIssue) return;
 
-    // remove from source
+    // ─── same-section reorder ──────────────────────────────────
+    if (fromContainer === toContainer) {
+      const list = getListFor(fromContainer);
+      const oldIndex = list.findIndex((i) => i.id === issueId);
+      const newIndex = list.findIndex((i) => i.id === overId);
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      const reordered = arrayMove(list, oldIndex, newIndex);
+      const dropIndex = reordered.findIndex((i) => i.id === issueId);
+      const listWithoutDragged = reordered.filter((i) => i.id !== issueId);
+      const newPosition = getFractionalPosition(listWithoutDragged, dropIndex);
+
+      const updatedIssue = { ...movedIssue, position: newPosition };
+      const finalList = reordered.map((i) =>
+        i.id === issueId ? updatedIssue : i,
+      );
+
+      if (fromContainer === "BACKLOG") {
+        setLocalBacklog(finalList);
+      } else {
+        setLocalSprints((prev) =>
+          prev.map((s) =>
+            s.id === fromContainer ? { ...s, issues: finalList } : s,
+          ),
+        );
+      }
+
+      moveIssue(
+        { issueId, data: { status: movedIssue.status, position: newPosition } },
+        {
+          onError: () => {
+            if (data) {
+              setLocalSprints(data.sprints);
+              setLocalBacklog(data.backlogIssues);
+            }
+            toast.error("Failed to reorder issue");
+          },
+        },
+      );
+      return;
+    }
+
+    // ─── cross-section move ─────────────────────────────────────
+    const destList = getListFor(toContainer);
+    const overIndex = destList.findIndex((i) => i.id === overId);
+    const dropIndex = overIndex >= 0 ? overIndex : destList.length;
+    const newPosition = getFractionalPosition(destList, dropIndex);
+    const updatedIssue = { ...movedIssue, position: newPosition };
+
     if (fromContainer === "BACKLOG") {
       setLocalBacklog((prev) => prev.filter((i) => i.id !== issueId));
     } else {
@@ -345,26 +300,28 @@ export function BacklogPage() {
       );
     }
 
-    // add to destination
     if (toContainer === "BACKLOG") {
-      setLocalBacklog((prev) => [...prev, movedIssue]);
+      setLocalBacklog((prev) => {
+        const next = [...prev];
+        next.splice(dropIndex, 0, updatedIssue);
+        return next;
+      });
     } else {
       setLocalSprints((prev) =>
-        prev.map((s) =>
-          s.id === toContainer
-            ? { ...s, issues: [...s.issues, movedIssue] }
-            : s,
-        ),
+        prev.map((s) => {
+          if (s.id !== toContainer) return s;
+          const next = [...s.issues];
+          next.splice(dropIndex, 0, updatedIssue);
+          return { ...s, issues: next };
+        }),
       );
     }
 
-    // fire API
     const sprintId = toContainer === "BACKLOG" ? null : toContainer;
     moveToSprint(
-      { issueId, data: { sprintId } },
+      { issueId, data: { sprintId, position: newPosition } },
       {
         onError: () => {
-          // rollback — re-sync from server data
           if (data) {
             setLocalSprints(data.sprints);
             setLocalBacklog(data.backlogIssues);
@@ -392,24 +349,51 @@ export function BacklogPage() {
   const totalIssues =
     (data?.sprints.reduce((acc, s) => acc + s.issues.length, 0) ?? 0) +
     (data?.backlogIssues.length ?? 0);
+  const memberUsers = members?.map((m) => m.user!).filter(Boolean) ?? [];
 
   return (
     <div className="flex flex-col w-full h-full overflow-hidden">
-      {/* Header */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-border-default shrink-0">
-        <h1 className="text-[13px] font-medium text-text-primary">
-          Backlog
-          <span className="ml-2 text-text-muted font-normal">
-            {totalIssues} issues
-          </span>
-        </h1>
-        <Button variant="primary" size="sm" onClick={() => setShowCreate(true)}>
-          <Plus className="h-3.5 w-3.5 mr-1.5" />
-          Issue
-        </Button>
+        <div className="flex items-center gap-3">
+          <h1 className="text-[13px] font-medium text-text-primary">
+            Backlog
+            <span className="ml-2 text-text-muted font-normal">
+              {totalIssues} issues
+            </span>
+          </h1>
+          <div className="h-4 w-px bg-border-default" />
+          {project && (
+            <FilterBar
+              fields={["assignee", "label", "priority", "type", "dueDate"]}
+              projectId={project.id}
+              members={memberUsers}
+              filters={filters}
+              onChange={setFilters}
+            />
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isFetching}
+          >
+            <RotateCw
+              className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`}
+            />
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setShowCreate(true)}
+          >
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
+            Issue
+          </Button>
+        </div>
       </div>
 
-      {/* List */}
       <div className="flex-1 overflow-y-auto px-6 py-4">
         {!data || totalIssues === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 border border-border-default rounded-[4px]">
@@ -430,17 +414,17 @@ export function BacklogPage() {
             onDragEnd={handleDragEnd}
           >
             <div className="flex flex-col gap-4">
-              {/* Sprint sections */}
               {localSprints.map((sprint: any) => (
                 <SprintSection
                   key={sprint.id}
                   sprint={sprint}
-                  onOpen={setSelectedIssue}
+                  onOpen={setSelectedIssueId}
                 />
               ))}
-
-              {/* Backlog section */}
-              <BacklogSection issues={localBacklog} onOpen={setSelectedIssue} />
+              <BacklogSection
+                issues={localBacklog}
+                onOpen={setSelectedIssueId}
+              />
             </div>
 
             <DragOverlay>
@@ -465,7 +449,6 @@ export function BacklogPage() {
         )}
       </div>
 
-      {/* Modals */}
       {project && (
         <>
           <CreateIssueModal
@@ -473,12 +456,12 @@ export function BacklogPage() {
             onClose={() => setShowCreate(false)}
             projectId={project.id}
             sprints={sprints ?? []}
-            members={members?.map((m) => m.user!).filter(Boolean) ?? []}
+            members={memberUsers}
             activeSprint={null}
           />
           <IssueSlideOver
-            issueId={selectedIssue?.id ?? null}
-            onClose={() => setSelectedIssue(null)}
+            issueId={selectedIssueId}
+            onClose={() => setSelectedIssueId(null)}
             projectId={project.id}
             workspaceSlug={workspaceSlug}
             projectSlug={projectSlug}

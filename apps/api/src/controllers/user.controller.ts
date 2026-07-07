@@ -7,7 +7,7 @@ import { generatePresignedDownloadUrl } from "@devflow/storage";
 import { updateProfileSchema, updateAvatarSchema } from "@devflow/validators";
 import { buildUpdateData } from "../lib/updateBuilder";
 
-// ─── GET MY PROFILE ───────────────────────────────────────────
+// ─── GET MY PROFILE /users/me ───────────────────────────────────────────
 export const getMe = asyncHandler(async (req: Request, res: Response) => {
     const user = await prisma.user.findUnique({
         where: {
@@ -41,7 +41,7 @@ export const getMe = asyncHandler(async (req: Request, res: Response) => {
 
 })
 
-// ─── UPDATE PROFILE ───────────────────────────────────────────
+// ─── UPDATE PROFILE PATCH /users/me ───────────────────────────────────────────
 export const updateProfile = asyncHandler(async (req: Request, res: Response) => {
     const { name, avatarUrl, timezone } = updateProfileSchema.parse(req.body)
 

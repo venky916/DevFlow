@@ -24,5 +24,9 @@ export const updateSprintSchema = z.object({
     endDate: z.coerce.date().nullable().optional()
 }).refine(dateRefinement, dateRefinementError)
 
-export type CreateSprintInput = z.infer<typeof createSprintSchema>
-export type UpdateSprintInput = z.infer<typeof updateSprintSchema>
+// export type CreateSprintInput = z.infer<typeof createSprintSchema>
+// export type UpdateSprintInput = z.infer<typeof updateSprintSchema>
+export type CreateSprintInput = z.input<typeof createSprintSchema>;
+export type CreateSprintOutput = z.output<typeof createSprintSchema>;
+export type UpdateSprintInput = z.input<typeof updateSprintSchema>;
+export type UpdateSprintOutput = z.output<typeof updateSprintSchema>;

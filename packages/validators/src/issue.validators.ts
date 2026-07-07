@@ -23,6 +23,7 @@ export const updateIssueSchema = z.object({
     priority: IssuePriorityEnum.optional(),
     type: IssueTypeEnum.optional(),
     status: IssueStatusEnum.optional(),
+    sprintId: z.string().optional().nullable(),
     assigneeId: z.string().optional().nullable(),
     parentId: z.string().optional().nullable(),
     dueDate: z.coerce.date().optional().nullable(),
@@ -36,7 +37,8 @@ export const moveIssueSchema = z.object({
 })
 
 export const moveIssueToSprintSchema = z.object({
-    sprintId: z.string().nullable()
+    sprintId: z.string().nullable(),
+    position: z.string().min(1).optional(), // fractional key for the destination bucket
 })
 
 // for GET /projects/:slug/issues and board fetch query params
@@ -48,9 +50,24 @@ export const issueFilterSchema = z.object({
     status: IssueStatusEnum.optional(),
     dueDateFrom: z.coerce.date().optional(),
     dueDateTo: z.coerce.date().optional(),
+    noDueDate: z.coerce.boolean().optional(),
 })
 
-export type CreateIssueInput = z.infer<typeof createIssueSchema>
-export type UpdateIssueInput = z.infer<typeof updateIssueSchema>
+export const myIssuesFilterSchema = z.object({
+    projectId: z.string().optional(),
+    sprintId: z.string().optional(),
+    type: IssueTypeEnum.optional(),
+    priority: IssuePriorityEnum.optional(),
+    dueDateFrom: z.coerce.date().optional(),
+    dueDateTo: z.coerce.date().optional(),
+    noDueDate: z.coerce.boolean().optional(),
+})
+
+export type CreateIssueInput = z.input<typeof createIssueSchema>
+export type CreateIssueOutput = z.output<typeof createIssueSchema>
+
+export type UpdateIssueInput = z.input<typeof updateIssueSchema>
+export type UpdateIssueOutput = z.output<typeof updateIssueSchema>
+
 export type MoveIssueInput = z.infer<typeof moveIssueSchema>
 export type MoveIssueToSprintInput = z.infer<typeof moveIssueToSprintSchema>

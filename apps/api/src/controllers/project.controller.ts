@@ -9,6 +9,7 @@ import { createLabelSchema, updateLabelSchema } from "@devflow/validators"
 import { logActivity } from "../lib/logActivity"
 import { notificationQueue } from "@devflow/queues";
 import { ActivityActions, NotificationTypes } from "@devflow/types";
+import { buildUpdateData } from "../lib/updateBuilder";
 
 // ─── POST /workspaces/:workspaceId/projects ───────────────────────
 export const createProject = asyncHandler(async (req: Request, res: Response) => {
@@ -459,10 +460,7 @@ export const updateLabel = asyncHandler(async (req: Request, res: Response) => {
         where: {
             id: labelId as string
         },
-        data: {
-            ...(name && { name }),
-            ...(color && { color })
-        }
+        data: buildUpdateData({ name, color })
     })
 
     sendSuccess(res, updated, "Label updated successfully")

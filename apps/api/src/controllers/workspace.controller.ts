@@ -58,6 +58,7 @@ export const createWorkspace = asyncHandler(async (req: Request, res: Response) 
 
 })
 
+// ─── GET /workspaces ──────────────────────────────────────────
 export const getMyWorkspaces = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id
     const workspaces = await prisma.workspace.findMany({
@@ -99,7 +100,6 @@ export const getMyWorkspaces = asyncHandler(async (req: Request, res: Response) 
 export const getWorkspaceById = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
     const userId = req.user!.id
-
 
     const member = await getMember(id as string, userId)
 
@@ -213,8 +213,6 @@ export const getWorkspaceMembers = asyncHandler(async (req: Request, res: Respon
     const cacheKey = CacheKeys.workspaceMembers(id as string)
     const cached = await getCache(cacheKey)
 
-    console.log(cacheKey, cached)
-
     if (cached) {
         sendSuccess(res, cached, "Members fetched successfully")
         return
@@ -290,7 +288,6 @@ export const updateMemberRole = asyncHandler(async (req: Request, res: Response)
     // add after DB write in both functions:
     await deleteCache(CacheKeys.workspaceMembers(id as string))
     sendSuccess(res, updated, 'Member Role updated successfully')
-
 })
 
 // ─── DELETE /workspaces/:id/members/:uid ─────────────────────────
@@ -326,7 +323,6 @@ export const removeMember = asyncHandler(async (req: Request, res: Response) => 
     // add after DB write in both functions:
     await deleteCache(CacheKeys.workspaceMembers(id as string))
     sendNoContent(res)
-
 })
 
 // ─── UPDATE LOGO ──────────────────────────────────────────────

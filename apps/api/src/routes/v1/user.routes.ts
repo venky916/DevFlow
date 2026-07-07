@@ -7,6 +7,7 @@ const router = Router();
 
 router.use(authenticate);
 
+// /users
 router.get("/me", getMe);
 router.patch("/me", updateProfile);
 router.get("/my-issues", getMyIssues);

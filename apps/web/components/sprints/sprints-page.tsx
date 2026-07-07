@@ -10,8 +10,10 @@ import {
   useSprints,
   useStartSprint,
   useCompleteSprint,
+  useDeleteSprint,
 } from "../../hooks/use-sprints";
 import { CreateSprintModal } from "./create-sprint-modal";
+import { EditSprintModal } from "./edit-sprint-modal";
 import { SprintCard } from "./sprint-card";
 import { toast } from "sonner";
 import type { ISprintWithCount } from "@devflow/types";
@@ -23,6 +25,9 @@ export function SprintsPage() {
   }>();
 
   const [showModal, setShowModal] = useState(false);
+  const [editingSprint, setEditingSprint] = useState<ISprintWithCount | null>(
+    null,
+  );
 
   const { data: workspaces } = useWorkspaces();
   const workspace = workspaces?.find((w) => w.slug === workspaceSlug);
@@ -34,6 +39,9 @@ export function SprintsPage() {
     project?.id ?? "",
   );
   const { mutate: completeSprint, isPending: completing } = useCompleteSprint(
+    project?.id ?? "",
+  );
+  const { mutate: deleteSprint, isPending: deleting } = useDeleteSprint(
     project?.id ?? "",
   );
 
@@ -58,6 +66,14 @@ export function SprintsPage() {
       onSuccess: () =>
         toast.success("Sprint completed! Incomplete issues moved to backlog."),
       onError: () => toast.error("Failed to complete sprint"),
+    });
+  };
+
+  const handleDelete = (sprintId: string) => {
+    deleteSprint(sprintId, {
+      onSuccess: () => toast.success("Sprint deleted"),
+      onError: (err: any) =>
+        toast.error(err?.response?.data?.message ?? "Failed to delete sprint"),
     });
   };
 
@@ -108,11 +124,12 @@ export function SprintsPage() {
       {activeSprint && (
         <div className="flex flex-col gap-3">
           <p className="text-[11px] uppercase tracking-[0.04em] font-mono text-text-muted">
-            Active 
+            Active
           </p>
           <SprintCard
             sprint={activeSprint}
             onComplete={() => handleComplete(activeSprint.id)}
+            onEdit={() => setEditingSprint(activeSprint)}
             completing={completing}
             active
           />
@@ -131,7 +148,10 @@ export function SprintsPage() {
                 key={sprint.id}
                 sprint={sprint}
                 onStart={() => handleStart(sprint.id)}
+                onEdit={() => setEditingSprint(sprint)}
+                onDelete={() => handleDelete(sprint.id)}
                 starting={starting}
+                deleting={deleting}
                 hasActiveSprint={!!activeSprint}
               />
             ))}
@@ -158,6 +178,15 @@ export function SprintsPage() {
           open={showModal}
           onClose={() => setShowModal(false)}
           projectId={project.id}
+        />
+      )}
+
+      {project && editingSprint && (
+        <EditSprintModal
+          open={!!editingSprint}
+          onClose={() => setEditingSprint(null)}
+          projectId={project.id}
+          sprint={editingSprint}
         />
       )}
     </div>

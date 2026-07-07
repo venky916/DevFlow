@@ -23,6 +23,7 @@
     "axios": "^1.16.1",
     "date-fns": "^4.4.0",
     "firebase": "^12.12.1",
+    "fractional-indexing": "^3.3.0",
     "geist": "^1.7.2",
     "lucide-react": "^1.17.0",
     "next": "16.2.0",

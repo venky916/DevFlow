@@ -3,7 +3,7 @@ import { asyncHandler } from "../lib/asyncHandler";
 import { ApiError } from "../lib/ApiError";
 import { IssueStatus, prisma } from "@devflow/db";
 import { sendNoContent, sendSuccess } from "../lib/apiResponse";
-import { createIssueSchema, updateIssueSchema, moveIssueSchema, moveIssueToSprintSchema, issueFilterSchema } from "@devflow/validators";
+import { createIssueSchema, updateIssueSchema, moveIssueSchema, moveIssueToSprintSchema, issueFilterSchema, myIssuesFilterSchema } from "@devflow/validators";
 import { publishToProject } from "../lib/redis.publisher";
 import { notificationQueue, emailQueue } from "@devflow/queues"
 import { ActivityActions, NotificationTypes, ProjectEvents } from "@devflow/types";
@@ -44,12 +44,14 @@ function buildFilterWhere(query: Record<string, any>) {
         ...(filters.priority && { priority: filters.priority }),
         ...(filters.status && { status: filters.status }),
         ...(filters.labelId && { labels: { some: { labelId: filters.labelId } } }),
-        ...((filters.dueDateFrom || filters.dueDateTo) && {
-            dueDate: {
-                ...(filters.dueDateFrom && { gte: filters.dueDateFrom }),
-                ...(filters.dueDateTo && { lte: filters.dueDateTo }),
-            }
-        }),
+        ...(filters.noDueDate
+            ? { dueDate: null }
+            : (filters.dueDateFrom || filters.dueDateTo) && {
+                dueDate: {
+                    ...(filters.dueDateFrom && { gte: filters.dueDateFrom }),
+                    ...(filters.dueDateTo && { lte: filters.dueDateTo }),
+                }
+            }),
     }
 }
 
@@ -245,6 +247,40 @@ export const createIssue = asyncHandler(async (req: Request, res: Response) => {
     sendSuccess(res, issue, "Issue created successfully")
 })
 
+// ─── GET /projects/:id/issues/search ──────────────────────────────
+// mode=child → only issues safe to become a child (no parent, no children of own)
+// no mode → default parent-candidate search (just parentId: null) — not used by any UI now, kept for flexibility
+export const searchProjectIssues = asyncHandler(async (req: Request, res: Response) => {
+    const { id: projectId } = req.params
+    const { q, excludeId, mode } = req.query
+
+    const issues = await prisma.issue.findMany({
+        where: {
+            projectId: projectId as string,
+            parentId: null,
+            ...(mode === "child" && { children: { none: {} } }),
+            ...(excludeId && { id: { not: excludeId as string } }),
+            ...(q && {
+                title: {
+                    contains: q as string,
+                    mode: "insensitive"
+                }
+            })
+        },
+        select: {
+            id: true,
+            title: true,
+            status: true,
+            type: true,
+            priority: true,
+        },
+        orderBy: { updatedAt: "desc" },
+        take: 10
+    })
+
+    sendSuccess(res, issues, "Issues fetched successfully")
+})
+
 // ─── GET /projects/:id/board ──────────────────────────────────────
 export const getBoardIssues = asyncHandler(async (req: Request, res: Response) => {
     const { id: projectId } = req.params
@@ -289,12 +325,24 @@ export const getBoardIssues = asyncHandler(async (req: Request, res: Response) =
         where: {
             projectId: projectId as string,
             sprintId: activeSprint ? activeSprint.id : null,
+            parentId: null,
             NOT: {
                 status: "BACKLOG"
             },
             ...filterWhere
         },
-        include: issueInclude,
+        include: {
+            ...issueInclude,
+            children: {
+                select: {
+                    id: true,
+                    title: true,
+                    status: true,
+                    assignee: { select: { id: true, name: true, avatarUrl: true } }
+                },
+                orderBy: { position: "asc" }
+            }
+        },
         orderBy: {
             position: 'asc'
         }
@@ -340,6 +388,17 @@ export const getBacklogIssues = asyncHandler(async (req: Request, res: Response)
 // ─── GET /projects/:id/backlog/grouped ────────────────────────────
 export const getBacklogGrouped = asyncHandler(async (req: Request, res: Response) => {
     const { id: projectId } = req.params;
+    const filterWhere = buildFilterWhere(req.query)
+
+    const childrenInclude = {
+        children: {
+            select: {
+                id: true, title: true, status: true,
+                assignee: { select: { id: true, name: true, avatarUrl: true } }
+            },
+            orderBy: { position: "asc" as const }
+        }
+    }
 
     const sprints = await prisma.sprint.findMany({
         where: {
@@ -348,7 +407,8 @@ export const getBacklogGrouped = asyncHandler(async (req: Request, res: Response
         },
         include: {
             issues: {
-                include: issueInclude,
+                where: { parentId: null, ...filterWhere },
+                include: { ...issueInclude, ...childrenInclude },
                 orderBy: { position: "asc" }
             }
         },
@@ -356,11 +416,8 @@ export const getBacklogGrouped = asyncHandler(async (req: Request, res: Response
     });
 
     const backlogIssues = await prisma.issue.findMany({
-        where: {
-            projectId: projectId as string,
-            sprintId: null
-        },
-        include: issueInclude,
+        where: { projectId: projectId as string, sprintId: null, parentId: null, ...filterWhere },
+        include: { ...issueInclude, ...childrenInclude },
         orderBy: { position: "asc" }
     });
 
@@ -428,45 +485,6 @@ export const getIssueById = asyncHandler(async (req: Request, res: Response) => 
                     createdAt: "asc"
                 }
             },
-            comments: {
-                include: {
-                    user: {
-                        select: {
-                            id: true,
-                            name: true,
-                            avatarUrl: true
-                        }
-                    },
-                    attachments: {
-                        include: {
-                            uploader: {
-                                select: {
-                                    id: true,
-                                    name: true,
-                                    avatarUrl: true
-                                }
-                            }
-                        }
-                    }
-                },
-                orderBy: {
-                    createdAt: "asc"
-                }
-            },
-            activities: {
-                include: {
-                    user: {
-                        select: {
-                            id: true,
-                            name: true,
-                            avatarUrl: true
-                        }
-                    }
-                },
-                orderBy: {
-                    createdAt: "desc"
-                }
-            }
         }
     })
 
@@ -508,17 +526,28 @@ export const updateIssue = asyncHandler(async (req: Request, res: Response) => {
         }
     }
 
-    // validate parentId
-    if (parentId) {
-        if (parentId === id) throw ApiError.badRequest('Issue cannot be its own parent')
-        const parent = await prisma.issue.findUnique({
-            where: {
-                id: parentId
-            }
+    // validate parentId — safety net only, no UI on the child's own page calls this
+    if (parentId !== undefined) {
+        const project = await prisma.project.findUnique({ where: { id: issue.projectId }, select: { workspaceId: true } })
+        const wsMember = await prisma.workspaceMember.findUnique({
+            where: { workspaceId_userId: { workspaceId: project!.workspaceId, userId: req.user!.id } }
         })
-        if (!parent) throw ApiError.badRequest('Parent issue not found')
-        if (parent.parentId) throw ApiError.badRequest('Cannot nest more than 1 level deep in parent-child relationship')
-        if (parent.projectId !== issue.projectId) throw ApiError.badRequest('Parent must be in same project')
+        const projMember = await prisma.projectMember.findUnique({
+            where: { projectId_userId: { projectId: issue.projectId, userId: req.user!.id } }
+        })
+        const isLeadOrAdmin = wsMember?.role === 'ADMIN' || projMember?.role === 'LEAD'
+        if (!isLeadOrAdmin) throw ApiError.forbidden('Only leads or admins can change an issue\'s parent')
+
+        if (parentId) {
+            if (parentId === id) throw ApiError.badRequest('Issue cannot be its own parent')
+            const parent = await prisma.issue.findUnique({ where: { id: parentId } })
+            if (!parent) throw ApiError.badRequest('Parent issue not found')
+            if (parent.parentId) throw ApiError.badRequest('Cannot nest more than 1 level deep in parent-child relationship')
+            if (parent.projectId !== issue.projectId) throw ApiError.badRequest('Parent must be in same project')
+
+            const childCount = await prisma.issue.count({ where: { parentId: id as string } })
+            if (childCount > 0) throw ApiError.badRequest('Cannot set a parent — this issue already has sub-issues')
+        }
     }
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -655,7 +684,7 @@ export const moveIssue = asyncHandler(async (req: Request, res: Response) => {
 // ─── PATCH /issues/:id/move-to-sprint ────────────────────────────
 export const moveIssueToSprint = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
-    const { sprintId } = moveIssueToSprintSchema.parse(req.body)
+    const { sprintId, position } = moveIssueToSprintSchema.parse(req.body)
 
     const issue = await prisma.issue.findUnique({
         where: {
@@ -698,7 +727,8 @@ export const moveIssueToSprint = asyncHandler(async (req: Request, res: Response
             },
             data: {
                 sprintId: sprintId as string ?? null,
-                status: newStatus
+                status: newStatus,
+                ...(position && { position }),
             }
         })
 
@@ -893,6 +923,146 @@ export const getSubIssues = asyncHandler(async (req: Request, res: Response) => 
     sendSuccess(res, children, "Sub-issues fetched successfully")
 })
 
+// ─── POST /issues/:id/children/attach ─────────────────────────────
+// lead/admin only — attaches an EXISTING standalone issue as a child of :id
+// called from the PARENT's page only (dev-1's sub-issue search box)
+export const attachChildIssue = asyncHandler(async (req: Request, res: Response) => {
+    const { id: parentId } = req.params
+    const { issueId: childId } = req.body
+
+    if (!childId) {
+        throw ApiError.badRequest('issueId is required')
+    }
+    if (childId === parentId) {
+        throw ApiError.badRequest('Issue cannot be its own parent')
+    }
+
+
+    const parent = await prisma.issue.findUnique({
+        where: {
+            id: parentId as string
+        }
+    })
+
+    if (!parent) {
+        throw ApiError.notFound('Parent issue not found')
+    }
+    if (parent.parentId) {
+        throw ApiError.badRequest('Cannot nest more than 1 level deep in parent-child relationship')
+    }
+
+    const child = await prisma.issue.findUnique({
+        where: {
+            id: childId as string
+        }
+    })
+
+    if (!child) {
+        throw ApiError.notFound('Child issue to attach not found')
+    }
+    if (child.projectId !== parent.projectId) throw ApiError.badRequest('Issue must be in same project')
+    if (child.parentId) throw ApiError.badRequest('Issue already has a parent')
+
+    const childHasChildren = await prisma.issue.count({
+        where: {
+            parentId: childId as string
+        }
+    })
+
+    if (childHasChildren > 0) {
+        throw ApiError.badRequest('Cannot attach — this issue already has its own sub-issues')
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+        await tx.issue.update({
+            where: {
+                id: childId as string
+            },
+            data: {
+                parentId: parentId as string,
+                sprintId: parent.sprintId ?? null
+            }
+        })
+
+        await syncParentStatus(parentId as string, tx)
+
+        return tx.issue.findUnique({ where: { id: childId as string }, include: issueInclude })
+    })
+
+    await deleteCache(CacheKeys.board(parent.projectId, parent.sprintId ?? null))
+
+    await logActivity({
+        action: ActivityActions.ISSUE_UPDATED,
+        scope: "ISSUE",
+        userId: req.user!.id,
+        projectId: parent.projectId,
+        issueId: childId as string,
+        meta: { attachedToParent: parentId },
+    })
+
+    await publishToProject(parent.projectId, {
+        type: ProjectEvents.ISSUE_UPDATED,
+        payload: { issueId: childId, changes: { parentId } }
+    })
+
+    sendSuccess(res, updated, "Issue attached as sub-issue")
+
+})
+
+// ─── DELETE /issues/:id/children/:childId ─────────────────────────
+// lead/admin only — detaches a child, making it standalone again
+// called from the PARENT's page only (dev-1's sub-issue list, X button)
+export const detachChildIssue = asyncHandler(async (req: Request, res: Response) => {
+    const { id: parentId, childId } = req.params
+
+    const child = await prisma.issue.findUnique({
+        where: {
+            id: childId as string
+        }
+    })
+
+    if (!child) {
+        throw ApiError.notFound('Child issue not found')
+    }
+
+    if (child.parentId !== parentId) {
+        throw ApiError.badRequest('Issue is not a child of this parent')
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+        const result = await tx.issue.update({
+            where: {
+                id: childId as string
+            },
+            data: {
+                parentId: null,
+            }
+        })
+
+        await syncParentStatus(parentId as string, tx)
+        return result
+    })
+
+    await deleteCache(CacheKeys.board(child.projectId, child.sprintId ?? null))
+
+    await logActivity({
+        action: ActivityActions.ISSUE_UPDATED,
+        scope: "ISSUE",
+        userId: req.user!.id,
+        projectId: child.projectId,
+        issueId: childId as string,
+        meta: { detachedFromParent: parentId },
+    })
+
+    await publishToProject(child.projectId, {
+        type: ProjectEvents.ISSUE_UPDATED,
+        payload: { issueId: childId, changes: { parentId: null } }
+    })
+
+    sendSuccess(res, updated, "Sub-issue detached")
+
+})
+
 // ─── DELETE /issues/:id ───────────────────────────────────────────
 export const deleteIssue = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
@@ -954,10 +1124,23 @@ export const deleteIssue = asyncHandler(async (req: Request, res: Response) => {
 // ─── GET /my-issues ───────────────────────────────────────────────
 export const getMyIssues = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id;
+    const filters = myIssuesFilterSchema.parse(req.query)
 
     const issues = await prisma.issue.findMany({
         where: {
-            assigneeId: userId
+            assigneeId: userId,
+            ...(filters.projectId && { projectId: filters.projectId }),
+            ...(filters.sprintId && { sprintId: filters.sprintId }),
+            ...(filters.type && { type: filters.type }),
+            ...(filters.priority && { priority: filters.priority }),
+            ...(filters.noDueDate
+                ? { dueDate: null }
+                : (filters.dueDateFrom || filters.dueDateTo) && {
+                    dueDate: {
+                        ...(filters.dueDateFrom && { gte: filters.dueDateFrom }),
+                        ...(filters.dueDateTo && { lte: filters.dueDateTo }),
+                    }
+                }),
         },
         include: {
             ...issueInclude,

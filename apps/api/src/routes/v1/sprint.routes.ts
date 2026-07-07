@@ -11,7 +11,6 @@ router.use(authenticate);
 router.post("/", requireProjectRole('LEAD'), createSprint);
 router.get("/", requireProjectMember, getSprints);
 
-// TODO // middleware that fetches sprint and attaches projectId
 // /sprints/:id
 router.get("/:id", attachSprintProject, requireProjectMember, getSprintById);
 router.patch("/:id", attachSprintProject, requireProjectRole('LEAD'), updateSprint);
