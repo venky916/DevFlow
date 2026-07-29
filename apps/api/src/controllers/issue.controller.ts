@@ -11,6 +11,7 @@ import { CacheKeys, deleteCache, deleteManyCache, getCache, setCache, TTL } from
 import { generateKeyBetween } from "fractional-indexing"
 import { buildUpdateData } from "../lib/updateBuilder";
 import { logActivity } from "../lib/logActivity";
+import { signUrl } from "../lib/signUrl";
 
 // ─── shared include — used across all issue fetches ───────────────
 const issueInclude = {
@@ -128,7 +129,7 @@ async function notifyAssignee(
 // ─── POST /projects/:id/issues ────────────────────────────────────
 export const createIssue = asyncHandler(async (req: Request, res: Response) => {
     const { id: projectId } = req.params;
-    const { title, description, priority, type, assigneeId, sprintId, parentId, dueDate, labelIds, status } = createIssueSchema.parse(req.body);
+    const { title, description, priority, type, assigneeId, sprintId, parentId, dueDate, labelIds, status, attachments } = createIssueSchema.parse(req.body);
     const creatorId = req.user!.id;
 
     // validate assignee is project member
@@ -208,6 +209,16 @@ export const createIssue = asyncHandler(async (req: Request, res: Response) => {
                 data: labelIds.map(labelId => ({
                     issueId: created.id,
                     labelId: labelId
+                }))
+            })
+        }
+
+        if (attachments && attachments.length > 0) {
+            await tx.attachment.createMany({
+                data: attachments.map(a => ({
+                    ...a,
+                    issueId: created.id,
+                    uploadedBy: creatorId,
                 }))
             })
         }
@@ -492,7 +503,20 @@ export const getIssueById = asyncHandler(async (req: Request, res: Response) => 
         throw ApiError.notFound('Issue not found')
     }
 
-    sendSuccess(res, issue, "Issue fetched successfully")
+    const signedIssue = {
+        ...issue,
+        assignee: issue.assignee ? { ...issue.assignee, avatarUrl: await signUrl(issue.assignee.avatarUrl) } : null,
+        creator: { ...issue.creator, avatarUrl: await signUrl(issue.creator.avatarUrl) },
+        attachments: await Promise.all(
+            issue.attachments.map(async (a) => ({
+                ...a,
+                url: (await signUrl(a.url)) ?? a.url,
+                uploader: { ...a.uploader, avatarUrl: await signUrl(a.uploader.avatarUrl) },
+            })),
+        ),
+    }
+
+    sendSuccess(res, signedIssue, "Issue fetched successfully")
 })
 
 // ─── PATCH /issues/:id ────────────────────────────────────────────

@@ -8,20 +8,28 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@devflow/ui/components/button";
 import { Input } from "@devflow/ui/components/input";
 import { ConfirmModal } from "@devflow/ui/components/confirm-modal";
+import { ImageUploadButton } from "@devflow/ui/components/image-upload-button";
 import { SectionHeading } from "../../shared/section-heading";
 import {
   useUpdateWorkspace,
   useDeleteWorkspace,
 } from "../../../hooks/use-workspaces";
+import { useLogoUpload } from "../../../hooks/use-logo-upload";
 import type { UpdateWorkspaceInput } from "@devflow/validators";
 
 interface Props {
   workspaceId: string;
   workspaceName: string;
+  workspaceLogoUrl: string | null;
   isAdmin: boolean;
 }
 
-export function GeneralTab({ workspaceId, workspaceName, isAdmin }: Props) {
+export function GeneralTab({
+  workspaceId,
+  workspaceName,
+  workspaceLogoUrl,
+  isAdmin,
+}: Props) {
   const router = useRouter();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -29,14 +37,13 @@ export function GeneralTab({ workspaceId, workspaceName, isAdmin }: Props) {
     useUpdateWorkspace(workspaceId);
   const { mutate: deleteWorkspace, isPending: isDeleting } =
     useDeleteWorkspace(workspaceId);
+  const { uploadLogo, isUploading } = useLogoUpload(workspaceId);
 
   const {
     register,
     handleSubmit,
     formState: { isDirty },
-  } = useForm<UpdateWorkspaceInput>({
-    values: { name: workspaceName },
-  });
+  } = useForm<UpdateWorkspaceInput>({ values: { name: workspaceName } });
 
   const onSave = (data: UpdateWorkspaceInput) => {
     updateWorkspace(data, {
@@ -58,9 +65,36 @@ export function GeneralTab({ workspaceId, workspaceName, isAdmin }: Props) {
     });
   };
 
+  const handleLogoSelect = async (file: File) => {
+    try {
+      await uploadLogo(file);
+      toast.success("Logo updated");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload logo");
+    }
+  };
+
   return (
     <>
       <div className="flex flex-col gap-6">
+        <div>
+          <SectionHeading
+            title="Workspace logo"
+            description="Shown in the sidebar and workspace switcher."
+          />
+          <ImageUploadButton
+            src={workspaceLogoUrl}
+            fallbackLabel={workspaceName.charAt(0).toUpperCase()}
+            shape="square"
+            size={56}
+            isUploading={isUploading}
+            disabled={!isAdmin}
+            onFileSelect={handleLogoSelect}
+          />
+        </div>
+
+        <div className="h-px bg-border-default" />
+
         <div>
           <SectionHeading
             title="Workspace name"

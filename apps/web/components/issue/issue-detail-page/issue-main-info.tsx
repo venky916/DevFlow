@@ -3,7 +3,10 @@
 import { Loader2 } from "lucide-react";
 import { ParentLink } from "../../shared/parent-link";
 import { SubIssueList } from "../../shared/sub-issue-list";
-import type { IIssueWithRelations } from "@devflow/types";
+import type { IIssueWithRelations, PendingAttachment } from "@devflow/types";
+import { useIssueAttachments } from "../../../hooks/use-issue-attachments";
+import { FileUploadList } from "@devflow/ui/components/file-upload-list";
+import { api } from "../../../lib/axios";
 
 interface Props {
   issue: IIssueWithRelations;
@@ -24,6 +27,28 @@ export function IssueMainInfo({
   save,
   onNavigate,
 }: Props) {
+  const {
+    items: attachmentItems,
+    addFiles,
+    removeFile,
+  } = useIssueAttachments(
+    issue.id,
+    issue.attachments?.map((a: any) => ({
+      id: a.id,
+      fileName: a.fileName,
+      fileSize: a.fileSize ?? 0,
+      mimeType: a.mimeType ?? "",
+      url: a.url,
+    })) ?? [],
+  );
+
+  const handleDownload = async (item: PendingAttachment) => {
+    if (!item.attachmentId) return;
+    const res = await api.get(
+      `/issues/${issue.id}/attachments/${item.attachmentId}/download-url`,
+    );
+    window.location.href = res.data.data.downloadUrl;
+  };
   return (
     <div className="flex flex-col gap-4">
       <ParentLink issue={issue} onNavigate={onNavigate} />
@@ -45,6 +70,13 @@ export function IssueMainInfo({
         placeholder="Add a description..."
         {...register("description")}
         onBlur={handleSubmit(save)}
+      />
+
+      <FileUploadList
+        items={attachmentItems}
+        onFilesAdded={addFiles}
+        onRemove={removeFile}
+        onDownload={handleDownload}
       />
 
       <SubIssueList

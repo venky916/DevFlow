@@ -20,6 +20,8 @@ import { PRIORITY_OPTIONS, TYPE_OPTIONS } from "../../lib/issue-constants";
 import { IssueTypeSelect } from "../shared/issue-type-select";
 import { ProjectLabelSelect } from "../shared/project-label-select";
 import type { ISprint, IUserPublic } from "@devflow/types";
+import { useAttachmentUpload } from "../../hooks/use-attachment-upload";
+import { FileUploadList } from "@devflow/ui/components/file-upload-list";
 
 interface Props {
   open: boolean;
@@ -39,6 +41,13 @@ export function CreateIssueModal({
   activeSprint,
 }: Props) {
   const { mutateAsync, isPending } = useCreateIssue(projectId);
+  const {
+    items: pendingFiles,
+    addFiles,
+    removeFile,
+    reset: resetFiles,
+    readyAttachments,
+  } = useAttachmentUpload();
 
   // opened from the board (activeSprint passed) → issue is locked to that
   // sprint and starts at TODO. Opened from backlog (activeSprint === null)
@@ -77,9 +86,11 @@ export function CreateIssueModal({
         status: isBoardContext ? "TODO" : (data.status ?? "BACKLOG"),
         sprintId: data.sprintId || null,
         assigneeId: data.assigneeId || null,
+        attachments: readyAttachments,
       });
       toast.success("Issue created!");
       reset();
+      resetFiles();
       onClose();
     } catch (err: any) {
       toast.error(err.response?.data?.message ?? "Failed to create issue");
@@ -103,6 +114,11 @@ export function CreateIssueModal({
           placeholder="Add a description..."
           error={errors.description?.message}
           {...register("description")}
+        />
+        <FileUploadList
+          items={pendingFiles}
+          onFilesAdded={addFiles}
+          onRemove={removeFile}
         />
 
         {/* Type + Priority */}

@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Pencil, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { Spinner } from "@devflow/ui/components/spinner";
-import { Avatar } from "@devflow/ui/components/avatar";
+import { ImageUploadButton } from "@devflow/ui/components/image-upload-button";
 import { Select } from "@devflow/ui/components/select";
 import { useMyProfile, useUpdateProfile } from "../../../hooks/use-user";
+import { useAvatarUpload } from "../../../hooks/use-avatar-upload";
 
 const TIMEZONE_OPTIONS = [
   { label: "Asia/Kolkata (IST)", value: "Asia/Kolkata" },
@@ -24,6 +25,7 @@ export default function ProfilePage() {
 
   const { data: profile, isLoading } = useMyProfile();
   const { mutateAsync: updateProfile, isPending: saving } = useUpdateProfile();
+  const { uploadAvatar, isUploading } = useAvatarUpload();
 
   const [name, setName] = useState("");
 
@@ -51,6 +53,17 @@ export default function ProfilePage() {
     }
   };
 
+  const handleAvatarSelect = async (file: File) => {
+    try {
+      await uploadAvatar(file);
+      toast.success("Avatar updated");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to upload avatar",
+      );
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -71,27 +84,18 @@ export default function ProfilePage() {
         Back
       </button>
 
-      {/* identity card — name is the only editable field here, avatarUrl
-          click is stubbed pending the B2 presigned-upload flow */}
       <div className="rounded-[6px] border border-border-default p-5 flex flex-col gap-4">
         <div className="flex items-center gap-3.5">
-          <button
-            onClick={() =>
-              toast(
-                "Avatar upload wiring pending — TODO: hook into B2 presigned upload flow",
-              )
-            }
-            className="relative"
-          >
-            <Avatar
-              name={profile.name ?? profile.email}
-              size="lg"
-              src={profile.avatarUrl ?? undefined}
-            />
-            <span className="absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full bg-bg-surface border border-border-default flex items-center justify-center">
-              <Pencil className="h-2.5 w-2.5 text-text-muted" />
-            </span>
-          </button>
+          <ImageUploadButton
+            src={profile.avatarUrl ?? null}
+            fallbackLabel={(profile.name ?? profile.email)
+              .charAt(0)
+              .toUpperCase()}
+            shape="circle"
+            size={40}
+            isUploading={isUploading}
+            onFileSelect={handleAvatarSelect}
+          />
           <div>
             <p className="text-[15px] font-semibold text-text-primary">
               {profile.name ?? "Unnamed"}
@@ -118,7 +122,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* account card — read-only email, editable timezone, member-since */}
       <div className="rounded-[6px] border border-border-default p-5 flex flex-col gap-3">
         <p className="text-[11px] uppercase tracking-[0.04em] font-mono text-text-muted">
           Account

@@ -15,7 +15,7 @@ export type PresignedUploadResult = {
 
 export type UploadFolder = "attachments" | "avatars" | "logos"
 
-export const generatePresignedUploadUrl = async (folder: UploadFolder, fileName: string, mimeType: string, expiresInSeconds = 3000) => {
+export const generatePresignedUploadUrl = async (folder: UploadFolder, fileName: string, mimeType: string, fileSize: number, expiresInSeconds = 3000) => {
 
     // unique key so files never collide
     const ext = fileName.split('.').pop()
@@ -24,7 +24,8 @@ export const generatePresignedUploadUrl = async (folder: UploadFolder, fileName:
     const command = new PutObjectCommand({
         Bucket: B2_BUCKET_NAME,
         Key: fileKey,
-        ContentType: mimeType
+        ContentType: mimeType,
+        ContentLength: fileSize
     })
 
     const uploadUrl = await getSignedUrl(b2Client, command, {
@@ -43,10 +44,13 @@ export const generatePresignedUploadUrl = async (folder: UploadFolder, fileName:
 // ─── Download URL ─────────────────────────────────────────────
 // since bucket is private, every read needs a signed URL
 // expires in 1 hour by default
-export const generatePresignedDownloadUrl = async (fileKey: string, expiresInSeconds = 3600) => {
+export const generatePresignedDownloadUrl = async (fileKey: string, expiresInSeconds = 3600, forceDownloadFileName?: string,) => {
     const command = new GetObjectCommand({
         Bucket: B2_BUCKET_NAME,
-        Key: fileKey
+        Key: fileKey,
+        ...(forceDownloadFileName && {
+            ResponseContentDisposition: `attachment; filename="${forceDownloadFileName}"`,
+        }),
     })
 
     return getSignedUrl(b2Client, command, {
@@ -56,7 +60,6 @@ export const generatePresignedDownloadUrl = async (fileKey: string, expiresInSec
 
 // ─── Delete ───────────────────────────────────────────────────
 // used by attachment delete endpoint + future cleanup worker
-
 export const deleteFileFromB2 = async (fileKey: string) => {
     const command = new DeleteObjectCommand({
         Bucket: B2_BUCKET_NAME,

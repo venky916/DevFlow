@@ -52,3 +52,17 @@ export function useDeleteWorkspace(workspaceId: string) {
         onSuccess: () => qc.invalidateQueries({ queryKey: ["workspaces"] }),
     });
 }
+
+export function useUpdateWorkspaceLogo(workspaceId: string) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: async (url: string) => {
+            const res = await api.patch(`/workspaces/${workspaceId}/logo`, { url });
+            return res.data.data as IWorkspace;
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ["workspaces"] });
+            qc.invalidateQueries({ queryKey: ["workspace", workspaceId] });
+        },
+    });
+}

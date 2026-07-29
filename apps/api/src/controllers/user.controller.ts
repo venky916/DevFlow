@@ -6,6 +6,7 @@ import { sendSuccess } from "../lib/apiResponse";
 import { generatePresignedDownloadUrl } from "@devflow/storage";
 import { updateProfileSchema, updateAvatarSchema } from "@devflow/validators";
 import { buildUpdateData } from "../lib/updateBuilder";
+import { signUrl } from "../lib/signUrl";
 
 // ─── GET MY PROFILE /users/me ───────────────────────────────────────────
 export const getMe = asyncHandler(async (req: Request, res: Response) => {
@@ -29,13 +30,7 @@ export const getMe = asyncHandler(async (req: Request, res: Response) => {
     }
 
     // private bucket — sign the avatar URL if it exists
-    const signedAvatarUrl = user.avatarUrl
-        ? await generatePresignedDownloadUrl(
-            user.avatarUrl.includes('avatars/')
-                ? user.avatarUrl.split(`${process.env.B2_BUCKET_NAME}/`)[1] ?? user.avatarUrl
-                : user.avatarUrl
-        )
-        : null
+    const signedAvatarUrl = await signUrl(user.avatarUrl)
 
     sendSuccess(res, { ...user, avatarUrl: signedAvatarUrl }, 'Profile fetched successfully')
 
@@ -85,5 +80,5 @@ export const updateAvatar = asyncHandler(async (req: Request, res: Response) => 
             timezone: true
         }
     })
-    sendSuccess(res, user, 'Avatar updated successfully')
+    sendSuccess(res, { ...user, avatarUrl: await signUrl(user.avatarUrl) }, 'Avatar updated successfully')
 })

@@ -4,6 +4,14 @@ const IssueTypeEnum = z.enum(['BUG', 'TASK', 'FEATURE', 'IMPROVEMENT', 'OTHER'])
 const IssueStatusEnum = z.enum(['BACKLOG', 'TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'])
 const IssuePriorityEnum = z.enum(['LOW', 'MEDIUM', 'HIGH', 'NO_PRIORITY', 'URGENT',])
 
+const attachmentInputSchema = z.object({
+    fileKey: z.string().min(1),
+    fileName: z.string().min(1),
+    fileSize: z.number().optional(),
+    mimeType: z.string().optional(),
+    url: z.string().min(1),
+});
+
 export const createIssueSchema = z.object({
     title: z.string().min(1, "Title is required").max(200, "Title is too long"),
     description: z.string().max(500).optional().nullable(),
@@ -15,6 +23,7 @@ export const createIssueSchema = z.object({
     parentId: z.string().optional().nullable(),
     dueDate: z.coerce.date().optional().nullable(),
     labelIds: z.array(z.string()).optional().default([]),
+    attachments: z.array(attachmentInputSchema).optional(),
 })
 
 export const updateIssueSchema = z.object({

@@ -1,6 +1,7 @@
 import { IUserPublic } from "./user.types";
 import { ISprint } from "./sprint.types";
 import { IProjectLabel } from "./project.types";
+import { IAttachment } from "./attachment";
 
 export type IssueStatus = "BACKLOG" | "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
 
@@ -33,4 +34,5 @@ export interface IIssueWithRelations extends IIssue {
     parent?: { id: string; title: string } | null;
     children?: IIssueWithRelations[];
     labels?: IProjectLabel[];
+    attachments?: IAttachment[];
 }

@@ -5,7 +5,7 @@ import { ApiError } from "../lib/ApiError"
 import { sendNoContent, sendSuccess, sendCreated } from "../lib/apiResponse"
 import { publishToIssue } from "../lib/redis.publisher"
 import { activityQueue, emailQueue, notificationQueue } from "@devflow/queues"
-import { createCommentSchema, extractMentions, updateCommentSchema } from "@devflow/validators"
+import { createCommentSchema, extractMentions, updateCommentSchema, getPlainText } from "@devflow/validators"
 import { ActivityActions, IssueEvents, NotificationTypes } from "@devflow/types"
 import { logActivity } from "../lib/logActivity"
 
@@ -54,6 +54,8 @@ export const createComment = asyncHandler(async (req: Request, res: Response) =>
         select: { name: true }
     })
 
+    const plainPreview = getPlainText(content)
+
     // ─── Publish to WS (issue detail page)
     await publishToIssue(issueId as string, {
         type: IssueEvents.COMMENT_ADDED,
@@ -69,14 +71,12 @@ export const createComment = asyncHandler(async (req: Request, res: Response) =>
         userId,
         projectId: issue.projectId,
         issueId: issueId as string,
-        meta: { commentId: comment.id, preview: content.slice(0, 100) },
+        meta: { commentId: comment.id, preview: plainPreview.slice(0, 100) },
     })
 
-    // ─── mention + notification logic
-    // extract @[userId] mentions from content
-    const mentionedUserIds = extractMentions(content)
+    const mentions = extractMentions(content)
 
-    if (mentionedUserIds.length > 0) {
+    if (mentions.length > 0) {
         // validate each mentioned user is actually a project member
         const projectMembers = await prisma.projectMember.findMany({
             where: {
@@ -88,12 +88,12 @@ export const createComment = asyncHandler(async (req: Request, res: Response) =>
         })
         const membersIds = new Set(projectMembers.map(member => member.userId))
 
-        const validMentionIds = mentionedUserIds.filter(id => id !== userId && membersIds.has(id))
+        const validMentions = mentions.filter(m => m.id !== userId && membersIds.has(m.id))
 
         // fire MENTION notification for each valid mention
-        for (const mentionedUserId of validMentionIds) {
+        for (const mention of validMentions) {
             await notificationQueue.add('notification', {
-                userId: mentionedUserId,
+                userId: mention.id,
                 type: NotificationTypes.MENTION,
                 content: `@${commenter?.name ?? 'Someone'} mentioned you in: ${issue.title}`,
                 link: `/issues/${issueId}`,
@@ -102,7 +102,7 @@ export const createComment = asyncHandler(async (req: Request, res: Response) =>
         }
 
         // ISSUE_COMMENTED → creator + assignee only if NOT already mentioned
-        const mentionedSet = new Set(validMentionIds)
+        const mentionedSet = new Set(validMentions.map(m => m.id))
         const commentRecipients = [issue.creatorId, issue.assigneeId].filter(Boolean) as string[]
 
         for (const recipientId of commentRecipients) {

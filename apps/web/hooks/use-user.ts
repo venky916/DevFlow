@@ -31,3 +31,14 @@ export function useUpdateProfile() {
         onSuccess: () => qc.invalidateQueries({ queryKey: ["me"] }),
     });
 }
+
+export function useUpdateAvatar() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: async (avatarUrl: string) => {
+            const res = await api.patch("/users/me/avatar", { avatarUrl }); // ⚠️ verify against router — file shows "/user/me/avatar" singular
+            return res.data.data as IMyProfile;
+        },
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["me"] }),
+    });
+}

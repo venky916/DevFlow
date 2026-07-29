@@ -7,6 +7,7 @@ import { createWorkspaceSchema, updateMemberRoleSchema, updateWorkspaceSchema, u
 import { generatePresignedDownloadUrl } from "@devflow/storage"
 import { getCache, setCache, CacheKeys, TTL, deleteCache } from "../lib/cache"
 import { buildUpdateData } from "../lib/updateBuilder"
+import { signUrl } from "../lib/signUrl"
 
 const getMember = async (workspaceId: string, userId: string) => {
     const member = await prisma.workspaceMember.findFirst({
@@ -93,7 +94,16 @@ export const getMyWorkspaces = asyncHandler(async (req: Request, res: Response) 
             createdAt: 'desc'
         }
     })
-    sendSuccess(res, workspaces, 'Workspaces fetched successfully')
+
+    const signed = await Promise.all(
+        workspaces.map(async (ws) => ({
+            ...ws,
+            logoUrl: ws.logoUrl
+                ? await signUrl(ws.logoUrl)
+                : null
+        }))
+    )
+    sendSuccess(res, signed, 'Workspaces fetched successfully')
 })
 
 // ─── GET /workspaces/:id ──────────────────────────────────────────
@@ -153,7 +163,7 @@ export const getWorkspaceById = asyncHandler(async (req: Request, res: Response)
         }
     })
 
-    sendSuccess(res, { ...workspace, activeSprintsCount }, 'Workspace fetched successfully')
+    sendSuccess(res, { ...workspace, logoUrl: await signUrl(workspace.logoUrl), activeSprintsCount }, 'Workspace fetched successfully')
 
 })
 

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authenticate } from "../../middlewares/auth.middleware";
 import { getPresignedUploadUrl, deleteFile } from "../../controllers/upload.controller";
-import { saveAttachment, getAttachments, deleteAttachment } from "../../controllers/attachement.controller";
+import { saveAttachment, getAttachments, deleteAttachment, getAttachmentDownloadUrl } from "../../controllers/attachement.controller";
 import { updateWorkspaceLogo } from "../../controllers/workspace.controller";
 import { requireProjectMember, requireWorkspaceMember } from "../../middlewares/permission.middleware";
 import { updateAvatar } from "../../controllers/user.controller";
@@ -18,10 +18,11 @@ router.delete("/upload/:file", deleteFile);
 // ─── ATTACHMENTS ──────────────────────────────────────────────
 router.post("/issues/:id/attachments", saveAttachment);
 router.get("/issues/:id/attachments", getAttachments);
-router.delete("/issues/:id/attachments/:id", deleteAttachment);
+router.delete("/issues/:id/attachments/:attachmentId", deleteAttachment);
+router.get("/issues/:id/attachments/:attachmentId/download-url", getAttachmentDownloadUrl);
 
 // ─── AVATAR + LOGO ────────────────────────────────────────────
 router.patch("/workspaces/:id/logo", updateWorkspaceLogo);
-router.patch("/user/me/avatar", updateAvatar)
+router.patch("/users/me/avatar", updateAvatar)
 
 export default router;

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
+import type { TiptapContent } from "@devflow/validators";
 
 export function useComments(issueId: string) {
     return useQuery({
@@ -15,22 +16,26 @@ export function useComments(issueId: string) {
 export function useCreateComment(issueId: string) {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: async (data: { content: string }) => {
+        mutationFn: async (data: { content: TiptapContent }) => {
             const res = await api.post(`/issues/${issueId}/comments`, data);
             return res.data.data;
         },
-        onSuccess: () => qc.invalidateQueries({ queryKey: ["comments", issueId] }),
+        onSuccess: async () => {
+            await qc.refetchQueries({ queryKey: ["activities", issueId] });
+            qc.invalidateQueries({ queryKey: ["comments", issueId] })
+        },
     });
 }
 
-export function useUpdateComment() {
+export function useUpdateComment(issueId: string) {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: async ({ commentId, content }: { commentId: string; content: string }) => {
+        mutationFn: async ({ commentId, content }: { commentId: string; content: TiptapContent }) => {
             const res = await api.patch(`/comments/${commentId}`, { content });
             return res.data.data;
         },
-        onSuccess: (_data, { commentId }) => {
+        onSuccess: async (_data, { commentId }) => {
+            await qc.refetchQueries({ queryKey: ["activities", issueId] });
             qc.invalidateQueries({ queryKey: ["comments"] });
         },
     });
@@ -42,6 +47,9 @@ export function useDeleteComment(issueId: string) {
         mutationFn: async (commentId: string) => {
             await api.delete(`/comments/${commentId}`);
         },
-        onSuccess: () => qc.invalidateQueries({ queryKey: ["comments", issueId] }),
+        onSuccess: async () => {
+            await qc.refetchQueries({ queryKey: ["activities", issueId] });
+            qc.invalidateQueries({ queryKey: ["comments", issueId] })
+        },
     });
 }

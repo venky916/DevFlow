@@ -26,7 +26,6 @@ export type AggregateComment = {
 
 export type CommentMinAggregateOutputType = {
   id: string | null
-  content: string | null
   issueId: string | null
   userId: string | null
   createdAt: Date | null
@@ -35,7 +34,6 @@ export type CommentMinAggregateOutputType = {
 
 export type CommentMaxAggregateOutputType = {
   id: string | null
-  content: string | null
   issueId: string | null
   userId: string | null
   createdAt: Date | null
@@ -55,7 +53,6 @@ export type CommentCountAggregateOutputType = {
 
 export type CommentMinAggregateInputType = {
   id?: true
-  content?: true
   issueId?: true
   userId?: true
   createdAt?: true
@@ -64,7 +61,6 @@ export type CommentMinAggregateInputType = {
 
 export type CommentMaxAggregateInputType = {
   id?: true
-  content?: true
   issueId?: true
   userId?: true
   createdAt?: true
@@ -155,7 +151,7 @@ export type CommentGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
 
 export type CommentGroupByOutputType = {
   id: string
-  content: string
+  content: runtime.JsonValue
   issueId: string
   userId: string
   createdAt: Date
@@ -185,7 +181,7 @@ export type CommentWhereInput = {
   OR?: Prisma.CommentWhereInput[]
   NOT?: Prisma.CommentWhereInput | Prisma.CommentWhereInput[]
   id?: Prisma.StringFilter<"Comment"> | string
-  content?: Prisma.StringFilter<"Comment"> | string
+  content?: Prisma.JsonFilter<"Comment">
   issueId?: Prisma.StringFilter<"Comment"> | string
   userId?: Prisma.StringFilter<"Comment"> | string
   createdAt?: Prisma.DateTimeFilter<"Comment"> | Date | string
@@ -212,7 +208,7 @@ export type CommentWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.CommentWhereInput | Prisma.CommentWhereInput[]
   OR?: Prisma.CommentWhereInput[]
   NOT?: Prisma.CommentWhereInput | Prisma.CommentWhereInput[]
-  content?: Prisma.StringFilter<"Comment"> | string
+  content?: Prisma.JsonFilter<"Comment">
   issueId?: Prisma.StringFilter<"Comment"> | string
   userId?: Prisma.StringFilter<"Comment"> | string
   createdAt?: Prisma.DateTimeFilter<"Comment"> | Date | string
@@ -239,7 +235,7 @@ export type CommentScalarWhereWithAggregatesInput = {
   OR?: Prisma.CommentScalarWhereWithAggregatesInput[]
   NOT?: Prisma.CommentScalarWhereWithAggregatesInput | Prisma.CommentScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Comment"> | string
-  content?: Prisma.StringWithAggregatesFilter<"Comment"> | string
+  content?: Prisma.JsonWithAggregatesFilter<"Comment">
   issueId?: Prisma.StringWithAggregatesFilter<"Comment"> | string
   userId?: Prisma.StringWithAggregatesFilter<"Comment"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Comment"> | Date | string
@@ -248,7 +244,7 @@ export type CommentScalarWhereWithAggregatesInput = {
 
 export type CommentCreateInput = {
   id?: string
-  content: string
+  content: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   issue: Prisma.IssueCreateNestedOneWithoutCommentsInput
@@ -258,7 +254,7 @@ export type CommentCreateInput = {
 
 export type CommentUncheckedCreateInput = {
   id?: string
-  content: string
+  content: Prisma.JsonNullValueInput | runtime.InputJsonValue
   issueId: string
   userId: string
   createdAt?: Date | string
@@ -268,7 +264,7 @@ export type CommentUncheckedCreateInput = {
 
 export type CommentUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  content?: Prisma.StringFieldUpdateOperationsInput | string
+  content?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   issue?: Prisma.IssueUpdateOneRequiredWithoutCommentsNestedInput
@@ -278,7 +274,7 @@ export type CommentUpdateInput = {
 
 export type CommentUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  content?: Prisma.StringFieldUpdateOperationsInput | string
+  content?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   issueId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -288,7 +284,7 @@ export type CommentUncheckedUpdateInput = {
 
 export type CommentCreateManyInput = {
   id?: string
-  content: string
+  content: Prisma.JsonNullValueInput | runtime.InputJsonValue
   issueId: string
   userId: string
   createdAt?: Date | string
@@ -297,14 +293,14 @@ export type CommentCreateManyInput = {
 
 export type CommentUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  content?: Prisma.StringFieldUpdateOperationsInput | string
+  content?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type CommentUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  content?: Prisma.StringFieldUpdateOperationsInput | string
+  content?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   issueId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -332,7 +328,6 @@ export type CommentCountOrderByAggregateInput = {
 
 export type CommentMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  content?: Prisma.SortOrder
   issueId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -341,7 +336,6 @@ export type CommentMaxOrderByAggregateInput = {
 
 export type CommentMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  content?: Prisma.SortOrder
   issueId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -455,7 +449,7 @@ export type CommentUpdateOneWithoutAttachmentsNestedInput = {
 
 export type CommentCreateWithoutUserInput = {
   id?: string
-  content: string
+  content: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   issue: Prisma.IssueCreateNestedOneWithoutCommentsInput
@@ -464,7 +458,7 @@ export type CommentCreateWithoutUserInput = {
 
 export type CommentUncheckedCreateWithoutUserInput = {
   id?: string
-  content: string
+  content: Prisma.JsonNullValueInput | runtime.InputJsonValue
   issueId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -502,7 +496,7 @@ export type CommentScalarWhereInput = {
   OR?: Prisma.CommentScalarWhereInput[]
   NOT?: Prisma.CommentScalarWhereInput | Prisma.CommentScalarWhereInput[]
   id?: Prisma.StringFilter<"Comment"> | string
-  content?: Prisma.StringFilter<"Comment"> | string
+  content?: Prisma.JsonFilter<"Comment">
   issueId?: Prisma.StringFilter<"Comment"> | string
   userId?: Prisma.StringFilter<"Comment"> | string
   createdAt?: Prisma.DateTimeFilter<"Comment"> | Date | string
@@ -511,7 +505,7 @@ export type CommentScalarWhereInput = {
 
 export type CommentCreateWithoutIssueInput = {
   id?: string
-  content: string
+  content: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutCommentsInput
@@ -520,7 +514,7 @@ export type CommentCreateWithoutIssueInput = {
 
 export type CommentUncheckedCreateWithoutIssueInput = {
   id?: string
-  content: string
+  content: Prisma.JsonNullValueInput | runtime.InputJsonValue
   userId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -555,7 +549,7 @@ export type CommentUpdateManyWithWhereWithoutIssueInput = {
 
 export type CommentCreateWithoutAttachmentsInput = {
   id?: string
-  content: string
+  content: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   issue: Prisma.IssueCreateNestedOneWithoutCommentsInput
@@ -564,7 +558,7 @@ export type CommentCreateWithoutAttachmentsInput = {
 
 export type CommentUncheckedCreateWithoutAttachmentsInput = {
   id?: string
-  content: string
+  content: Prisma.JsonNullValueInput | runtime.InputJsonValue
   issueId: string
   userId: string
   createdAt?: Date | string
@@ -589,7 +583,7 @@ export type CommentUpdateToOneWithWhereWithoutAttachmentsInput = {
 
 export type CommentUpdateWithoutAttachmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  content?: Prisma.StringFieldUpdateOperationsInput | string
+  content?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   issue?: Prisma.IssueUpdateOneRequiredWithoutCommentsNestedInput
@@ -598,7 +592,7 @@ export type CommentUpdateWithoutAttachmentsInput = {
 
 export type CommentUncheckedUpdateWithoutAttachmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  content?: Prisma.StringFieldUpdateOperationsInput | string
+  content?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   issueId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -607,7 +601,7 @@ export type CommentUncheckedUpdateWithoutAttachmentsInput = {
 
 export type CommentCreateManyUserInput = {
   id?: string
-  content: string
+  content: Prisma.JsonNullValueInput | runtime.InputJsonValue
   issueId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -615,7 +609,7 @@ export type CommentCreateManyUserInput = {
 
 export type CommentUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  content?: Prisma.StringFieldUpdateOperationsInput | string
+  content?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   issue?: Prisma.IssueUpdateOneRequiredWithoutCommentsNestedInput
@@ -624,7 +618,7 @@ export type CommentUpdateWithoutUserInput = {
 
 export type CommentUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  content?: Prisma.StringFieldUpdateOperationsInput | string
+  content?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   issueId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -633,7 +627,7 @@ export type CommentUncheckedUpdateWithoutUserInput = {
 
 export type CommentUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  content?: Prisma.StringFieldUpdateOperationsInput | string
+  content?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   issueId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -641,7 +635,7 @@ export type CommentUncheckedUpdateManyWithoutUserInput = {
 
 export type CommentCreateManyIssueInput = {
   id?: string
-  content: string
+  content: Prisma.JsonNullValueInput | runtime.InputJsonValue
   userId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -649,7 +643,7 @@ export type CommentCreateManyIssueInput = {
 
 export type CommentUpdateWithoutIssueInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  content?: Prisma.StringFieldUpdateOperationsInput | string
+  content?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutCommentsNestedInput
@@ -658,7 +652,7 @@ export type CommentUpdateWithoutIssueInput = {
 
 export type CommentUncheckedUpdateWithoutIssueInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  content?: Prisma.StringFieldUpdateOperationsInput | string
+  content?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -667,7 +661,7 @@ export type CommentUncheckedUpdateWithoutIssueInput = {
 
 export type CommentUncheckedUpdateManyWithoutIssueInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  content?: Prisma.StringFieldUpdateOperationsInput | string
+  content?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -773,7 +767,7 @@ export type $CommentPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
-    content: string
+    content: runtime.JsonValue
     issueId: string
     userId: string
     createdAt: Date
@@ -1205,7 +1199,7 @@ export interface Prisma__CommentClient<T, Null = never, ExtArgs extends runtime.
  */
 export interface CommentFieldRefs {
   readonly id: Prisma.FieldRef<"Comment", 'String'>
-  readonly content: Prisma.FieldRef<"Comment", 'String'>
+  readonly content: Prisma.FieldRef<"Comment", 'Json'>
   readonly issueId: Prisma.FieldRef<"Comment", 'String'>
   readonly userId: Prisma.FieldRef<"Comment", 'String'>
   readonly createdAt: Prisma.FieldRef<"Comment", 'DateTime'>

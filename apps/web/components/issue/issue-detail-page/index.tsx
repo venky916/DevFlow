@@ -95,7 +95,7 @@ function IssueDetailContent({
             onNavigate={onNavigate}
           />
           <div className="h-px bg-border-default" />
-          <CommentsSection issueId={issue.id} />
+          <CommentsSection projectId={issue.projectId} issueId={issue.id} />
         </div>
         <div className="w-[400px] shrink-0 border-l border-border-default overflow-y-auto px-4 py-6 flex flex-col gap-6">
           <IssuePropertiesPanel

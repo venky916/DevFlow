@@ -52,6 +52,7 @@ export function WorkspaceSettings() {
                   <GeneralTab
                     workspaceId={workspace.id}
                     workspaceName={workspace.name}
+                    workspaceLogoUrl={workspace.logoUrl ?? null}
                     isAdmin={isAdmin}
                   />
                 ),

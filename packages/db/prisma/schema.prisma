@@ -256,7 +256,7 @@ model IssueLabel {
 
 model Comment {
   id          String   @id @default(cuid())
-  content     String
+  content     Json
   issueId     String
   userId      String
   createdAt   DateTime @default(now())

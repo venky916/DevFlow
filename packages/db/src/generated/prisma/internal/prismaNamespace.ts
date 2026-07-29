@@ -1688,6 +1688,13 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
 export const NullableJsonNullValueInput = {
   DbNull: DbNull,
   JsonNull: JsonNull
@@ -1840,20 +1847,6 @@ export type ListEnumIssueTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
 
 
 /**
- * Reference to a field of type 'ActivityScope'
- */
-export type EnumActivityScopeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ActivityScope'>
-    
-
-
-/**
- * Reference to a field of type 'ActivityScope[]'
- */
-export type ListEnumActivityScopeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ActivityScope[]'>
-    
-
-
-/**
  * Reference to a field of type 'Json'
  */
 export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
@@ -1864,6 +1857,20 @@ export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'J
  * Reference to a field of type 'QueryMode'
  */
 export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+/**
+ * Reference to a field of type 'ActivityScope'
+ */
+export type EnumActivityScopeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ActivityScope'>
+    
+
+
+/**
+ * Reference to a field of type 'ActivityScope[]'
+ */
+export type ListEnumActivityScopeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ActivityScope[]'>
     
 
 

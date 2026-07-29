@@ -1,43 +1,45 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useMe } from "../../../hooks/use-auth";
-import { useComments, useCreateComment, useDeleteComment, useUpdateComment } from "../../../hooks/use-comments";
+import {
+  useComments,
+  useCreateComment,
+  useDeleteComment,
+  useUpdateComment,
+} from "../../../hooks/use-comments";
+import { useMentionSuggestion } from "../../../hooks/use-mention-suggestion";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { Avatar } from "@devflow/ui/components/avatar";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
+import { CommentBox } from "@devflow/ui/components/comment-box";
+import { CommentContent } from "@devflow/ui/components/comment-content";
 
+interface CommentsSectionProps {
+  issueId: string;
+  projectId: string;
+}
 
-
-export function CommentsSection({ issueId }: { issueId: string }) {
+export function CommentsSection({ issueId, projectId }: CommentsSectionProps) {
   const { data: comments, isLoading } = useComments(issueId);
   const { mutateAsync: createComment } = useCreateComment(issueId);
-  const { mutateAsync: updateComment } = useUpdateComment();
+  const { mutateAsync: updateComment } = useUpdateComment(issueId);
   const { mutateAsync: deleteComment } = useDeleteComment(issueId);
   const { data: me } = useMe();
+  const mentionSuggestion = useMentionSuggestion(projectId);
 
-  const [text, setText] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editText, setEditText] = useState("");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleSubmit = async () => {
-    if (!text.trim()) return;
+  const handleCreate = async (json: object) => {
     try {
-      setSubmitting(true);
-      await createComment({ content: text.trim() });
-      setText("");
+      await createComment({ content: json });
     } catch {
       toast.error("Failed to post comment");
-    } finally {
-      setSubmitting(false);
     }
   };
 
-  const handleEdit = async (commentId: string) => {
-    if (!editText.trim()) return;
+  const handleEdit = async (commentId: string, json: object) => {
     try {
-      await updateComment({ commentId, content: editText.trim() });
+      await updateComment({ commentId, content: json });
       setEditingId(null);
     } catch {
       toast.error("Failed to update comment");
@@ -83,48 +85,29 @@ export function CommentsSection({ issueId }: { issueId: string }) {
                 </div>
 
                 {editingId === comment.id ? (
-                  <div className="flex flex-col gap-2">
-                    <textarea
-                      className="w-full bg-bg-surface border border-border-default rounded-[4px] px-3 py-2 text-[13px] text-text-primary focus:outline-none focus:border-border-emphasis resize-none"
-                      value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
-                      rows={3}
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(comment.id)}
-                        className="text-[12px] text-accent hover:text-accent-hover transition-colors"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="text-[12px] text-text-muted hover:text-text-primary transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
+                  <CommentBox
+                    initialContent={comment.content}
+                    placeholder="Edit comment..."
+                    mentionSuggestion={mentionSuggestion}
+                    submitLabel="Save"
+                    onSubmit={(json) => handleEdit(comment.id, json)}
+                    onCancel={() => setEditingId(null)}
+                  />
                 ) : (
-                  <p className="text-[13px] text-text-secondary leading-relaxed">
-                    {comment.content}
-                  </p>
+                  <CommentContent content={comment.content} />
                 )}
 
                 {me?.id === comment.user?.id && editingId !== comment.id && (
                   <div className="flex gap-3 mt-0.5">
                     <button
-                      onClick={() => {
-                        setEditingId(comment.id);
-                        setEditText(comment.content);
-                      }}
-                      className="text-[11px] text-text-muted hover:text-text-primary transition-colors"
+                      onClick={() => setEditingId(comment.id)}
+                      className="text-[11px] text-text-muted hover:text-text-primary transition-colors cursor-pointer"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(comment.id)}
-                      className="text-[11px] text-text-muted hover:text-status-danger-text transition-colors"
+                      className="text-[11px] text-text-muted hover:text-danger-text transition-colors cursor-pointer"
                     >
                       Delete
                     </button>
@@ -136,37 +119,12 @@ export function CommentsSection({ issueId }: { issueId: string }) {
         </div>
       )}
 
-      <div className="flex items-start gap-3 pt-2 border-t border-border-default">
-        {me && <Avatar name={me.name ?? me.email} size="sm" />}
-        <div className="flex-1 flex flex-col gap-2">
-          <textarea
-            ref={textareaRef}
-            className="w-full bg-bg-surface border border-border-default rounded-[4px] px-3 py-2 text-[13px] text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-border-emphasis resize-none transition-colors"
-            placeholder="Add a comment..."
-            rows={3}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit();
-            }}
-          />
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] text-text-muted">
-              ⌘ + Enter to submit
-            </span>
-            <button
-              onClick={handleSubmit}
-              disabled={!text.trim() || submitting}
-              className="px-3 py-1.5 bg-accent text-accent-text text-[12px] font-medium rounded-[4px] hover:bg-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {submitting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                "Comment"
-              )}
-            </button>
-          </div>
-        </div>
+      <div className="pt-2 border-t border-border-default">
+        <CommentBox
+          onSubmit={handleCreate}
+          placeholder="Add a comment..."
+          mentionSuggestion={mentionSuggestion}
+        />
       </div>
     </div>
   );

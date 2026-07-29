@@ -10,6 +10,7 @@ import {
   MessageSquare,
   UserPlus,
   Zap,
+  AtSign,
   X,
 } from "lucide-react";
 import { cn } from "@devflow/ui/lib/cn";
@@ -32,6 +33,8 @@ function NotifIcon({ type }: { type: NotificationType }) {
       return <GitBranch className={cn(cls, "text-info-text")} />;
     case "ISSUE_COMMENTED":
       return <MessageSquare className={cn(cls, "text-accent")} />;
+    case "MENTION":
+      return <AtSign className={cn(cls, "text-accent")} />;
     case "SPRINT_STARTED":
       return <Zap className={cn(cls, "text-warning-text")} />;
     case "SPRINT_COMPLETED":

@@ -53,19 +53,72 @@ export const TYPE_OPTIONS = [
 
 export function activityText(action: string, meta?: Record<string, any>): string {
     switch (action) {
+
+        // ─── issue level ──────────────────────────────────────────
         case "ISSUE_CREATED":
-            return "created this issue";
+            return meta?.parentId
+                ? "created this sub-issue"
+                : "created this issue"
+
         case "ISSUE_UPDATED":
-            return "updated this issue";
+            if (meta?.changes?.assigneeId !== undefined)
+                return meta.changes.assigneeId
+                    ? "reassigned this issue"
+                    : "removed the assignee"
+            if (meta?.changes?.dueDate !== undefined)
+                return meta.changes.dueDate
+                    ? `set due date`
+                    : "removed due date"
+            if (meta?.changes?.type !== undefined)
+                return `changed type to ${meta.changes.type}`
+            if (meta?.changes?.priority !== undefined)
+                return `changed priority to ${meta.changes.priority?.toLowerCase().replace("_", " ")}`
+            if (meta?.attachedToParent)
+                return "attached as sub-issue"
+            if (meta?.detachedFromParent)
+                return "detached from parent"
+            return "updated this issue"
+
         case "ISSUE_STATUS_CHANGED":
-            return `moved to ${STATUS_LABELS[meta?.to as IssueStatus] ?? meta?.to}`;
+            if (meta?.from === meta?.to)
+                return `reordered to ${STATUS_LABELS[meta?.to as IssueStatus] ?? meta?.to}`
+            return `moved from ${STATUS_LABELS[meta?.from as IssueStatus] ?? meta?.from} to ${STATUS_LABELS[meta?.to as IssueStatus] ?? meta?.to}`
+
+        case "ISSUE_ASSIGNED":
+            return "was assigned this issue"
+
         case "ISSUE_DELETED":
-            return "deleted this issue";
+            return `deleted issue: ${meta?.title ?? ""}`
+
+        // ─── comment level ────────────────────────────────────────
         case "COMMENT_ADDED":
-            return "added a comment";
+            return meta?.preview
+                ? `commented: "${meta.preview.slice(0, 60)}${meta.preview.length > 60 ? "..." : ""}"`
+                : "added a comment"
+
+        case "COMMENT_UPDATED":
+            return "edited a comment"
+
         case "COMMENT_DELETED":
-            return "deleted a comment";
+            return "deleted a comment"
+
+        // ─── project level ────────────────────────────────────────
+        case "SPRINT_CREATED":
+            return `created sprint: ${meta?.sprintName ?? ""}`
+
+        case "SPRINT_STARTED":
+            return `started sprint: ${meta?.sprintName ?? ""}`
+
+        case "SPRINT_COMPLETED":
+            return `completed sprint — ${meta?.doneCount ?? 0} done, ${meta?.incompleteCount ?? 0} moved to backlog`
+
+        case "MEMBER_ADDED":
+            return `added a new member as ${meta?.role?.toLowerCase() ?? "developer"}`
+
+        case "MENTION":
+            return "mentioned someone in a comment"
+
         default:
-            return action.toLowerCase().replace(/_/g, " ");
+            return action.toLowerCase().replace(/_/g, " ")
     }
 }

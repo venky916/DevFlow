@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +9,9 @@ import { Loader2 } from "lucide-react";
 import { Modal } from "@devflow/ui/components/modal";
 import { Button } from "@devflow/ui/components/button";
 import { Input } from "@devflow/ui/components/input";
+import { ImageUploadButton } from "@devflow/ui/components/image-upload-button";
 import { useCreateWorkspace } from "../../hooks/use-workspaces";
+import { useImageUpload } from "../../hooks/use-image-upload";
 import {
   createWorkspaceSchema,
   type CreateWorkspaceInput,
@@ -23,6 +25,9 @@ interface Props {
 export function CreateWorkspaceModal({ open, onClose }: Props) {
   const router = useRouter();
   const { mutateAsync, isPending } = useCreateWorkspace();
+  const { upload, isUploading } = useImageUpload("logos");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const {
     register,
@@ -35,7 +40,6 @@ export function CreateWorkspaceModal({ open, onClose }: Props) {
     resolver: zodResolver(createWorkspaceSchema),
   });
 
-  // auto generate slug from name
   const name = watch("name");
   useEffect(() => {
     if (name) {
@@ -49,11 +53,28 @@ export function CreateWorkspaceModal({ open, onClose }: Props) {
     }
   }, [name]);
 
+  const handleLogoSelect = async (file: File) => {
+    const localPreview = URL.createObjectURL(file);
+    setPreviewUrl(localPreview);
+    try {
+      const url = await upload(file);
+      setLogoUrl(url);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload logo");
+      setPreviewUrl(null);
+    }
+  };
+
   const onSubmit = async (data: CreateWorkspaceInput) => {
     try {
-      const workspace = await mutateAsync(data);
+      const workspace = await mutateAsync({
+        ...data,
+        logoUrl: logoUrl ?? undefined,
+      });
       toast.success("Workspace created!");
       reset();
+      setLogoUrl(null);
+      setPreviewUrl(null);
       onClose();
       router.push(`/${workspace.slug}`);
     } catch (err: any) {
@@ -69,6 +90,15 @@ export function CreateWorkspaceModal({ open, onClose }: Props) {
       description="A workspace contains your projects and team members."
     >
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <ImageUploadButton
+          src={previewUrl ?? logoUrl}
+          fallbackLabel={name?.charAt(0)?.toUpperCase() ?? "?"}
+          shape="square"
+          size={56}
+          isUploading={isUploading}
+          onFileSelect={handleLogoSelect}
+        />
+
         <Input
           label="Workspace name"
           placeholder="Acme Inc"

@@ -4,7 +4,8 @@ import { asyncHandler } from "../lib/asyncHandler";
 import { ApiError } from "../lib/ApiError";
 import { generatePresignedDownloadUrl, deleteFileFromB2 } from "@devflow/storage";
 import { sendSuccess, sendCreated, sendNoContent } from "../lib/apiResponse";
-import {saveAttachmentSchema} from "@devflow/validators"
+import { saveAttachmentSchema } from "@devflow/validators"
+import { signUrl } from "../lib/signUrl";
 
 // ─── SAVE ATTACHMENT ──────────────────────────────────────────
 // just saves to DB — doesnt care if its an issue, comment, or anything else
@@ -82,7 +83,11 @@ export const getAttachments = asyncHandler(async (req: Request, res: Response) =
         const signedUrl = await generatePresignedDownloadUrl(attachment.fileKey)
         return {
             ...attachment,
-            signedUrl: signedUrl
+            signedUrl: signedUrl,
+            uploader: {
+                ...attachment.uploader,
+                avatarUrl: await signUrl(attachment.uploader.avatarUrl)
+            }
         }
     }))
     sendSuccess(res, withSignedUrls, "Attachments fetched")
@@ -92,11 +97,11 @@ export const getAttachments = asyncHandler(async (req: Request, res: Response) =
 // deletes from DB first, then B2
 // only the uploader can delete their own attachment
 export const deleteAttachment = asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { attachmentId } = req.params;
 
     const attachment = await prisma.attachment.findUnique({
         where: {
-            id: id as string
+            id: attachmentId as string
         }
     })
 
@@ -111,7 +116,7 @@ export const deleteAttachment = asyncHandler(async (req: Request, res: Response)
     // delete DB record first
     await prisma.attachment.delete({
         where: {
-            id: id as string
+            id: attachmentId as string
         }
     })
 
@@ -122,4 +127,14 @@ export const deleteAttachment = asyncHandler(async (req: Request, res: Response)
 
     sendNoContent(res)
 
+})
+
+export const getAttachmentDownloadUrl = asyncHandler(async (req: Request, res: Response) => {
+    const { attachmentId } = req.params
+
+    const attachment = await prisma.attachment.findUnique({ where: { id: attachmentId as string } })
+    if (!attachment) throw ApiError.notFound('Attachment not found')
+
+    const downloadUrl = await generatePresignedDownloadUrl(attachment.fileKey, 300, attachment.fileName)
+    sendSuccess(res, { downloadUrl }, "Download URL generated")
 })
