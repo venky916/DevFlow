@@ -1,4 +1,5 @@
 import admin from 'firebase-admin';
+import type { Auth } from 'firebase-admin/auth';
 
 if (!admin.apps.length) {
     admin.initializeApp({
@@ -10,4 +11,4 @@ if (!admin.apps.length) {
     });
 }
 
-export const adminAuth = admin.auth();
+export const adminAuth: Auth = admin.auth();

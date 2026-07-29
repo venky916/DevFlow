@@ -1,4 +1,8 @@
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut as firebaseSignOut, signInWithPopup, updateProfile } from "firebase/auth"
+import {
+    signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut as firebaseSignOut, signInWithPopup, updateProfile, sendPasswordResetEmail,
+    verifyPasswordResetCode,
+    confirmPasswordReset
+} from "firebase/auth"
 import { auth, googleProvider, githubProvider } from "./firebase";
 import { api } from "./axios"
 import { useAuthStore } from "../stores/auth.store";
@@ -38,4 +42,17 @@ export async function signInWithGithub() {
 export async function signOut() {
     await firebaseSignOut(auth);
     useAuthStore.getState().clearAuth();
+}
+
+export async function sendResetEmail(email: string) {
+    await api.post("/auth/forgot-password", { email });
+}
+
+export async function verifyResetCode(oobCode: string) {
+    // returns the email tied to this code — throws if expired/invalid/used
+    return verifyPasswordResetCode(auth, oobCode);
+}
+
+export async function confirmReset(oobCode: string, newPassword: string) {
+    await confirmPasswordReset(auth, oobCode, newPassword);
 }

@@ -69,5 +69,6 @@ export const NotificationTypes = {
     PROJECT_ADDED: "PROJECT_ADDED",
     WORKSPACE_INVITED: "WORKSPACE_INVITED",
     MENTION: "MENTION",
+    PASSWORD_RESET: "PASSWORD_RESET",
     OTHER: "OTHER"
 } as const

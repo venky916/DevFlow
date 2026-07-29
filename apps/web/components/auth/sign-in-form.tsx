@@ -144,6 +144,12 @@ export function SignInForm() {
           error={errors.password?.message}
           {...register("password")}
         />
+        <Link
+          href="/forgot-password"
+          className="text-xs text-accent hover:text-accent-hover transition-colors self-end -mt-2"
+        >
+          Forgot password?
+        </Link>
         <Button
           type="submit"
           variant="primary"

@@ -95,6 +95,27 @@ const getEmailContent = (type: EmailJobData['type'], data: Record<string, any>) 
         `,
             };
 
+        case NotificationTypes.PASSWORD_RESET:
+            return {
+                subject: `Reset your DevFlow password`,
+                html: `
+          <h2>Reset your password</h2>
+          <p>Hi,</p>
+          <p>Click the link below to reset your DevFlow password. This link expires in 1 hour.</p>
+          <a href="${data.resetLink}" style="
+              background: #6366f1;
+              color: white;
+              padding: 12px 24px;
+              border-radius: 6px;
+              text-decoration: none;
+              display: inline-block;
+              margin-top: 16px;
+          ">Reset Password</a>
+          <p style="color: #666; font-size: 12px; margin-top: 24px;">
+              If you didn't request this, you can safely ignore this email.
+          </p>
+        `,
+            };
         default:
             return {
                 subject: 'DevFlow Notification',

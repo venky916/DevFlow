@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express"
 import { adminAuth } from "@devflow/backend-common"
 import { prisma } from "@devflow/db"
+import { ApiError } from "../lib/ApiError";
 
 declare global {
     namespace Express {
@@ -26,6 +27,13 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
         }
 
         const decoded = await adminAuth.verifyIdToken(token)
+        const authTimeMs = decoded.auth_time * 1000;
+        const sessionAge = Date.now() - authTimeMs;
+        const MAX_SESSION_AGE = 24 * 60 * 60 * 1000; // 24h
+
+        if (sessionAge > MAX_SESSION_AGE) {
+            throw ApiError.unauthorized('Session expired, please sign in again', 'SESSION_EXPIRED');
+        }
 
         // old way 2 db calls 
         // let user = await prisma.user.findUnique({

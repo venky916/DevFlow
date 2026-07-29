@@ -1,5 +1,6 @@
 import axios from "axios"
 import { auth } from "./firebase"
+import { signOut } from "./auth";
 
 export const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -22,3 +23,16 @@ api.interceptors.request.use(async (config) => {
     }
     return config;
 })
+
+
+api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        if (error.response?.data?.code === "SESSION_EXPIRED") {
+            await signOut();
+            const redirect = window.location.pathname;
+            window.location.href = `/sign-in?redirect=${encodeURIComponent(redirect)}`;
+        }
+        return Promise.reject(error);
+    }
+);
