@@ -14,8 +14,7 @@ datasource db {
 
 enum WorkspaceRole {
   ADMIN
-  DEVELOPER
-  VIEWER
+  MEMBER
 }
 
 enum ProjectRole {
@@ -114,7 +113,7 @@ model WorkspaceInvite {
   id  String     @id @default(cuid())
   workspaceId  String
   email        String
-  role         WorkspaceRole @default(DEVELOPER)
+  role         WorkspaceRole @default(MEMBER)
   token        String   @unique @default(uuid())
   expiresAt  DateTime
   acceptedAt DateTime?
@@ -132,7 +131,7 @@ model WorkspaceMember {
   id          String   @id @default(cuid())
   workspaceId String
   userId      String
-  role        WorkspaceRole @default(DEVELOPER)
+  role        WorkspaceRole @default(MEMBER)
   joinedAt   DateTime @default(now())
 
   workspace   Workspace @relation(fields: [workspaceId], references: [id])

@@ -98,6 +98,8 @@ export const getAttachments = asyncHandler(async (req: Request, res: Response) =
 // only the uploader can delete their own attachment
 export const deleteAttachment = asyncHandler(async (req: Request, res: Response) => {
     const { attachmentId } = req.params;
+    const userId = req.user!.id
+    const access = req.projectAccess!
 
     const attachment = await prisma.attachment.findUnique({
         where: {
@@ -109,7 +111,10 @@ export const deleteAttachment = asyncHandler(async (req: Request, res: Response)
         throw ApiError.notFound('Attachment not found')
     }
 
-    if (attachment.uploadedBy !== req.user!.id) {
+    const isUploader = attachment.uploadedBy === userId
+    const canModerate = access.isWorkspaceAdmin || access.projectRole === 'LEAD'
+
+    if (!isUploader && !canModerate) {
         throw ApiError.forbidden('You can only delete your own attachments')
     }
 

@@ -246,6 +246,7 @@ export const updateComment = asyncHandler(async (req: Request, res: Response) =>
 export const deleteComment = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
     const userId = req.user!.id
+    const access = req.projectAccess!
 
     const comment = await prisma.comment.findUnique({
         where: {
@@ -257,8 +258,11 @@ export const deleteComment = asyncHandler(async (req: Request, res: Response) =>
         throw ApiError.notFound('Comment not found')
     }
 
+    const isAuthor = comment.userId === userId
+    const canModerate = access.isWorkspaceAdmin || access.projectRole === 'LEAD'
+
     // only author can delete
-    if (comment.userId !== userId) {
+    if (!isAuthor && !canModerate) {
         throw ApiError.forbidden('You are not allowed to delete this comment')
     }
 

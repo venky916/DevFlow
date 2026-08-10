@@ -207,7 +207,6 @@ export const deleteProject = asyncHandler(async (req: Request, res: Response) =>
 export const addProjectMember = asyncHandler(async (req: Request, res: Response) => {
     const { id: projectId } = req.params
     const { userId, role } = addProjectMemberSchema.parse(req.body)
-    const requester = req.user!.id
 
     const project = await prisma.project.findUnique({
         where: { id: projectId as string }
@@ -215,27 +214,6 @@ export const addProjectMember = asyncHandler(async (req: Request, res: Response)
 
     if (!project) {
         throw ApiError.notFound('Project not found')
-    }
-
-    // Check requester permissions (workspace or project level)
-    const workspaceMember = await prisma.workspaceMember.findUnique({
-        where: {
-            workspaceId_userId: {
-                workspaceId: project.workspaceId,
-                userId: requester
-            }
-        }
-    })
-
-    // If not workspace OWNER/ADMIN, check if project LEAD
-    if (!workspaceMember || workspaceMember.role !== "ADMIN") {
-        const projectMember = await prisma.projectMember.findUnique({
-            where: { projectId_userId: { projectId: projectId as string, userId: requester } }
-        })
-
-        if (!projectMember || projectMember.role !== 'LEAD') {
-            throw ApiError.forbidden('Only OWNER, ADMIN, or project LEAD can add members')
-        }
     }
 
     // Check if user is workspace member
@@ -252,10 +230,6 @@ export const addProjectMember = asyncHandler(async (req: Request, res: Response)
         throw ApiError.conflict('User must be a workspace member first')
     }
 
-    if (newMember.role === 'VIEWER' && role !== 'VIEWER') {
-        throw ApiError.forbidden('Workspace VIEWERs can only be added as project VIEWER')
-    }
-
     // Add to project
     const member = await prisma.projectMember.create({
         data: {
@@ -269,7 +243,7 @@ export const addProjectMember = asyncHandler(async (req: Request, res: Response)
     await logActivity({
         action: ActivityActions.MEMBER_ADDED,
         scope: 'PROJECT',
-        userId: requester,
+        userId: req.user!.id,
         projectId: projectId as string,
         meta: { addedUserId: userId, role }
     })
@@ -279,7 +253,7 @@ export const addProjectMember = asyncHandler(async (req: Request, res: Response)
         type: NotificationTypes.PROJECT_ADDED,
         content: `You've been added to project`,
         link: `/projects/${projectId}`,
-        triggeredBy: requester,
+        triggeredBy: req.user!.id,
     })
 
     sendSuccess(res, member, 'Member added to project')
@@ -336,6 +310,15 @@ export const updateProjectMemberRole = asyncHandler(async (req: Request, res: Re
         throw ApiError.notFound('Member not found in this project');
     }
 
+    if (member.role === 'LEAD' && role !== 'LEAD') {
+        const leadCount = await prisma.projectMember.count({
+            where: { projectId: id as string, role: 'LEAD' }
+        })
+        if (leadCount <= 1) {
+            throw ApiError.forbidden('Cannot demote the last lead — assign another lead first')
+        }
+    }
+
     const updated = await prisma.projectMember.update({
         where: { projectId_userId: { projectId: id as string, userId: uid as string } },
         data: { role },
@@ -362,8 +345,13 @@ export const removeProjectMember = asyncHandler(async (req: Request, res: Respon
         throw ApiError.notFound('Member not found in this project');
     }
 
-    if (member.role === "LEAD" && uid === req.user!.id) {
-        throw ApiError.forbidden('LEAD cannot remove themselves');
+    if (member.role === "LEAD") {
+        const leadCount = await prisma.projectMember.count({
+            where: { projectId: id as string, role: 'LEAD' }
+        })
+        if (leadCount <= 1) {
+            throw ApiError.forbidden('Cannot remove the last lead — assign another lead first')
+        }
     }
 
     const deleted = await prisma.projectMember.delete({

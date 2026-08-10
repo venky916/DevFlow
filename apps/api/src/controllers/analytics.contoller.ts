@@ -244,8 +244,7 @@ export const getWorkspaceAnalytics = asyncHandler(async (req: Request, res: Resp
         issuesByProject,
         roleBreakdown: {
             ADMIN: roleBreakdown['ADMIN'] ?? 0,
-            DEVELOPER: roleBreakdown['DEVELOPER'] ?? 0,
-            VIEWER: roleBreakdown['VIEWER'] ?? 0,
+            MEMBER: roleBreakdown['MEMBER'] ?? 0,
         },
         members: members.map(m => ({
             user: m.user,

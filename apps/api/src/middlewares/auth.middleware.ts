@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express"
 import { adminAuth } from "@devflow/backend-common"
 import { prisma } from "@devflow/db"
 import { ApiError } from "../lib/ApiError";
+import { ResolvedAccess } from "./permission.middleware";
 
 declare global {
     namespace Express {
@@ -13,6 +14,7 @@ declare global {
                 name: string | null;
                 avatarUrl: string | null;
             }
+            projectAccess?: ResolvedAccess;
         }
     }
 }

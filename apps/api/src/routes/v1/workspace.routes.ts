@@ -18,7 +18,7 @@ router.patch("/:id", requireWorkspaceRole('ADMIN'), updateWorkspace);
 router.delete("/:id", requireWorkspaceRole('ADMIN'), deleteWorkspace);
 
 // Member management
-router.get("/:id/members", requireWorkspaceMember, getWorkspaceMembers);
+router.get("/:id/members", requireWorkspaceRole('ADMIN'), getWorkspaceMembers);
 router.put("/:id/members/:uid", requireWorkspaceRole('ADMIN'), updateMemberRole);
 router.delete("/:id/members/:uid", requireWorkspaceRole('ADMIN'), removeMember);
 

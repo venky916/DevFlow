@@ -11,8 +11,7 @@
 
 export const WorkspaceRole = {
   ADMIN: 'ADMIN',
-  DEVELOPER: 'DEVELOPER',
-  VIEWER: 'VIEWER'
+  MEMBER: 'MEMBER'
 } as const
 
 export type WorkspaceRole = (typeof WorkspaceRole)[keyof typeof WorkspaceRole]

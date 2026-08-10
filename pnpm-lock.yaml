@@ -199,6 +199,9 @@ importers:
       '@devflow/queues':
         specifier: workspace:*
         version: link:../../packages/queues
+      '@devflow/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       '@devflow/types':
         specifier: workspace:*
         version: link:../../packages/types

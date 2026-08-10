@@ -5,8 +5,7 @@ import {
     requireWorkspaceMember,
     requireWorkspaceRole,
     requireProjectMember,
-    requireProjectRole,
-    requireLeadOrAbove
+    requireProjectRole
 } from "../../middlewares/permission.middleware.js";
 import { updateMemberRole } from "../../controllers/workspace.controller";
 
@@ -18,19 +17,19 @@ router.use(authenticate);
 router.post("/", requireWorkspaceRole('ADMIN'), createProject);
 router.get("/", requireWorkspaceMember, getProjects);
 router.get("/:id", requireProjectMember, getProjectById);
-router.patch("/:id", requireLeadOrAbove, updateProject);
+router.patch("/:id", requireProjectRole('LEAD'), updateProject);
 router.delete("/:id", requireWorkspaceRole('ADMIN'), deleteProject);
 
 // Member management
 router.get("/:id/members", requireProjectMember, getProjectMembers);
-router.post("/:id/members", requireLeadOrAbove, addProjectMember);
-router.put("/:id/members/:uid", requireLeadOrAbove, updateMemberRole);
-router.delete("/:id/members/:uid", requireLeadOrAbove, removeProjectMember);
+router.post("/:id/members", requireProjectRole('LEAD'), addProjectMember);
+router.put("/:id/members/:uid", requireProjectRole('LEAD'), updateMemberRole);
+router.delete("/:id/members/:uid", requireProjectRole('LEAD'), removeProjectMember);
 
 // Labels — LEAD/ADMIN only for mutations, any member can read
 router.get("/:id/labels", requireProjectMember, getLabels);
-router.post("/:id/labels", requireLeadOrAbove, createLabel);
-router.patch("/:id/labels/:labelId", requireLeadOrAbove, updateLabel);
-router.delete("/:id/labels/:labelId", requireLeadOrAbove, deleteLabel);
+router.post("/:id/labels", requireProjectRole('LEAD'), createLabel);
+router.patch("/:id/labels/:labelId", requireProjectRole('LEAD'), updateLabel);
+router.delete("/:id/labels/:labelId", requireProjectRole('LEAD'), deleteLabel);
 
 export default router

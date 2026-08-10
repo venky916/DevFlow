@@ -67,3 +67,9 @@ export const deleteFileFromB2 = async (fileKey: string) => {
     })
     await b2Client.send(command)
 }
+
+export function extractKeyFromUrl(url: string): string {
+    return url.includes(`${B2_BUCKET_NAME}/`)
+        ? url.split(`${B2_BUCKET_NAME}/`)[1]!
+        : url;
+}

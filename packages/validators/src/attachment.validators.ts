@@ -13,7 +13,9 @@ export const presignedUrlSchema = z.object({
     folder: z.enum(["attachments", "avatars", "logos"]),
     fileName: z.string().min(1),
     mimeType: z.string().min(1),
-    fileSize: z.number().max(10 * 1024 * 1024) // 10MB max
+    fileSize: z.number().max(10 * 1024 * 1024), // 10MB max
+    workspaceId: z.string().optional(),
+    projectId: z.string().optional(),
 })
 
 export const deleteFileSchema = z.object({

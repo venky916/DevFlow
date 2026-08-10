@@ -12,7 +12,7 @@ export const updateWorkspaceSchema = z.object({
 })
 
 export const updateMemberRoleSchema = z.object({
-    role: z.enum(['ADMIN', 'DEVELOPER', 'VIEWER'])
+    role: z.enum(['ADMIN', 'MEMBER'])
 })
 
 export const updateWorkspaceLogoSchema = z.object({

@@ -11,7 +11,7 @@ import commentRoutes from './comment.routes';
 import activityRoutes from './activity.routes';
 import notificationRoutes from "./notification.routes"
 import { getAllProjectActivities, getProjectActivities } from '../../controllers/activity.controller';
-import { requireProjectMember, requireWorkspaceMember } from '../../middlewares/permission.middleware';
+import { requireProjectMember, requireProjectRole, requireWorkspaceMember, requireWorkspaceRole } from '../../middlewares/permission.middleware';
 import { acceptInvite } from "../../controllers/invite.controller";
 import { getProjectAnalytics, getWorkspaceAnalytics } from "../../controllers/analytics.contoller";
 
@@ -51,14 +51,14 @@ router.get(
 router.get(
     '/projects/:id/analytics',
     authenticate,
-    requireProjectMember,
+    requireProjectRole('LEAD'),
     getProjectAnalytics
 )
 
 router.get(
     '/workspaces/:id/analytics',
     authenticate,
-    requireWorkspaceMember,
+    requireWorkspaceRole('ADMIN'),
     getWorkspaceAnalytics
 )
 

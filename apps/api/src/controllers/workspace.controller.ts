@@ -4,10 +4,11 @@ import { Request, Response } from "express"
 import { ApiError } from "../lib/ApiError"
 import { sendCreated, sendNoContent, sendSuccess } from "../lib/apiResponse"
 import { createWorkspaceSchema, updateMemberRoleSchema, updateWorkspaceSchema, updateWorkspaceLogoSchema } from "@devflow/validators"
-import { generatePresignedDownloadUrl } from "@devflow/storage"
+import { extractKeyFromUrl, generatePresignedDownloadUrl } from "@devflow/storage"
 import { getCache, setCache, CacheKeys, TTL, deleteCache } from "../lib/cache"
 import { buildUpdateData } from "../lib/updateBuilder"
 import { signUrl } from "../lib/signUrl"
+import { fileCleanupQueue } from "@devflow/queues"
 
 const getMember = async (workspaceId: string, userId: string) => {
     const member = await prisma.workspaceMember.findFirst({
@@ -270,8 +271,13 @@ export const updateMemberRole = asyncHandler(async (req: Request, res: Response)
         throw ApiError.notFound('Member not found in this workspace')
     }
 
-    if (role === "ADMIN") {
-        throw ApiError.forbidden('Cannot assign ADMIN role')
+    if (targetMember.role === 'ADMIN' && role === "ADMIN") {
+        const adminCount = await prisma.workspaceMember.count({
+            where: { workspaceId: id as string, role: 'ADMIN' }
+        })
+        if (adminCount <= 1) {
+            throw ApiError.forbidden('Cannot demote the last admin — assign another admin first')
+        }
     }
 
     const updated = await prisma.workspaceMember.update({
@@ -321,13 +327,18 @@ export const removeMember = asyncHandler(async (req: Request, res: Response) => 
         throw ApiError.forbidden('Cannot remove ADMIN from workspace')
     }
 
-    const deleted = await prisma.workspaceMember.delete({
-        where: {
-            workspaceId_userId: {
-                workspaceId: id as string,
-                userId: uid as string
+    // cascade: remove their project-member rows for projects in this workspace, same transaction
+    await prisma.$transaction(async (tx) => {
+        await tx.projectMember.deleteMany({
+            where: {
+                userId: uid as string,
+                project: { workspaceId: id as string }
             }
-        }
+        })
+
+        await tx.workspaceMember.delete({
+            where: { workspaceId_userId: { workspaceId: id as string, userId: uid as string } }
+        })
     })
 
     // add after DB write in both functions:
@@ -338,7 +349,15 @@ export const removeMember = asyncHandler(async (req: Request, res: Response) => 
 // ─── UPDATE LOGO ──────────────────────────────────────────────
 export const updateWorkspaceLogo = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params
+    const userId = req.user!.id
     const { url } = updateWorkspaceLogoSchema.parse(req.body)
+
+    const member = await getMember(id as string, userId)
+
+    if (!member || member.role !== 'ADMIN') {
+        throw ApiError.forbidden('Only ADMIN can update the workspace logo')
+    }
+    const existing = await prisma.workspace.findUnique({ where: { id: id as string }, select: { logoUrl: true } })
 
     const workspace = await prisma.workspace.update({
         where: {
@@ -348,5 +367,34 @@ export const updateWorkspaceLogo = asyncHandler(async (req: Request, res: Respon
             logoUrl: url
         }
     })
+
+    if (existing?.logoUrl && existing.logoUrl !== url) {
+        await fileCleanupQueue.add('delete-file', { fileKey: extractKeyFromUrl(existing.logoUrl) })
+    }
+
     sendSuccess(res, workspace, 'Logo updated successfully')
+})
+
+// ─── REMOVE LOGO ──────────────────────────────────────────────
+export const removeWorkspaceLogo = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params
+    const userId = req.user!.id
+
+    const member = await getMember(id as string, userId)
+    if (!member || member.role !== 'ADMIN') {
+        throw ApiError.forbidden('Only ADMIN can remove the workspace logo')
+    }
+
+    const existing = await prisma.workspace.findUnique({ where: { id: id as string }, select: { logoUrl: true } })
+
+    const workspace = await prisma.workspace.update({
+        where: { id: id as string },
+        data: { logoUrl: null }
+    })
+
+    if (existing?.logoUrl) {
+        await fileCleanupQueue.add('delete-file', { fileKey: extractKeyFromUrl(existing.logoUrl) })
+    }
+
+    sendSuccess(res, workspace, 'Logo removed successfully')
 })

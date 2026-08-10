@@ -1,6 +1,6 @@
 import { IUserPublic } from "./user.types";
 
-export type WorkspaceRole = "ADMIN" | "DEVELOPER" | "VIEWER";
+export type WorkspaceRole = "ADMIN" | "MEMBER";
 
 export interface IWorkspace {
     id: string;

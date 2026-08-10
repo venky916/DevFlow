@@ -548,18 +548,18 @@ export const updateIssue = asyncHandler(async (req: Request, res: Response) => {
         if (!assigneeMember) {
             throw ApiError.badRequest('Assignee is not a member of this project')
         }
+
+        const access = req.projectAccess!
+        const canAssignAnyone = access.isWorkspaceAdmin || access.projectRole === 'LEAD'
+        if (!canAssignAnyone && assigneeId !== req.user!.id) {
+            throw ApiError.forbidden('You can only assign issues to yourself')
+        }
     }
 
     // validate parentId — safety net only, no UI on the child's own page calls this
     if (parentId !== undefined) {
-        const project = await prisma.project.findUnique({ where: { id: issue.projectId }, select: { workspaceId: true } })
-        const wsMember = await prisma.workspaceMember.findUnique({
-            where: { workspaceId_userId: { workspaceId: project!.workspaceId, userId: req.user!.id } }
-        })
-        const projMember = await prisma.projectMember.findUnique({
-            where: { projectId_userId: { projectId: issue.projectId, userId: req.user!.id } }
-        })
-        const isLeadOrAdmin = wsMember?.role === 'ADMIN' || projMember?.role === 'LEAD'
+        const access = req.projectAccess!
+        const isLeadOrAdmin = access.isWorkspaceAdmin || access.projectRole === 'LEAD'
         if (!isLeadOrAdmin) throw ApiError.forbidden('Only leads or admins can change an issue\'s parent')
 
         if (parentId) {
