@@ -44,6 +44,43 @@ export function useUpdateIssue(issueId: string, projectId: string) {
     });
 }
 
+export function useDeleteIssue( projectId: string) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: async (issueId: string) => {
+            await api.delete(`/issues/${issueId}`)
+        },
+        onSuccess: async () => {
+            await qc.refetchQueries({ queryKey: ["board", projectId] })
+            qc.invalidateQueries({ queryKey: ["backlog-grouped", projectId] })
+        }
+    })
+}
+
+export function useDuplicateIssue(projectId: string) {
+    const qc = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (issue: Pick<
+            CreateIssueInput,
+            "title" | "description" | "type" | "priority" | "labelIds"
+        >) => {
+            const payload: CreateIssueInput = {
+                ...issue,
+                title: `${issue.title} (copy)`,
+            };
+
+            const res = await api.post(`/projects/${projectId}/issues`, payload);
+            return res.data.data as { id: string };
+        },
+        onSuccess: (data) => {
+            qc.invalidateQueries({ queryKey: ["backlog-grouped", projectId] });
+            qc.invalidateQueries({ queryKey: ["board", projectId] });
+            return data.id;
+        },
+    });
+}
+
 export function useProjectSprints(projectId: string) {
     return useQuery<ISprint[]>({
         queryKey: ["sprints", projectId],

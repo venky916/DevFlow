@@ -3,6 +3,7 @@
 import { Plus, RotateCw } from "lucide-react";
 import { Button } from "@devflow/ui/components/button";
 import { Badge } from "@devflow/ui/components/badge";
+import { SearchBox } from "@devflow/ui/components/search-box";
 import { FilterBar, type IssueFilters } from "../shared/filter-bar";
 import type { ISprint, IUserPublic } from "@devflow/types";
 
@@ -35,6 +36,10 @@ export function BoardHeader({
         </span>
         {activeSprint && <Badge variant="success">Active</Badge>}
         <div className="h-4 w-px bg-border-default" />
+        <SearchBox
+          value={filters.q ?? ""}
+          onChange={(q) => onFiltersChange({ ...filters, q: q || undefined })}
+        />
         <FilterBar
           fields={["assignee", "label", "priority", "type", "dueDate"]}
           projectId={projectId}

@@ -18,3 +18,4 @@ export { MentionList } from "./components/mention-list";
 export { ImageUploadButton } from "./components/image-upload-button";
 export { FileUploadField } from "./components/file-upload-field";
 export { FileUploadList } from "./components/file-upload-list";
+export { SearchBox } from "./components/search-box";

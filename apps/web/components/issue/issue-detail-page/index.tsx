@@ -12,6 +12,7 @@ import { IssuePropertiesPanel } from "./issue-properties-panel";
 import { CommentsSection } from "./comments-section";
 import { ActivityPanel } from "../activity-panel";
 import type { IIssueWithRelations, IssueStatus } from "@devflow/types";
+import { IssueActionsMenu } from "../../shared/issue-actions-menu";
 
 export function IssueDetailPage({ issueId }: { issueId: string }) {
   const router = useRouter();
@@ -68,19 +69,30 @@ function IssueDetailContent({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex items-center gap-3 px-6 h-[38px] border-b border-border-default shrink-0">
-        <button
-          onClick={onBack}
-          className="text-text-muted hover:text-text-primary transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
-        <span className="text-[11px] font-mono text-accent">
-          #{issue.id.slice(-6).toUpperCase()}
-        </span>
-        <Badge variant={getStatusVariant(issue.status as IssueStatus)}>
-          {STATUS_LABELS[issue.status as IssueStatus]}
-        </Badge>
+      <div className="flex items-center justify-between gap-3 px-6 h-[38px] border-b border-border-default shrink-0">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className="text-text-muted hover:text-text-primary transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <span className="text-[11px] font-mono text-accent">
+            #{issue.id.slice(-6).toUpperCase()}
+          </span>
+          <Badge variant={getStatusVariant(issue.status as IssueStatus)}>
+            {STATUS_LABELS[issue.status as IssueStatus]}
+          </Badge>
+        </div>
+        <div>
+          <IssueActionsMenu
+            issue={issue}
+            projectId={issue.projectId}
+            canDelete={true}
+            onDeleted={onBack}
+            onDuplicated={onNavigate}
+          />
+        </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">

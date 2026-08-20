@@ -2,9 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import {
+  useQueryState,
+  useQueryStates,
+  parseAsString,
+  parseAsBoolean,
+} from "nuqs";
 import { Plus, ChevronDown, ChevronRight, RotateCw } from "lucide-react";
 import { Button } from "@devflow/ui/components/button";
 import { Badge } from "@devflow/ui/components/badge";
+import { SearchBox } from "@devflow/ui/components/search-box";
 import { cn } from "@devflow/ui/lib/cn";
 import {
   DndContext,
@@ -155,6 +162,18 @@ function BacklogSection({
   );
 }
 
+const filterParsers = {
+  assigneeId: parseAsString,
+  labelId: parseAsString,
+  priority: parseAsString,
+  type: parseAsString,
+  dueDateFrom: parseAsString,
+  dueDateTo: parseAsString,
+  noDueDate: parseAsBoolean,
+  dueDatePreset: parseAsString,
+  q: parseAsString,
+};
+
 export function BacklogPage() {
   const { workspaceSlug, projectSlug } = useParams<{
     workspaceSlug: string;
@@ -166,7 +185,18 @@ export function BacklogPage() {
   const [activeIssue, setActiveIssue] = useState<IIssueWithRelations | null>(
     null,
   );
-  const [filters, setFilters] = useState<IssueFilters>({});
+  const [rawFilters, setRawFilters] = useQueryStates(filterParsers);
+
+  const filters = Object.fromEntries(
+    Object.entries(rawFilters).filter(([, v]) => v !== null),
+  ) as IssueFilters;
+
+  const handleFiltersChange = (f: IssueFilters) => {
+    const normalized = Object.fromEntries(
+      Object.keys(filterParsers).map((key) => [key, (f as any)[key] ?? null]),
+    );
+    setRawFilters(normalized);
+  };
 
   const { data: workspaces } = useWorkspaces();
   const workspace = workspaces?.find((w) => w.slug === workspaceSlug);
@@ -363,12 +393,20 @@ export function BacklogPage() {
           </h1>
           <div className="h-4 w-px bg-border-default" />
           {project && (
+            <SearchBox
+              value={filters.q ?? ""}
+              onChange={(q) =>
+                handleFiltersChange({ ...filters, q: q || undefined })
+              }
+            />
+          )}
+          {project && (
             <FilterBar
               fields={["assignee", "label", "priority", "type", "dueDate"]}
               projectId={project.id}
               members={memberUsers}
               filters={filters}
-              onChange={setFilters}
+              onChange={handleFiltersChange}
             />
           )}
         </div>

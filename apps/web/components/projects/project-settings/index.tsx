@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { Tabs } from "@devflow/ui/components/tabs";
 import { Spinner } from "@devflow/ui/components/spinner";
 import { useWorkspaces } from "../../../hooks/use-workspaces";
@@ -25,6 +26,8 @@ export function ProjectSettings() {
   const project = projects?.find((p) => p.slug === projectSlug);
   const { data: members } = useProjectMembers(project?.id ?? "");
 
+  const [tab, setTab] = useQueryState("tab", { defaultValue: "general" });
+
   if (!project || !workspace) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -47,6 +50,8 @@ export function ProjectSettings() {
             Project Settings
           </h1>
           <Tabs
+            value={tab}
+            onValueChange={setTab}
             tabs={[
               {
                 label: "General",

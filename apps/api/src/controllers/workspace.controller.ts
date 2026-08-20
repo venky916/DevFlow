@@ -97,12 +97,14 @@ export const getMyWorkspaces = asyncHandler(async (req: Request, res: Response) 
     })
 
     const signed = await Promise.all(
-        workspaces.map(async (ws) => ({
-            ...ws,
-            logoUrl: ws.logoUrl
-                ? await signUrl(ws.logoUrl)
-                : null
-        }))
+        workspaces.map(async (ws) => {
+            const myMembership = ws.members.find((m) => m.userId === userId);
+            return {
+                ...ws,
+                logoUrl: ws.logoUrl ? await signUrl(ws.logoUrl) : null,
+                currentUserWorkspaceRole: myMembership?.role ?? null, // NEW
+            };
+        })
     )
     sendSuccess(res, signed, 'Workspaces fetched successfully')
 })
@@ -164,7 +166,9 @@ export const getWorkspaceById = asyncHandler(async (req: Request, res: Response)
         }
     })
 
-    sendSuccess(res, { ...workspace, logoUrl: await signUrl(workspace.logoUrl), activeSprintsCount }, 'Workspace fetched successfully')
+    sendSuccess(res, {
+        ...workspace, logoUrl: await signUrl(workspace.logoUrl), activeSprintsCount, currentUserWorkspaceRole: member.role
+    }, 'Workspace fetched successfully')
 
 })
 

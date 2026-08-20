@@ -39,6 +39,7 @@ export function useMyIssues(filters: MyIssuesFilters = {}) {
                     dueDateFrom: filters.dueDateFrom,
                     dueDateTo: filters.dueDateTo,
                     noDueDate: filters.noDueDate,
+                    q: filters.q, // ← new
                 },
             });
             return res.data.data;

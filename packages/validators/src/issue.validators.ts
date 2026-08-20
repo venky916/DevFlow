@@ -60,6 +60,7 @@ export const issueFilterSchema = z.object({
     dueDateFrom: z.coerce.date().optional(),
     dueDateTo: z.coerce.date().optional(),
     noDueDate: z.coerce.boolean().optional(),
+    q: z.string().optional(),
 })
 
 export const myIssuesFilterSchema = z.object({
@@ -70,6 +71,7 @@ export const myIssuesFilterSchema = z.object({
     dueDateFrom: z.coerce.date().optional(),
     dueDateTo: z.coerce.date().optional(),
     noDueDate: z.coerce.boolean().optional(),
+    q: z.string().optional(),
 })
 
 export type CreateIssueInput = z.input<typeof createIssueSchema>

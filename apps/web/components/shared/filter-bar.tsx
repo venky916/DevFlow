@@ -33,6 +33,7 @@ export interface IssueFilters {
   dueDatePreset?: DueDatePreset; // UI-only — not sent to the API directly
   projectId?: string;
   sprintId?: string;
+  q?: string; // ← new
 }
 
 interface Props {

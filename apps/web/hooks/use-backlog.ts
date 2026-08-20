@@ -22,6 +22,7 @@ export function useBacklogGrouped(projectId: string, filters: IssueFilters = {})
                     dueDateFrom: filters.dueDateFrom,
                     dueDateTo: filters.dueDateTo,
                     noDueDate: filters.noDueDate,
+                    q: filters.q, // ← new
                 },
             });
             return res.data.data;

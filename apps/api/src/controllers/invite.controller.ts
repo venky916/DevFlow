@@ -6,111 +6,22 @@ import { sendCreated, sendSuccess } from "../lib/apiResponse";
 import { emailQueue, notificationQueue } from "@devflow/queues"
 import { NotificationTypes } from "@devflow/types";
 import { createInviteSchema, acceptInviteSchema } from "@devflow/validators";
+import { inviteService } from "../services/invite.service";
 
 // ─── POST /workspaces/:id/invites ─────────────────────────────
 // Owner/Admin sends invite to an email
 export const createInvite = asyncHandler(async (req: Request, res: Response) => {
-    const { id: workspaceId } = req.params
-    const { email, role } = createInviteSchema.parse(req.body)
-    const userId = req.user!.id
+    const { id: workspaceId } = req.params;
+    const { email, role } = createInviteSchema.parse(req.body);
 
-    const workspace = await prisma.workspace.findUnique({
-        where: {
-            id: workspaceId as string
-        }
-    })
+    const result = await inviteService.createInvite(
+        workspaceId as string,
+        req.user!.id,
+        email,
+        role
+    );
 
-    if (!workspace) {
-        throw ApiError.notFound('Workspace not found')
-    }
-
-    // find the user account for the invited email first
-    const invitedUser = await prisma.user.findUnique({
-        where: { email }
-    })
-
-    if (invitedUser) {
-        const existingMember = await prisma.workspaceMember.findUnique({
-            where: {
-                workspaceId_userId: {
-                    workspaceId: workspaceId as string,
-                    userId: invitedUser.id
-                }
-            }
-        })
-
-        if (existingMember) {
-            throw ApiError.conflict("User is already a member of this workspace")
-        }
-    }
-
-
-    // check if invite already pending for this email
-    const existingInvite = await prisma.workspaceInvite.findFirst({
-        where: {
-            workspaceId: workspaceId as string,
-            email,
-            acceptedAt: null,
-            expiresAt: {
-                gt: new Date()
-            }
-        }
-    })
-
-    if (existingInvite) {
-        throw ApiError.conflict("Invite already pending for this email")
-    }
-
-    // create invite — expires in 7 days
-    const expiresAt = new Date()
-    expiresAt.setDate(expiresAt.getDate() + 7)
-
-    const invite = await prisma.workspaceInvite.create({
-        data: {
-            workspaceId: workspaceId as string,
-            email,
-            role,
-            invitedBy: userId,
-            expiresAt,
-        }
-    })
-
-    // get inviter name for email
-    const inviter = await prisma.user.findUnique({
-        where: {
-            id: userId
-        },
-        select: {
-            name: true,
-            email: true
-        }
-    })
-
-    // if user already has an account, fire in-app notification too
-    if (invitedUser) {
-        await notificationQueue.add('notification', {
-            userId: invitedUser.id,
-            type: NotificationTypes.WORKSPACE_INVITED,
-            content: `You've been invited to join ${workspace.name}`,
-            link: `/invite?token=${invite.token}`,
-            triggeredBy: userId,
-        })
-    }
-
-    // queue invite email
-    await emailQueue.add("email", {
-        to: email,
-        type: NotificationTypes.WORKSPACE_INVITED,
-        data: {
-            workspaceName: workspace.name,
-            invitedBy: inviter?.name ?? inviter?.email ?? "Admin",
-            inviteLink: `${process.env.BASE_WEB_URL}/invite?token=${invite.token}`,
-            role
-        }
-    })
-
-    sendCreated(res, { inviteId: invite.id, email, role, expiresAt }, "Invite sent successfully")
-
+    sendCreated(res, result, "Invite sent successfully");
 })
 
 // ─── POST /invites/accept ─────────────────────────────────────

@@ -10,6 +10,7 @@ import { IssueFields } from "./issue-fields";
 import { ActivityPanel } from "./activity-panel";
 import { STATUS_LABELS, getStatusVariant } from "../../lib/issue-constants";
 import type { IssueStatus } from "@devflow/types";
+import { IssueActionsMenu } from "../shared/issue-actions-menu";
 
 interface Props {
   issueId: string | null;
@@ -38,18 +39,6 @@ export function IssueSlideOver({
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
-
-  useEffect(() => {
-    if (issueId) {
-      const url = new URL(window.location.href);
-      url.searchParams.set("issue", issueId);
-      window.history.pushState({}, "", url);
-    } else {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("issue");
-      window.history.pushState({}, "", url);
-    }
-  }, [issueId]);
 
   return (
     <>
@@ -101,6 +90,18 @@ export function IssueSlideOver({
                 >
                   <ExternalLink className="h-4 w-4" />
                 </button>
+                <IssueActionsMenu
+                  issue={issue}
+                  projectId={projectId}
+                  canDelete={true}
+                  onDeleted={onClose}
+                  onDuplicated={(id: string) => {
+                    onClose();
+                    router.push(
+                      `/${workspaceSlug}/${projectSlug}/issues/${id}`,
+                    );
+                  }}
+                />
                 <button
                   onClick={onClose}
                   className="text-text-muted hover:text-text-primary transition-colors cursor-pointer"

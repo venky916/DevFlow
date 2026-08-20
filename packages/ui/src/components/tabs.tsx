@@ -13,12 +13,22 @@ interface TabsProps {
   tabs: Tab[];
   defaultValue?: string;
   className?: string;
+  value?: string;
+  onValueChange?: (value: string) => void;
 }
 
-export function Tabs({ tabs, defaultValue, className }: TabsProps) {
+export function Tabs({
+  tabs,
+  defaultValue,
+  className,
+  value,
+  onValueChange,
+}: TabsProps) {
   return (
     <RadixTabs.Root
       defaultValue={defaultValue ?? tabs[0]?.value}
+      value={value}
+      onValueChange={onValueChange}
       className={cn("flex flex-col gap-0", className)}
     >
       <RadixTabs.List className="flex border-b border-border-default">

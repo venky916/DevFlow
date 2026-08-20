@@ -41,6 +41,38 @@ export function DropdownMenu({
   );
 }
 
+export function IssueActionsDropdown({
+  open,
+  onClose,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      ref={ref}
+      className="absolute top-full right-0 mt-1 z-50 w-[184px] bg-bg-surface border border-border-default rounded-[4px] py-1 shadow-lg"
+    >
+      {children}
+    </div>
+  );
+}
+
 // ─── DropdownItem ─────────────────────────────────────────────────
 export function DropdownItem({
   onClick,

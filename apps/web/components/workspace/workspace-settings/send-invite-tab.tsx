@@ -17,7 +17,7 @@ interface Props {
 
 export function SendInviteTab({ workspaceId }: Props) {
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<WorkspaceRole>("DEVELOPER");
+  const [role, setRole] = useState<WorkspaceRole>("MEMBER");
   const { mutate: createInvite, isPending } = useCreateInvite(workspaceId);
 
   const handleSend = () => {
@@ -28,7 +28,7 @@ export function SendInviteTab({ workspaceId }: Props) {
         onSuccess: () => {
           toast.success(`Invite sent to ${email}`);
           setEmail("");
-          setRole("DEVELOPER");
+          setRole("MEMBER");
         },
         onError: (err: any) => {
           toast.error(err?.response?.data?.message ?? "Failed to send invite");

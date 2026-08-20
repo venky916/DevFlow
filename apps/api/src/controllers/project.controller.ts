@@ -6,11 +6,9 @@ import { asyncHandler } from "../lib/asyncHandler";
 import { createProjectSchema, updateProjectSchema, updateProjectMemberRoleSchema, addProjectMemberSchema } from "@devflow/validators";
 import { getCache, setCache, CacheKeys, TTL, deleteCache } from "../lib/cache"
 import { createLabelSchema, updateLabelSchema } from "@devflow/validators"
-import { logActivity } from "../lib/logActivity"
-import { notificationQueue } from "@devflow/queues";
-import { ActivityActions, NotificationTypes } from "@devflow/types";
 import { buildUpdateData } from "../lib/updateBuilder";
-
+import { projectService } from "../services/project.service";
+import { ProjectRole } from "@devflow/types";
 // ─── POST /workspaces/:workspaceId/projects ───────────────────────
 export const createProject = asyncHandler(async (req: Request, res: Response) => {
     const { workspaceId } = req.params
@@ -103,7 +101,19 @@ export const getProjects = asyncHandler(async (req: Request, res: Response) => {
         }
     })
 
-    sendSuccess(res, projects, "Projects fetched successfully")
+    // NEW — attach resolved access per project, no extra query needed:
+    // admin → isWorkspaceAdmin true always; otherwise pull role from the members array we already fetched
+    const mapped = projects.map((p) => {
+        const myMembership = p.members.find((m) => m.userId === userId);
+        return {
+            ...p,
+            currentUserAccess: isOwnerOrAdmin
+                ? { isWorkspaceAdmin: true, projectRole: null }
+                : { isWorkspaceAdmin: false, projectRole: myMembership?.role ?? null },
+        };
+    });
+
+    sendSuccess(res, mapped, "Projects fetched successfully")
 })
 
 // ─── GET /projects/:id ────────────────────────────────────────────
@@ -155,9 +165,9 @@ export const getProjectById = asyncHandler(async (req: Request, res: Response) =
     if (!project) {
         throw ApiError.notFound('Project not found')
     }
-
     const mapped = {
         ...project,
+        currentUserAccess: req.projectAccess,
         sprints: project.sprints.map((sprint) => {
             return {
                 ...sprint,
@@ -205,58 +215,17 @@ export const deleteProject = asyncHandler(async (req: Request, res: Response) =>
 // ─── POST /projects/:id/members ──────────────────────────────
 // Add a workspace member to a project
 export const addProjectMember = asyncHandler(async (req: Request, res: Response) => {
-    const { id: projectId } = req.params
-    const { userId, role } = addProjectMemberSchema.parse(req.body)
+    const { id: projectId } = req.params;
+    const { userId, role } = addProjectMemberSchema.parse(req.body);
 
-    const project = await prisma.project.findUnique({
-        where: { id: projectId as string }
-    })
-
-    if (!project) {
-        throw ApiError.notFound('Project not found')
-    }
-
-    // Check if user is workspace member
-    const newMember = await prisma.workspaceMember.findUnique({
-        where: {
-            workspaceId_userId: {
-                workspaceId: project.workspaceId,
-                userId
-            }
-        }
-    })
-
-    if (!newMember) {
-        throw ApiError.conflict('User must be a workspace member first')
-    }
-
-    // Add to project
-    const member = await prisma.projectMember.create({
-        data: {
-            projectId: projectId as string,
-            userId,
-            role: role || 'DEVELOPER'
-        },
-        include: { user: { select: { id: true, name: true, email: true } } }
-    })
-
-    await logActivity({
-        action: ActivityActions.MEMBER_ADDED,
-        scope: 'PROJECT',
-        userId: req.user!.id,
-        projectId: projectId as string,
-        meta: { addedUserId: userId, role }
-    })
-
-    await notificationQueue.add('notification', {
+    const member = await projectService.addMember(
+        projectId as string,
+        req.user!.id,
         userId,
-        type: NotificationTypes.PROJECT_ADDED,
-        content: `You've been added to project`,
-        link: `/projects/${projectId}`,
-        triggeredBy: req.user!.id,
-    })
+        role as ProjectRole
+    );
 
-    sendSuccess(res, member, 'Member added to project')
+    sendSuccess(res, member, 'Member added to project');
 
 })
 

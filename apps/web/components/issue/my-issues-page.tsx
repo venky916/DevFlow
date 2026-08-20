@@ -1,8 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  useQueryState,
+  useQueryStates,
+  parseAsString,
+  parseAsBoolean,
+} from "nuqs";
 import { RotateCw } from "lucide-react";
 import { Button } from "@devflow/ui/components/button";
+import { SearchBox } from "@devflow/ui/components/search-box";
 import { KanbanColumn } from "../../components/board/kanban-column";
 import { IssueSlideOver } from "../../components/issue/issue-slide-over";
 import { FilterBar } from "../../components/shared/filter-bar";
@@ -17,10 +24,36 @@ const STATUSES: IssueStatus[] = [
   "DONE",
 ];
 
+const filterParsers = {
+  projectId: parseAsString,
+  sprintId: parseAsString,
+  priority: parseAsString,
+  type: parseAsString,
+  dueDateFrom: parseAsString,
+  dueDateTo: parseAsString,
+  noDueDate: parseAsBoolean,
+  dueDatePreset: parseAsString,
+  q: parseAsString,
+};
+
 export function MyIssuesPage() {
-  const [filters, setFilters] = useState<MyIssuesFilters>({});
+  const [rawFilters, setRawFilters] = useQueryStates(filterParsers);
+  const [selectedIssueId, setSelectedIssueId] = useQueryState(
+    "issue",
+    parseAsString,
+  );
+
+  const filters = Object.fromEntries(
+    Object.entries(rawFilters).filter(([, v]) => v !== null),
+  ) as MyIssuesFilters;
+
+  const handleFiltersChange = (f: MyIssuesFilters) => {
+    const normalized = Object.fromEntries(
+      Object.keys(filterParsers).map((key) => [key, (f as any)[key] ?? null]),
+    );
+    setRawFilters(normalized);
+  };
   const { data, isLoading, isFetching, refetch } = useMyIssues(filters);
-  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
 
   // derived from whatever's currently loaded — narrows as filters narrow,
   // widens back out the moment filters are cleared and the full set refetches
@@ -62,11 +95,17 @@ export function MyIssuesPage() {
             </span>
           </h1>
           <div className="h-4 w-px bg-border-default" />
+          <SearchBox
+            value={filters.q ?? ""}
+            onChange={(q) =>
+              handleFiltersChange({ ...filters, q: q || undefined })
+            }
+          />
           <FilterBar
             fields={["project", "sprint", "priority", "type", "dueDate"]}
             projectOptions={projectOptions}
             filters={filters}
-            onChange={setFilters}
+            onChange={handleFiltersChange}
           />
         </div>
         <Button

@@ -4,12 +4,8 @@ import { ApiError } from "../lib/ApiError";
 import { prisma } from "@devflow/db";
 import { sendNoContent, sendSuccess } from "../lib/apiResponse";
 import { createSprintSchema, updateSprintSchema } from "@devflow/validators";
-import { publishToProject } from "../lib/redis.publisher";
-import { notificationQueue } from "@devflow/queues";
-import { ActivityActions, NotificationTypes, ProjectEvents } from "@devflow/types";
-import { CacheKeys, deleteCache } from "../lib/cache";
 import { buildUpdateData } from "../lib/updateBuilder";
-import { logActivity } from "../lib/logActivity";
+import { sprintService } from "../services/sprint.service";
 
 // ─── POST /projects/:id/sprints ───────────────────────────────────
 export const createSprint = asyncHandler(async (req: Request, res: Response) => {
@@ -181,183 +177,15 @@ export const deleteSprint = asyncHandler(async (req: Request, res: Response) => 
 
 // ─── POST /sprints/:id/start ──────────────────────────────────────
 export const startSprint = asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const userId = req.user!.id;
-
-    const sprint = await prisma.sprint.findUnique({
-        where: {
-            id: id as string
-        }
-    })
-
-    if (!sprint) {
-        throw ApiError.notFound('Sprint not found')
-    }
-
-    if (sprint.status === "ACTIVE") {
-        throw ApiError.badRequest('Sprint is already active')
-    }
-
-    if (sprint.status === "COMPLETED") {
-        throw ApiError.badRequest('Sprint is already completed')
-    }
-
-    // only one active sprint per project at a time
-    const activeSprint = await prisma.sprint.findFirst({
-        where: {
-            projectId: sprint.projectId,
-            status: "ACTIVE"
-        }
-    })
-
-    if (activeSprint) {
-        throw ApiError.badRequest('A sprint is already active in this project — complete it first')
-    }
-
-    const updated = await prisma.$transaction(async (tx) => {
-        await tx.sprint.update({
-            where: {
-                id: id as string
-            },
-            data: {
-                status: "ACTIVE",
-                startDate: sprint?.startDate ?? new Date()
-            }
-        })
-
-        // bulk promote BACKLOG → TODO for all issues in this sprint
-        await tx.issue.updateMany({
-            where: {
-                sprintId: id as string,
-                status: "BACKLOG"
-            },
-            data: {
-                status: "TODO"
-            }
-        })
-    })
-
-
-    // in startSprint — after sprint updated:
-    await deleteCache(CacheKeys.board(sprint.projectId, id as string))
-
-    // after sprint started:
-    await logActivity({
-        action: ActivityActions.SPRINT_STARTED,
-        scope: "PROJECT",
-        userId: req.user!.id,
-        projectId: sprint.projectId,
-        meta: { sprintId: id, sprintName: sprint.name },
-    });
-
-    // after transaction
-    const projectMembers = await prisma.projectMember.findMany({
-        where: { projectId: sprint.projectId },
-        select: { userId: true }
-    })
-
-    await Promise.all(projectMembers.map(async (member) =>
-        notificationQueue.add('notification', {
-            userId: member.userId,
-            type: NotificationTypes.SPRINT_STARTED,
-            content: `Sprint "${sprint.name}" has started`,
-            link: `/projects/${sprint.projectId}/board`,
-            triggeredBy: userId,
-        })
-    ))
-
-    // TODO: publish SPRINT_STARTED event to Redis pub/sub → WS broadcasts to clients
-    await publishToProject(sprint.projectId, {
-        type: ProjectEvents.SPRINT_STARTED,
-        payload: { sprintId: id, name: sprint.name }
-    })
-    sendSuccess(res, updated, "Sprint started successfully")
+    const updated = await sprintService.startSprint(req.params.id as string, req.user!.id);
+    sendSuccess(res, updated, "Sprint started successfully");
 })
 
 // ─── POST /sprints/:id/complete ───────────────────────────────────
 export const completeSprint = asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const userId = req.user!.id;
-
-    const sprint = await prisma.sprint.findUnique({
-        where: {
-            id: id as string
-        },
-        include: {
-            issues: true
-        }
-    })
-
-    if (!sprint) {
-        throw ApiError.notFound('Sprint not found')
-    }
-
-
-    if (sprint.status === "COMPLETED") {
-        throw ApiError.badRequest('Sprint is already completed')
-    }
-
-
-    await prisma.$transaction(async (tx) => {
-        // move incomplete issues back to backlog
-        await tx.issue.updateMany({
-            where: {
-                sprintId: id as string,
-                status: {
-                    not: "DONE"
-                }
-            },
-            data: {
-                status: "BACKLOG",
-                sprintId: null
-            }
-        })
-
-        // mark sprint as completed
-        await tx.sprint.update({
-            where: {
-                id: id as string
-            },
-            data: {
-                status: "COMPLETED",
-                endDate: sprint?.endDate ?? new Date()
-            }
-        })
-    })
-    // in completeSprint — after transaction:
-    await deleteCache(CacheKeys.board(sprint.projectId, id as string))
-
-    const incompleteCount = sprint?.issues.filter(issue => issue.status !== "DONE").length
-    const doneCount = sprint?.issues.filter(issue => issue.status === "DONE").length
-
-    await logActivity({
-        action: ActivityActions.SPRINT_COMPLETED,
-        scope: "PROJECT",
-        userId: req.user!.id,
-        projectId: sprint.projectId,
-        meta: { sprintId: id, doneCount, incompleteCount },
-    });
-
-    // after transaction
-    const projectMembers = await prisma.projectMember.findMany({
-        where: { projectId: sprint.projectId },
-        select: { userId: true }
-    })
-
-    await Promise.all(projectMembers.map(async (member) =>
-        notificationQueue.add('notification', {
-            userId: member.userId,
-            type: NotificationTypes.SPRINT_COMPLETED,
-            content: `Sprint "${sprint.name}" completed — ${doneCount} done, ${incompleteCount} moved to backlog`,
-            link: `/projects/${sprint.projectId}/board`,
-            triggeredBy: userId,
-        })
-    ))
-
-    // TODO: publish SPRINT_COMPLETED event to Redis pub/sub → WS broadcasts to clients
-    await publishToProject(sprint.projectId, {
-        type: ProjectEvents.SPRINT_COMPLETED,
-        payload: { sprintId: id, incompleteCount, doneCount }
-    })
-    sendSuccess(res, { sprintId: id, incompleteCount, doneCount, message: `${incompleteCount} issues moved back to backlog`, }, "Sprint completed successfully")
+    const result = await sprintService.completeSprint(req.params.id as string, req.user!.id);
+    sendSuccess(res, {
+        ...result,
+        message: `${result.incompleteCount} issues moved back to backlog`,
+    }, "Sprint completed successfully");
 })

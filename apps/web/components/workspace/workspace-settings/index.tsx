@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { Tabs } from "@devflow/ui/components/tabs";
 import { Spinner } from "@devflow/ui/components/spinner";
 import { useAuthStore } from "../../../stores/auth.store";
@@ -15,6 +16,8 @@ export function WorkspaceSettings() {
   const user = useAuthStore((s) => s.user);
   const { data: workspaces } = useWorkspaces();
   const workspace = workspaces?.find((w) => w.slug === workspaceSlug);
+
+    const [tab, setTab] = useQueryState("tab", { defaultValue: "general" });
 
   if (!workspace) {
     return (
@@ -44,6 +47,8 @@ export function WorkspaceSettings() {
             Workspace Settings
           </h1>
           <Tabs
+            value={tab}
+            onValueChange={setTab}
             tabs={[
               {
                 label: "General",

@@ -1,10 +1,15 @@
+// board-page.tsx
 "use client";
 
-import { useState } from "react";
 import { useParams } from "next/navigation";
+import {
+  useQueryState,
+  useQueryStates,
+  parseAsString,
+  parseAsBoolean,
+} from "nuqs";
 import { KanbanBoard } from "./kanban-board";
 import { BoardHeader } from "./board-header";
-import { type IssueFilters } from "../shared/filter-bar";
 import { useBoard } from "../../hooks/use-board";
 import { useWorkspaces } from "../../hooks/use-workspaces";
 import { useProjects } from "../../hooks/use-projects";
@@ -13,6 +18,20 @@ import type { IIssueWithRelations, IUserPublic } from "@devflow/types";
 import { useProjectSprints, useProjectMembers } from "../../hooks/use-issues";
 import { CreateIssueModal } from "../issue/create-issue-modal";
 import { IssueSlideOver } from "../issue/issue-slide-over";
+import { useState } from "react";
+import { IssueFilters } from "../shared/filter-bar";
+
+const filterParsers = {
+  assigneeId: parseAsString,
+  labelId: parseAsString,
+  priority: parseAsString,
+  type: parseAsString,
+  dueDateFrom: parseAsString,
+  dueDateTo: parseAsString,
+  noDueDate: parseAsBoolean,
+  dueDatePreset: parseAsString,
+  q: parseAsString,
+};
 
 export function BoardPage() {
   const { workspaceSlug, projectSlug } = useParams<{
@@ -20,10 +39,16 @@ export function BoardPage() {
     projectSlug: string;
   }>();
 
-  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [issueId, setIssueId] = useQueryState("issue", parseAsString);
+  const [rawFilters, setRawFilters] = useQueryStates(filterParsers);
   const [showCreateIssue, setShowCreateIssue] = useState(false);
-  const [filters, setFilters] = useState<IssueFilters>({});
   const activeSprint = useBoardStore((s) => s.activeSprint);
+
+  // strip nulls so downstream consumers (useBoard's queryKey, FilterBar) see
+  // the same "absent = undefined" shape they already expect
+  const filters = Object.fromEntries(
+    Object.entries(rawFilters).filter(([, v]) => v !== null),
+  );
 
   const { data: workspaces } = useWorkspaces();
   const workspace = workspaces?.find((w) => w.slug === workspaceSlug);
@@ -39,6 +64,16 @@ export function BoardPage() {
 
   const memberUsers: IUserPublic[] =
     members?.map((m) => m.user!).filter(Boolean) ?? [];
+
+  const handleFiltersChange = (f: IssueFilters) => {
+    const normalized = Object.fromEntries(
+      Object.keys(filterParsers).map((key) => [
+        key,
+        (f as any)[key] ?? null, // undefined (or missing) → null, so nuqs removes the param
+      ]),
+    );
+    setRawFilters(normalized);
+  };
 
   if (isLoading) {
     return (
@@ -56,7 +91,7 @@ export function BoardPage() {
           members={memberUsers}
           projectId={project.id}
           filters={filters}
-          onFiltersChange={setFilters}
+          onFiltersChange={handleFiltersChange}
           onRefresh={() => refetch()}
           isRefreshing={isFetching}
           onCreateIssue={() => setShowCreateIssue(true)}
@@ -65,10 +100,7 @@ export function BoardPage() {
 
       <div className="flex-1 overflow-hidden px-6 py-4">
         {project && (
-          <KanbanBoard
-            projectId={project.id}
-            onIssueClick={setSelectedIssueId}
-          />
+          <KanbanBoard projectId={project.id} onIssueClick={setIssueId} />
         )}
       </div>
 
@@ -85,8 +117,8 @@ export function BoardPage() {
 
       {project && (
         <IssueSlideOver
-          issueId={selectedIssueId}
-          onClose={() => setSelectedIssueId(null)}
+          issueId={issueId}
+          onClose={() => setIssueId(null)}
           projectId={project.id}
           workspaceSlug={workspaceSlug}
           projectSlug={projectSlug}
