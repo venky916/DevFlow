@@ -9,6 +9,7 @@ import { createLabelSchema, updateLabelSchema } from "@devflow/validators"
 import { buildUpdateData } from "../lib/updateBuilder";
 import { projectService } from "../services/project.service";
 import { ProjectRole } from "@devflow/types";
+import { signUrl } from "../lib/signUrl";
 // ─── POST /workspaces/:workspaceId/projects ───────────────────────
 export const createProject = asyncHandler(async (req: Request, res: Response) => {
     const { workspaceId } = req.params
@@ -238,7 +239,16 @@ export const getProjectMembers = asyncHandler(async (req: Request, res: Response
     const cached = await getCache(cacheKey)
 
     if (cached) {
-        sendSuccess(res, cached, "Members fetched successfully")
+        const signedCached = await Promise.all(
+            cached?.map(async (m: any) => ({
+                ...m,
+                user: {
+                    ...m.user,
+                    avatarUrl: m.user.avatarUrl ? await signUrl(m.user.avatarUrl) : null
+                }
+            }))
+        )
+        sendSuccess(res, signedCached, "Members fetched successfully")
         return
     }
 
@@ -261,9 +271,20 @@ export const getProjectMembers = asyncHandler(async (req: Request, res: Response
         }
     })
 
+    // cache raw (unsigned) data — signed URLs expire, raw keys don't
     await setCache(cacheKey, members, TTL.MEMBERS)
 
-    sendSuccess(res, members, "Members fetched successfully")
+    const signed = await Promise.all(
+        members.map(async (m) => ({
+            ...m,
+            user: {
+                ...m.user,
+                avatarUrl: m.user.avatarUrl ? await signUrl(m.user.avatarUrl) : null
+            }
+        }))
+    )
+
+    sendSuccess(res, signed, "Members fetched successfully")
 })
 
 // ─── PATCH /projects/:id/members/:uid ────────────────────────────
@@ -323,14 +344,16 @@ export const removeProjectMember = asyncHandler(async (req: Request, res: Respon
         }
     }
 
-    const deleted = await prisma.projectMember.delete({
-        where: {
-            projectId_userId: {
-                projectId: id as string,
-                userId: uid as string
-            }
-        }
-    })
+    await prisma.$transaction([
+        // unassign their issues in this project — they can no longer open them
+        prisma.issue.updateMany({
+            where: { projectId: id as string, assigneeId: uid as string },
+            data: { assigneeId: null },
+        }),
+        prisma.projectMember.delete({
+            where: { projectId_userId: { projectId: id as string, userId: uid as string } },
+        }),
+    ])
 
     // add after DB write in both functions:
     await deleteCache(CacheKeys.projectMembers(id as string))

@@ -14,13 +14,13 @@
   /* ── Text ── */
   --color-text-primary: #ffffff;
   --color-text-secondary: #a0a0a0;
-  --color-text-muted: #666666;
+  --color-text-muted: #8c8c8c;
   --color-text-disabled: #444444;
 
   /* ── Borders ── */
-  --color-border-default: #1f1f1f;
-  --color-border-emphasis: #2a2a2a;
-  --color-border-strong: #333333;
+  --color-border-default: #2b2b2b;
+  --color-border-emphasis: #3d3d3d;
+  --color-border-strong: #6b6b6b;
 
   /* ── Accent (Neon Green) ── */
   --color-accent: #00e599;
@@ -63,7 +63,7 @@
 }
 
 .mention {
-  color: #00E599;
+  color: #00e599;
   background: #0a2a1a;
   border-radius: 3px;
   padding: 1px 5px;

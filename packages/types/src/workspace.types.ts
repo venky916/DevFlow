@@ -26,7 +26,8 @@ export interface IWorkspaceWithMembers extends IWorkspace {
     _count?: {
         projects: number,
         members: number
-    }
+    },
+    currentUserWorkspaceRole: "ADMIN" | "MEMBER";
 }
 
 export interface IWorkspaceInvite {

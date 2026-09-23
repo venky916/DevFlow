@@ -51,74 +51,109 @@ export const TYPE_OPTIONS = [
     { label: "Other", value: "OTHER" },
 ];
 
-export function activityText(action: string, meta?: Record<string, any>): string {
+export const STATUS_ORDER: IssueStatus[] = [
+    "BACKLOG",
+    "TODO",
+    "IN_PROGRESS",
+    "IN_REVIEW",
+    "DONE",
+];
+
+export const STATUS_COLORS: Record<IssueStatus, string> = {
+    BACKLOG: "#555555",
+    TODO: "#4B8BE2",
+    IN_PROGRESS: "#EF9F27",
+    IN_REVIEW: "#8B5CF6",
+    DONE: "#22C55E",
+};
+
+export const TYPE_LABELS: Record<IssueType, string> = {
+    BUG: "Bug",
+    FEATURE: "Feature",
+    TASK: "Task",
+    IMPROVEMENT: "Improvement",
+    OTHER: "Other",
+};
+
+export const TYPE_COLORS: Record<IssueType, string> = {
+    BUG: "#E24B4A",
+    FEATURE: "#8B5CF6",
+    TASK: "#4B8BE2",
+    IMPROVEMENT: "#EF9F27",
+    OTHER: "#777777",
+};
+
+const FIELD_MESSAGES: Record<string, (from: any, to: any) => string> = {
+    title: (_f, to) => `changed title to "${to}"`,
+    description: () => `updated the description`,
+    priority: (_f, to) => `changed priority to ${String(to).toLowerCase().replace("_", " ")}`,
+    type: (_f, to) => `changed type to ${to}`,
+    dueDate: (_f, to) => (to ? `set due date` : "removed due date"),
+    assigneeId: (_f, to) => (to ? "reassigned this issue" : "removed the assignee"),
+    status: (from, to) =>
+        `moved from ${STATUS_LABELS[from as IssueStatus] ?? from} to ${STATUS_LABELS[to as IssueStatus] ?? to}`,
+};
+
+export function activityText(action: string, meta?: Record<string, any>): string[] {
     switch (action) {
-
-        // ─── issue level ──────────────────────────────────────────
         case "ISSUE_CREATED":
-            return meta?.parentId
-                ? "created this sub-issue"
-                : "created this issue"
+            return [meta?.parentId ? "created this sub-issue" : "created this issue"];
 
-        case "ISSUE_UPDATED":
-            if (meta?.changes?.assigneeId !== undefined)
-                return meta.changes.assigneeId
-                    ? "reassigned this issue"
-                    : "removed the assignee"
-            if (meta?.changes?.dueDate !== undefined)
-                return meta.changes.dueDate
-                    ? `set due date`
-                    : "removed due date"
-            if (meta?.changes?.type !== undefined)
-                return `changed type to ${meta.changes.type}`
-            if (meta?.changes?.priority !== undefined)
-                return `changed priority to ${meta.changes.priority?.toLowerCase().replace("_", " ")}`
-            if (meta?.attachedToParent)
-                return "attached as sub-issue"
-            if (meta?.detachedFromParent)
-                return "detached from parent"
-            return "updated this issue"
+        case "ISSUE_UPDATED": {
+            if (meta?.attachedToParent) return ["attached as sub-issue"];
+            if (meta?.detachedFromParent) return ["detached from parent"];
+
+            const changes = meta?.changes ?? {};
+            const lines = Object.entries(changes)
+                .map(([field, val]: [string, any]) => {
+                    if (!val || typeof val !== "object" || !("to" in val)) return null;
+                    return FIELD_MESSAGES[field]?.(val.from, val.to);
+                })
+                .filter(Boolean) as string[];
+
+            return lines.length > 0 ? lines : ["updated this issue"];
+        }
 
         case "ISSUE_STATUS_CHANGED":
-            if (meta?.from === meta?.to)
-                return `reordered to ${STATUS_LABELS[meta?.to as IssueStatus] ?? meta?.to}`
-            return `moved from ${STATUS_LABELS[meta?.from as IssueStatus] ?? meta?.from} to ${STATUS_LABELS[meta?.to as IssueStatus] ?? meta?.to}`
+            return meta?.from === meta?.to
+                ? [`reordered to ${STATUS_LABELS[meta?.to as IssueStatus] ?? meta?.to}`]
+                : [`moved from ${STATUS_LABELS[meta?.from as IssueStatus] ?? meta?.from} to ${STATUS_LABELS[meta?.to as IssueStatus] ?? meta?.to}`];
 
         case "ISSUE_ASSIGNED":
-            return "was assigned this issue"
+            return ["was assigned this issue"];
 
         case "ISSUE_DELETED":
-            return `deleted issue: ${meta?.title ?? ""}`
+            return [`deleted issue: ${meta?.title ?? ""}`];
 
-        // ─── comment level ────────────────────────────────────────
         case "COMMENT_ADDED":
-            return meta?.preview
-                ? `commented: "${meta.preview.slice(0, 60)}${meta.preview.length > 60 ? "..." : ""}"`
-                : "added a comment"
+            return [
+                meta?.preview
+                    ? `commented: "${meta.preview.slice(0, 60)}${meta.preview.length > 60 ? "..." : ""}"`
+                    : "added a comment",
+            ];
 
         case "COMMENT_UPDATED":
-            return "edited a comment"
+            return ["edited a comment"];
 
         case "COMMENT_DELETED":
-            return "deleted a comment"
+            return ["deleted a comment"];
 
-        // ─── project level ────────────────────────────────────────
         case "SPRINT_CREATED":
-            return `created sprint: ${meta?.sprintName ?? ""}`
+            return [`created sprint: ${meta?.sprintName ?? ""}`];
 
         case "SPRINT_STARTED":
-            return `started sprint: ${meta?.sprintName ?? ""}`
+            return [`started sprint: ${meta?.sprintName ?? ""}`];
 
         case "SPRINT_COMPLETED":
-            return `completed sprint — ${meta?.doneCount ?? 0} done, ${meta?.incompleteCount ?? 0} moved to backlog`
+            return [`completed sprint — ${meta?.doneCount ?? 0} done, ${meta?.incompleteCount ?? 0} moved to backlog`];
 
         case "MEMBER_ADDED":
-            return `added a new member as ${meta?.role?.toLowerCase() ?? "developer"}`
+            return [`added a new member as ${meta?.role?.toLowerCase() ?? "developer"}`];
 
         case "MENTION":
-            return "mentioned someone in a comment"
+            return ["mentioned someone in a comment"];
 
         default:
-            return action.toLowerCase().replace(/_/g, " ")
+            return [action.toLowerCase().replace(/_/g, " ")];
     }
 }

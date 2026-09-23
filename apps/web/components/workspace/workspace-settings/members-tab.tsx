@@ -4,7 +4,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { Badge } from "@devflow/ui/components/badge";
 import { Avatar } from "@devflow/ui/components/avatar";
 import { Select } from "@devflow/ui/components/select";
 import { Spinner } from "@devflow/ui/components/spinner";
@@ -15,12 +14,9 @@ import {
   useRemoveMember,
 } from "../../../hooks/use-workspace-settings";
 import { SectionHeading } from "../../shared/section-heading";
-import {
-  WORKSPACE_ROLE_OPTIONS,
-  workspaceRoleVariant,
-  displayName,
-} from "../../../lib/roles";
+import { WORKSPACE_ROLE_OPTIONS, displayName } from "../../../lib/roles";
 import type { WorkspaceRole } from "@devflow/types";
+import { RoleBadge } from "../../shared/role-badge";
 
 interface Props {
   workspaceId: string;
@@ -119,11 +115,7 @@ export function MembersTab({ workspaceId, isAdmin }: Props) {
                     />
                   </div>
                 ) : (
-                  <Badge
-                    variant={workspaceRoleVariant(member.role as WorkspaceRole)}
-                  >
-                    {member.role}
-                  </Badge>
+                  <RoleBadge role={member.role as WorkspaceRole} />
                 )}
               </div>
 

@@ -41,6 +41,7 @@ export function useMoveToSprint(projectId: string) {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["backlog-grouped", projectId] });
             qc.invalidateQueries({ queryKey: ["board", projectId] });
+            qc.invalidateQueries({ queryKey: ["issue-list", projectId] });
         },
     });
 }

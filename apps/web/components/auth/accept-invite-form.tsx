@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@devflow/ui/components/button";
 import { api } from "../../lib/axios";
 import { useAuthStore } from "../../stores/auth.store";
+import { Logo } from "../shared/logo";
 
 export function AcceptInviteForm() {
   const router = useRouter();
@@ -31,11 +32,7 @@ export function AcceptInviteForm() {
   if (!token) {
     return (
       <div className="flex flex-col items-center gap-6 text-center">
-        <div className="h-10 w-10 rounded-[4px] bg-accent flex items-center justify-center">
-          <span className="text-accent-text font-bold text-lg font-mono">
-            D
-          </span>
-        </div>
+        <Logo />
         <div>
           <h1 className="text-xl font-semibold text-text-primary">
             Invalid invite
@@ -50,9 +47,7 @@ export function AcceptInviteForm() {
 
   return (
     <div className="flex flex-col items-center gap-6 text-center">
-      <div className="h-10 w-10 rounded-[4px] bg-accent flex items-center justify-center">
-        <span className="text-accent-text font-bold text-lg font-mono">D</span>
-      </div>
+      <Logo />
       <div>
         <h1 className="text-xl font-semibold text-text-primary">
           You're invited!

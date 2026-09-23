@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../lib/asyncHandler";
 import { ApiError } from "../lib/ApiError";
 import { prisma } from "@devflow/db";
-import { sendNoContent, sendSuccess } from "../lib/apiResponse";
+import { sendNoContent, sendPaginated, sendSuccess } from "../lib/apiResponse";
 import { createIssueSchema, updateIssueSchema, moveIssueSchema, moveIssueToSprintSchema, issueFilterSchema, myIssuesFilterSchema } from "@devflow/validators";
 import { CacheKeys, getCache, setCache, TTL } from "../lib/cache";
 import { signUrl } from "../lib/signUrl";
@@ -75,49 +75,108 @@ export const searchProjectIssues = asyncHandler(async (req: Request, res: Respon
 })
 
 // ─── GET /projects/:id/board ──────────────────────────────────────
-export const getBoardIssues = asyncHandler(async (req: Request, res: Response) => {
-    const { id: projectId } = req.params
+const signBoardUrls = async (board: any) => {
+    const signedColumns = await Promise.all(
+        Object.entries(board.columns).map(async ([status, issues]: [string, any]) => {
+            const signedIssues = await Promise.all(
+                issues.map(async (issue: any) => ({
+                    ...issue,
 
-    // get active sprint first
+                    assignee: issue.assignee
+                        ? {
+                            ...issue.assignee,
+                            avatarUrl: issue.assignee.avatarUrl
+                                ? await signUrl(issue.assignee.avatarUrl)
+                                : null
+                        }
+                        : null,
+
+                    children: await Promise.all(
+                        (issue.children ?? []).map(async (child: any) => ({
+                            ...child,
+
+                            assignee: child.assignee
+                                ? {
+                                    ...child.assignee,
+                                    avatarUrl: child.assignee.avatarUrl
+                                        ? await signUrl(child.assignee.avatarUrl)
+                                        : null
+                                }
+                                : null
+                        }))
+                    )
+                }))
+            );
+
+            return [status, signedIssues];
+        })
+    );
+
+    return {
+        ...board,
+        columns: Object.fromEntries(signedColumns)
+    };
+};
+
+export const getBoardIssues = asyncHandler(async (req: Request, res: Response) => {
+    const { id: projectId } = req.params;
+
+    // Get active sprint first
     const activeSprint = await prisma.sprint.findFirst({
         where: {
             projectId: projectId as string,
             status: "ACTIVE"
         }
-    })
+    });
 
-    // if no active sprint, return empty board immediately
+    // If no active sprint, return empty board immediately
     if (!activeSprint) {
-        sendSuccess(res, {
-            activeSprint: null,
-            columns: {
-                TODO: [],
-                IN_PROGRESS: [],
-                IN_REVIEW: [],
-                DONE: []
-            }
-        }, "Board fetched successfully");
+        sendSuccess(
+            res,
+            {
+                activeSprint: null,
+                columns: {
+                    TODO: [],
+                    IN_PROGRESS: [],
+                    IN_REVIEW: [],
+                    DONE: []
+                }
+            },
+            "Board fetched successfully"
+        );
         return;
     }
 
-    const filterWhere = buildFilterWhere(req.query)
+    const filterWhere = buildFilterWhere(req.query);
 
-    // cache key includes filters so filtered results don't pollute unfiltered cache
-    const hasFilters = Object.keys(filterWhere).length > 0
-    const cacheKey = CacheKeys.board(projectId as string, activeSprint?.id ?? null)
+    // Cache key includes filters so filtered results don't pollute unfiltered cache
+    const hasFilters = Object.keys(filterWhere).length > 0;
+    const cacheKey = CacheKeys.board(
+        projectId as string,
+        activeSprint?.id ?? null
+    );
 
+    // ─── Check cache ──────────────────────────────────────────
     if (!hasFilters) {
-        const cached = await getCache(cacheKey)
+        const cached = await getCache(cacheKey);
+
         if (cached) {
-            sendSuccess(res, cached, "Board fetched successfully")
-            return
+            const signedBoard = await signBoardUrls(cached);
+
+            sendSuccess(
+                res,
+                signedBoard,
+                "Board fetched successfully"
+            );
+            return;
         }
     }
 
+    // ─── Fetch issues ─────────────────────────────────────────
     const issues = await prisma.issue.findMany({
         where: {
             projectId: projectId as string,
-            sprintId: activeSprint ? activeSprint.id : null,
+            sprintId: activeSprint.id,
             parentId: null,
             NOT: {
                 status: "BACKLOG"
@@ -126,20 +185,29 @@ export const getBoardIssues = asyncHandler(async (req: Request, res: Response) =
         },
         include: {
             ...issueInclude,
+
             children: {
                 select: {
                     id: true,
                     title: true,
                     status: true,
-                    assignee: { select: { id: true, name: true, avatarUrl: true } }
+                    assignee: {
+                        select: {
+                            id: true,
+                            name: true,
+                            avatarUrl: true
+                        }
+                    }
                 },
-                orderBy: { position: "asc" }
+                orderBy: {
+                    position: "asc"
+                }
             }
         },
         orderBy: {
-            position: 'asc'
+            position: "asc"
         }
-    })
+    });
 
     const board = {
         activeSprint,
@@ -149,14 +217,168 @@ export const getBoardIssues = asyncHandler(async (req: Request, res: Response) =
             IN_REVIEW: issues.filter(issue => issue.status === "IN_REVIEW"),
             DONE: issues.filter(issue => issue.status === "DONE")
         }
-    }
+    };
 
-    // ─── Store in cache ───────────────────────────────────────
+    // ─── Store raw URLs in cache ───────────────────────────────
+    // Signed URLs expire, so never cache signed URLs.
     if (!hasFilters) {
-        await setCache(cacheKey, board, TTL.BOARD)
+        await setCache(cacheKey, board, TTL.BOARD);
     }
 
-    sendSuccess(res, board, "Board fetched successfully")
+    // ─── Sign avatar URLs only for response ────────────────────
+    const signedBoard = await signBoardUrls(board);
+
+    sendSuccess(
+        res,
+        signedBoard,
+        "Board fetched successfully"
+    );
+});
+
+// whitelist — never let sortBy be an arbitrary user-supplied column name (injection/error surface)
+const LIST_SORTABLE_FIELDS = ["position", "priority", "dueDate", "createdAt", "updatedAt", "title", "status"] as const
+type ListSortField = typeof LIST_SORTABLE_FIELDS[number]
+
+// ─── GET /projects/:id/issues/list ────────────────────────────────
+// flat, paginated view of active sprint's issues (list-view toggle, TanStack Table)
+export const getListIssues = asyncHandler(async (req: Request, res: Response) => {
+    const { id: projectId } = req.params
+
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 25))
+    const skip = (page - 1) * limit
+
+    const sortBy: ListSortField = LIST_SORTABLE_FIELDS.includes(req.query.sortBy as ListSortField)
+        ? (req.query.sortBy as ListSortField)
+        : "position"
+    const sortOrder: "asc" | "desc" = req.query.sortOrder === "desc" ? "desc" : "asc"
+
+    const activeSprint = await prisma.sprint.findFirst({
+        where: {
+            projectId: projectId as string,
+            status: "ACTIVE"
+        }
+    })
+
+    if (!activeSprint) {
+        sendPaginated(res, [], { total: 0, page, limit, hasMore: false })
+        return
+    }
+
+    const filterWhere = buildFilterWhere(req.query)
+    const hasFilters = Object.keys(filterWhere).length > 0
+
+    const isDefaultSort = sortBy === "position" && sortOrder === "asc"
+    const cacheable = !hasFilters && isDefaultSort
+    const cacheKey = CacheKeys.list(projectId as string, activeSprint.id, page, limit)
+
+    if (cacheable) {
+        const cached = await getCache(cacheKey)
+
+        if (cached) {
+            const cachedIssues = (cached as any).issues
+
+            const signedIssues = await Promise.all(
+                cachedIssues.map(async (issue: any) => ({
+                    ...issue,
+                    assignee: issue.assignee
+                        ? {
+                            ...issue.assignee,
+                            avatarUrl: await signUrl(issue.assignee.avatarUrl)
+                        }
+                        : null,
+                    children: await Promise.all(
+                        (issue.children ?? []).map(async (child: any) => ({
+                            ...child,
+                            assignee: child.assignee
+                                ? {
+                                    ...child.assignee,
+                                    avatarUrl: await signUrl(child.assignee.avatarUrl)
+                                }
+                                : null
+                        }))
+                    )
+                }))
+            )
+
+            sendPaginated(res, signedIssues, (cached as any).meta)
+            return
+        }
+    }
+
+    const where = {
+        projectId: projectId as string,
+        sprintId: activeSprint.id,
+        parentId: null,
+        NOT: {
+            status: "BACKLOG" as const
+        },
+        ...filterWhere
+    }
+
+    const [issues, total] = await Promise.all([
+        prisma.issue.findMany({
+            where,
+            include: {
+                ...issueInclude,
+                children: {
+                    select: {
+                        id: true,
+                        title: true,
+                        status: true,
+                        assignee: {
+                            select: {
+                                id: true,
+                                name: true,
+                                avatarUrl: true
+                            }
+                        }
+                    },
+                    orderBy: { position: "asc" }
+                }
+            },
+            orderBy: { [sortBy]: sortOrder },
+            skip,
+            take: limit
+        }),
+        prisma.issue.count({ where })
+    ])
+
+    const meta = {
+        total,
+        page,
+        limit,
+        hasMore: skip + issues.length < total
+    }
+
+    if (cacheable) {
+        await setCache(cacheKey, { issues, meta }, TTL.BOARD)
+    }
+
+    const signedIssues = await Promise.all(
+        issues.map(async (issue) => ({
+            ...issue,
+            assignee: issue.assignee
+                ? {
+                    ...issue.assignee,
+                    avatarUrl: await signUrl(issue.assignee.avatarUrl)
+                }
+                : null,
+            children: await Promise.all(
+                issue.children.map(async (child) => ({
+                    ...child,
+                    assignee: child.assignee
+                        ? {
+                            ...child.assignee,
+                            avatarUrl: await signUrl(child.assignee.avatarUrl)
+                        }
+                        : null
+                }))
+            )
+        }))
+    )
+
+    sendPaginated(res, signedIssues, meta)
 })
 
 // ─── GET /projects/:id/backlog ────────────────────────────────────
@@ -181,40 +403,122 @@ export const getBacklogIssues = asyncHandler(async (req: Request, res: Response)
 // ─── GET /projects/:id/backlog/grouped ────────────────────────────
 export const getBacklogGrouped = asyncHandler(async (req: Request, res: Response) => {
     const { id: projectId } = req.params;
-    const filterWhere = buildFilterWhere(req.query)
+    const filterWhere = buildFilterWhere(req.query);
 
     const childrenInclude = {
         children: {
             select: {
-                id: true, title: true, status: true,
-                assignee: { select: { id: true, name: true, avatarUrl: true } }
+                id: true,
+                title: true,
+                status: true,
+                assignee: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatarUrl: true
+                    }
+                }
             },
-            orderBy: { position: "asc" as const }
+            orderBy: {
+                position: "asc" as const
+            }
         }
-    }
+    };
 
     const sprints = await prisma.sprint.findMany({
         where: {
             projectId: projectId as string,
-            status: { not: "COMPLETED" }
+            status: {
+                not: "COMPLETED"
+            }
         },
         include: {
             issues: {
-                where: { parentId: null, ...filterWhere },
-                include: { ...issueInclude, ...childrenInclude },
-                orderBy: { position: "asc" }
+                where: {
+                    parentId: null,
+                    ...filterWhere
+                },
+                include: {
+                    ...issueInclude,
+                    ...childrenInclude
+                },
+                orderBy: {
+                    position: "asc"
+                }
             }
         },
-        orderBy: { createdAt: "asc" }
+        orderBy: {
+            createdAt: "asc"
+        }
     });
 
     const backlogIssues = await prisma.issue.findMany({
-        where: { projectId: projectId as string, sprintId: null, parentId: null, ...filterWhere },
-        include: { ...issueInclude, ...childrenInclude },
-        orderBy: { position: "asc" }
+        where: {
+            projectId: projectId as string,
+            sprintId: null,
+            parentId: null,
+            ...filterWhere
+        },
+        include: {
+            ...issueInclude,
+            ...childrenInclude
+        },
+        orderBy: {
+            position: "asc"
+        }
     });
 
-    sendSuccess(res, { sprints, backlogIssues }, "Backlog fetched successfully");
+    // ─── Sign avatar URLs before sending response ──────────────
+
+    const signIssueAvatars = async (issue: any) => ({
+        ...issue,
+
+        assignee: issue.assignee
+            ? {
+                ...issue.assignee,
+                avatarUrl: issue.assignee.avatarUrl
+                    ? await signUrl(issue.assignee.avatarUrl)
+                    : null
+            }
+            : null,
+
+        children: await Promise.all(
+            (issue.children ?? []).map(async (child: any) => ({
+                ...child,
+
+                assignee: child.assignee
+                    ? {
+                        ...child.assignee,
+                        avatarUrl: child.assignee.avatarUrl
+                            ? await signUrl(child.assignee.avatarUrl)
+                            : null
+                    }
+                    : null
+            }))
+        )
+    });
+
+    const signedSprints = await Promise.all(
+        sprints.map(async (sprint) => ({
+            ...sprint,
+            issues: await Promise.all(
+                sprint.issues.map(signIssueAvatars)
+            )
+        }))
+    );
+
+    const signedBacklogIssues = await Promise.all(
+        backlogIssues.map(signIssueAvatars)
+    );
+
+    sendSuccess(
+        res,
+        {
+            sprints: signedSprints,
+            backlogIssues: signedBacklogIssues
+        },
+        "Backlog fetched successfully"
+    );
 });
 
 // ─── GET /issues/:id ──────────────────────────────────────────────
@@ -395,50 +699,63 @@ export const deleteIssue = asyncHandler(async (req: Request, res: Response) => {
     sendNoContent(res);
 })
 
-// ─── GET /my-issues ───────────────────────────────────────────────
-export const getMyIssues = asyncHandler(async (req: Request, res: Response) => {
+// ─── shared filter builder for /my-issues ─────────────────────────
+function buildMyIssuesFilterWhere(userId: string, query: Record<string, any>) {
+    const filters = myIssuesFilterSchema.parse(query)
+    return {
+        assigneeId: userId,
+        ...(filters.projectId && { projectId: filters.projectId }),
+        ...(filters.sprintId && { sprintId: filters.sprintId }),
+        ...(filters.type && { type: filters.type }),
+        ...(filters.priority && { priority: filters.priority }),
+        ...(filters.q?.trim() && {
+            title: { contains: filters.q.trim(), mode: "insensitive" as const }
+        }),
+        ...(filters.noDueDate
+            ? { dueDate: null }
+            : (filters.dueDateFrom || filters.dueDateTo) && {
+                dueDate: {
+                    ...(filters.dueDateFrom && { gte: filters.dueDateFrom }),
+                    ...(filters.dueDateTo && { lte: filters.dueDateTo }),
+                }
+            }),
+    }
+}
+
+const myIssuesInclude = {
+    ...issueInclude,
+    project: {
+        select: {
+            id: true, name: true, slug: true, workspace: {
+                select: { id: true, slug: true }
+            }
+        }
+    },
+    sprint: { select: { id: true, name: true, status: true } },
+    parent: { select: { id: true, title: true } }
+}
+
+// ─── GET /my-issues/board ──────────────────────────────────────────
+export const getMyIssuesBoard = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id;
-    const filters = myIssuesFilterSchema.parse(req.query)
+    const where = buildMyIssuesFilterWhere(userId, req.query)
+
+    // only cache the unfiltered default view — same reasoning as project board
+    const { assigneeId, ...restFilters } = where as any
+    const hasFilters = Object.keys(restFilters).length > 0
+    const cacheKey = CacheKeys.myIssuesBoard(userId)
+
+    if (!hasFilters) {
+        const cached = await getCache(cacheKey)
+        if (cached) {
+            sendSuccess(res, cached, "My issues fetched successfully")
+            return
+        }
+    }
 
     const issues = await prisma.issue.findMany({
-        where: {
-            assigneeId: userId,
-            ...(filters.projectId && { projectId: filters.projectId }),
-            ...(filters.sprintId && { sprintId: filters.sprintId }),
-            ...(filters.type && { type: filters.type }),
-            ...(filters.priority && { priority: filters.priority }),
-            ...(filters.q?.trim() && {
-                title: { contains: filters.q.trim(), mode: "insensitive" as const }
-            }),
-            ...(filters.noDueDate
-                ? { dueDate: null }
-                : (filters.dueDateFrom || filters.dueDateTo) && {
-                    dueDate: {
-                        ...(filters.dueDateFrom && { gte: filters.dueDateFrom }),
-                        ...(filters.dueDateTo && { lte: filters.dueDateTo }),
-                    }
-                }),
-        },
-        include: {
-            ...issueInclude,
-            project: {
-                select: {
-                    id: true, name: true, slug: true, workspace: {
-                        select: {
-                            id: true,
-                            slug: true
-                        }
-                    }
-                }
-            },
-            sprint: { select: { id: true, name: true, status: true } },
-            parent: {
-                select: {
-                    id: true,
-                    title: true
-                }
-            }
-        },
+        where,
+        include: myIssuesInclude,
         orderBy: { updatedAt: "desc" }
     });
 
@@ -450,5 +767,60 @@ export const getMyIssues = asyncHandler(async (req: Request, res: Response) => {
         DONE: issues.filter(i => i.status === "DONE"),
     };
 
+    if (!hasFilters) {
+        await setCache(cacheKey, { columns }, TTL.BOARD)
+    }
+
     sendSuccess(res, { columns }, "My issues fetched successfully");
+});
+
+// ─── GET /my-issues/list ────────────────────────────────────────────
+const MY_ISSUES_SORTABLE_FIELDS = ["updatedAt", "createdAt", "priority", "dueDate", "title", "status"] as const
+type MyIssuesSortField = typeof MY_ISSUES_SORTABLE_FIELDS[number]
+
+export const getMyIssuesList = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user!.id;
+
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 25))
+    const skip = (page - 1) * limit
+
+    const sortBy: MyIssuesSortField = MY_ISSUES_SORTABLE_FIELDS.includes(req.query.sortBy as MyIssuesSortField)
+        ? (req.query.sortBy as MyIssuesSortField)
+        : "updatedAt"
+    const sortOrder: "asc" | "desc" = req.query.sortOrder === "asc" ? "asc" : "desc"
+
+    const where = buildMyIssuesFilterWhere(userId, req.query)
+    const { assigneeId, ...restFilters } = where as any
+    const hasFilters = Object.keys(restFilters).length > 0
+    const isDefaultSort = sortBy === "updatedAt" && sortOrder === "desc"
+    const cacheable = !hasFilters && isDefaultSort && page === 1
+    const cacheKey = CacheKeys.myIssuesList(userId, page, limit)
+
+    if (cacheable) {
+        const cached = await getCache(cacheKey)
+        if (cached) {
+            sendPaginated(res, (cached as any).issues, (cached as any).meta)
+            return
+        }
+    }
+
+    const [issues, total] = await Promise.all([
+        prisma.issue.findMany({
+            where,
+            include: myIssuesInclude,
+            orderBy: { [sortBy]: sortOrder },
+            skip,
+            take: limit
+        }),
+        prisma.issue.count({ where })
+    ])
+
+    const meta = { total, page, limit, hasMore: skip + issues.length < total }
+
+    if (cacheable) {
+        await setCache(cacheKey, { issues, meta }, TTL.BOARD)
+    }
+
+    sendPaginated(res, issues, meta)
 });

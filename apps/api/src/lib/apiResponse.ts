@@ -21,20 +21,40 @@ export const sendCreated = (
     return sendSuccess(res, data, message, 201);
 };
 
-// things you might add later
 export const sendPaginated = (res: Response, data: any, meta: any) => {
     return res.status(200).json({
         success: true,
-        data,
-        meta: {
-            total: meta.total,
-            page: meta.page,
-            limit: meta.limit,
-            hasMore: meta.hasMore
+        message: 'Success',
+        data: {
+            items: data,
+            meta: {
+                total: meta.total,
+                page: meta.page,
+                limit: meta.limit,
+                hasMore: meta.hasMore
+            }
         }
     })
 }
 // when you add pagination to GET /issues (could be 100s of issues)
+
+export const sendCursorPaginated = (
+    res: Response,
+    items: any[],
+    meta: { nextCursor: string | null; hasMore: boolean }
+) => {
+    return res.status(200).json({
+        success: true,
+        message: 'Success',
+        data: {
+            items,
+            meta: {
+                nextCursor: meta.nextCursor,
+                hasMore: meta.hasMore,
+            },
+        },
+    });
+};
 
 export const sendNoContent = (res: Response) => {
     return res.status(204).send();

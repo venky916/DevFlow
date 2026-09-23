@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useDeleteIssue, useDuplicateIssue } from "../../hooks/use-issues";
 import { toast } from "sonner";
-import { Copy, Link2, MoreHorizontal, Trash2 } from "lucide-react";
+import { CircleEllipsis, Copy, Link2, Trash2 } from "lucide-react";
 import {
   DropdownDivider,
   DropdownItem,
@@ -61,10 +61,15 @@ export function IssueActionsMenu({
 
   return (
     <div className="relative">
-      <button onClick={() => setOpen((o) => !o)} className="...">
-        <MoreHorizontal className="h-4 w-4" />
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex h-8 w-8 items-center justify-center cursor-pointer text-text-muted transition-colors hover:text-text-primary"
+        aria-label="Issue actions"
+      >
+        <CircleEllipsis className="h-4 w-4" />
       </button>
-       <IssueActionsDropdown open={open} onClose={() => setOpen(false)}>
+      <IssueActionsDropdown open={open} onClose={() => setOpen(false)}>
         <DropdownItem icon={Link2} label="Copy link" onClick={handleCopyLink} />
         <DropdownItem
           icon={Copy}

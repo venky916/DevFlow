@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { X, ShieldCheck } from "lucide-react";
-import { Badge } from "@devflow/ui/components/badge";
 import { Avatar } from "@devflow/ui/components/avatar";
 import { Select } from "@devflow/ui/components/select";
 import { Spinner } from "@devflow/ui/components/spinner";
@@ -14,19 +13,17 @@ import {
   useRemoveProjectMember,
 } from "../../../hooks/use-project-settings";
 import { useAuthStore } from "../../../stores/auth.store";
-import {
-  PROJECT_ROLE_OPTIONS,
-  projectRoleVariant,
-  displayName,
-} from "../../../lib/roles";
+import { PROJECT_ROLE_OPTIONS, displayName } from "../../../lib/roles";
 import type { ProjectRole } from "@devflow/types";
+import { RoleBadge } from "../../shared/role-badge";
 
 interface Props {
   projectId: string;
   isLead: boolean;
+  workspaceAdminIds: Set<string>;
 }
 
-export function MembersTab({ projectId, isLead }: Props) {
+export function MembersTab({ projectId, isLead, workspaceAdminIds }: Props) {
   const user = useAuthStore((s) => s.user);
   const { data: members, isLoading } = useProjectMembers(projectId);
   const { mutate: updateRole, isPending: updatingRole } =
@@ -34,12 +31,13 @@ export function MembersTab({ projectId, isLead }: Props) {
   const { mutate: removeMember } = useRemoveProjectMember(projectId);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  if (isLoading)
+  if (isLoading) {
     return (
       <div className="flex justify-center pt-8">
         <Spinner size="sm" />
       </div>
     );
+  }
 
   return (
     <div className="flex flex-col gap-2">
@@ -50,8 +48,9 @@ export function MembersTab({ projectId, isLead }: Props) {
       <div className="flex flex-col gap-2">
         {members?.map((member: any) => {
           const isMe = member.userId === user?.id;
-          const canChangeRole = isLead && !isMe;
-          const canRemove = isLead && !isMe;
+          const isTargetWorkspaceAdmin = workspaceAdminIds.has(member.userId);
+          const canChangeRole = isLead && !isMe && !isTargetWorkspaceAdmin;
+          const canRemove = isLead && !isMe && !isTargetWorkspaceAdmin;
 
           return (
             <div
@@ -73,7 +72,7 @@ export function MembersTab({ projectId, isLead }: Props) {
                       you
                     </span>
                   )}
-                  {member.role === "LEAD" && (
+                  {(member.role === "LEAD" || isTargetWorkspaceAdmin) && (
                     <ShieldCheck className="h-3 w-3 text-success-text shrink-0" />
                   )}
                 </div>
@@ -108,11 +107,9 @@ export function MembersTab({ projectId, isLead }: Props) {
                     />
                   </div>
                 ) : (
-                  <Badge
-                    variant={projectRoleVariant(member.role as ProjectRole)}
-                  >
-                    {member.role}
-                  </Badge>
+                  <RoleBadge
+                    role={isTargetWorkspaceAdmin ? "ADMIN" : member?.role}
+                  />
                 )}
               </div>
 

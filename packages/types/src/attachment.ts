@@ -18,6 +18,7 @@ export interface PendingAttachment {
     localName: string;
     localSize: number;
     localMimeType: string;
+    uploader?: IUserPublic;
 }
 
 export interface IAttachment extends UploadedFileInfo {

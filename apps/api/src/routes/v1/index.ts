@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticate } from '../../middlewares/auth.middleware';
 import authRoutes from "./auth.routes";
+import searchRoutes from "./search.routes";
 import workspaceRoutes from "./workspace.routes";
 import projectRoutes from "./project.routes";
 import sprintRoutes from "./sprint.routes";
@@ -19,6 +20,7 @@ const router = Router();
 
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes)
+router.use("/search", searchRoutes);
 router.use("/workspaces", workspaceRoutes);
 router.use('/workspaces/:workspaceId/projects', projectRoutes)
 router.use("/projects", projectRoutes);

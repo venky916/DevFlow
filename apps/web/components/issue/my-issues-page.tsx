@@ -6,14 +6,24 @@ import {
   useQueryStates,
   parseAsString,
   parseAsBoolean,
+  parseAsStringEnum,
 } from "nuqs";
+import type { SortingState } from "@tanstack/react-table";
 import { RotateCw } from "lucide-react";
 import { Button } from "@devflow/ui/components/button";
 import { SearchBox } from "@devflow/ui/components/search-box";
-import { KanbanColumn } from "../../components/board/kanban-column";
-import { IssueSlideOver } from "../../components/issue/issue-slide-over";
-import { FilterBar } from "../../components/shared/filter-bar";
-import { useMyIssues, type MyIssuesFilters } from "../../hooks/use-my-issues";
+import { KanbanColumn } from "../board/kanban-column";
+import { ListView } from "../shared/list-view";
+import { IssueSlideOver } from "../issue/issue-slide-over";
+import { FilterBar } from "../shared/filter-bar";
+import PageLoading from "../shared/page-loading";
+import PageError from "../shared/page-error";
+import {
+  useMyIssuesBoard,
+  useMyIssuesList,
+  type MyIssuesFilters,
+  type MyIssuesListParams,
+} from "../../hooks/use-my-issues";
 import type { IssueStatus } from "@devflow/types";
 
 const STATUSES: IssueStatus[] = [
@@ -37,11 +47,20 @@ const filterParsers = {
 };
 
 export function MyIssuesPage() {
+  const [view, setView] = useQueryState(
+    "view",
+    parseAsStringEnum(["board", "list"]).withDefault("board"),
+  );
   const [rawFilters, setRawFilters] = useQueryStates(filterParsers);
   const [selectedIssueId, setSelectedIssueId] = useQueryState(
     "issue",
     parseAsString,
   );
+
+  const [listPage, setListPage] = useState(1);
+  const [listSorting, setListSorting] = useState<SortingState>([
+    { id: "updatedAt", desc: true },
+  ]);
 
   const filters = Object.fromEntries(
     Object.entries(rawFilters).filter(([, v]) => v !== null),
@@ -52,36 +71,56 @@ export function MyIssuesPage() {
       Object.keys(filterParsers).map((key) => [key, (f as any)[key] ?? null]),
     );
     setRawFilters(normalized);
+    setListPage(1);
   };
-  const { data, isLoading, isFetching, refetch } = useMyIssues(filters);
 
-  // derived from whatever's currently loaded — narrows as filters narrow,
-  // widens back out the moment filters are cleared and the full set refetches
+  // Board view's data — only meaningfully used when view === "board"
+  const {
+    data: boardData,
+    isLoading: boardLoading,
+    isFetching: boardFetching,
+    isError: boardError,
+    refetch: refetchBoard,
+  } = useMyIssuesBoard(filters);
+
+  // List view's data
+  const listSortBy = (listSorting[0]?.id ??
+    "updatedAt") as MyIssuesListParams["sortBy"];
+  const listSortOrder: "asc" | "desc" = listSorting[0]?.desc ? "desc" : "asc";
+
+  const {
+    data: listData,
+    isLoading: listLoading,
+    isFetching: listFetching,
+    isError: listError,
+    refetch: refetchList,
+  } = useMyIssuesList({
+    ...filters,
+    page: listPage,
+    limit: 25,
+    sortBy: listSortBy,
+    sortOrder: listSortOrder,
+  });
+
   const projectOptions = useMemo(() => {
-    if (!data) return [];
-    const all = STATUSES.flatMap((s) => data.columns[s] ?? []);
+    if (!boardData) return [];
+    const all = STATUSES.flatMap((s) => boardData.columns[s] ?? []);
     const unique = new Map(all.map((i) => [i.project.id, i.project.name]));
     return Array.from(unique, ([value, label]) => ({ label, value }));
-  }, [data]);
+  }, [boardData]);
 
-  if (isLoading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="h-5 w-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-      </div>
-    );
-  }
-
-  const totalIssues = data
-    ? STATUSES.reduce((acc, s) => acc + (data.columns[s]?.length ?? 0), 0)
+  const totalIssues = boardData
+    ? STATUSES.reduce((acc, s) => acc + (boardData.columns[s]?.length ?? 0), 0)
     : 0;
 
-  // find the selected issue across all columns so the slideover gets
-  // its workspaceSlug/projectSlug/projectId from IMyIssue's `project` field
+  // selected issue lookup — board data has full project info attached;
+  // list data (IMyIssue) also carries it, so check both depending on active view
   const selectedIssue = selectedIssueId
-    ? STATUSES.flatMap((s) => data?.columns[s] ?? []).find(
-        (i) => i.id === selectedIssueId,
-      )
+    ? view === "board"
+      ? STATUSES.flatMap((s) => boardData?.columns[s] ?? []).find(
+          (i) => i.id === selectedIssueId,
+        )
+      : listData?.items.find((i) => i.id === selectedIssueId)
     : null;
 
   return (
@@ -108,38 +147,89 @@ export function MyIssuesPage() {
             onChange={handleFiltersChange}
           />
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => refetch()}
-          disabled={isFetching}
-        >
-          <RotateCw
-            className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`}
-          />
-        </Button>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center rounded-[4px] border border-border-default overflow-hidden">
+            <button
+              onClick={() => setView("board")}
+              className={`px-2.5 h-7 text-[12px] transition-colors ${
+                view === "board"
+                  ? "bg-bg-active text-text-primary"
+                  : "text-text-muted hover:text-text-primary"
+              }`}
+            >
+              Board
+            </button>
+            <button
+              onClick={() => setView("list")}
+              className={`px-2.5 h-7 text-[12px] transition-colors ${
+                view === "list"
+                  ? "bg-bg-active text-text-primary"
+                  : "text-text-muted hover:text-text-primary"
+              }`}
+            >
+              List
+            </button>
+          </div>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => (view === "board" ? refetchBoard() : refetchList())}
+            disabled={view === "board" ? boardFetching : listFetching}
+          >
+            <RotateCw
+              className={`h-3.5 w-3.5 ${(view === "board" ? boardFetching : listFetching) ? "animate-spin" : ""}`}
+            />
+          </Button>
+        </div>
       </div>
 
-      {totalIssues === 0 ? (
-        <div className="flex h-full items-center justify-center">
-          <p className="text-[13px] text-text-muted">
-            No issues match these filters
-          </p>
-        </div>
-      ) : (
-        <div className="flex-1 overflow-hidden px-6 py-4">
-          <div className="flex gap-4 h-full overflow-x-auto pb-4">
-            {STATUSES.map((status) => (
-              <KanbanColumn
-                key={status}
-                status={status}
-                issues={data?.columns[status] ?? []}
-                onIssueClick={setSelectedIssueId}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="flex-1 overflow-hidden">
+        {view === "board" ? (
+          boardLoading ? (
+            <PageLoading />
+          ) : boardError ? (
+            <PageError
+              message="Couldn't load your issues"
+              onRetry={() => refetchBoard()}
+            />
+          ) : totalIssues === 0 ? (
+            <div className="flex h-full items-center justify-center">
+              <p className="text-[13px] text-text-muted">
+                No issues match these filters
+              </p>
+            </div>
+          ) : (
+            <div className="h-full px-6 py-4">
+              <div className="flex gap-4 h-full overflow-x-auto pb-4">
+                {STATUSES.map((status) => (
+                  <KanbanColumn
+                    key={status}
+                    status={status}
+                    issues={boardData?.columns[status] ?? []}
+                    onIssueClick={setSelectedIssueId}
+                  />
+                ))}
+              </div>
+            </div>
+          )
+        ) : (
+          <ListView
+            data={listData}
+            isLoading={listLoading}
+            isFetching={listFetching}
+            isError={listError}
+            refetch={refetchList}
+            page={listPage}
+            onPageChange={setListPage}
+            sorting={listSorting}
+            onSortingChange={setListSorting}
+            onIssueClick={setSelectedIssueId}
+            showProjectColumn
+          />
+        )}
+      </div>
 
       <IssueSlideOver
         issueId={selectedIssueId}

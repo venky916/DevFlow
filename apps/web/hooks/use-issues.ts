@@ -1,7 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import type { CreateIssueInput, UpdateIssueInput } from "@devflow/validators";
-import type { IIssueWithRelations, ISprint, IProjectMember } from "@devflow/types";
+import type { IIssueWithRelations, ISprint, IProjectMember, IActivityLog } from "@devflow/types";
+import type { IssueFilters } from "../components/shared/filter-bar";
 
 export function useCreateIssue(projectId: string) {
     const qc = useQueryClient();
@@ -13,6 +14,7 @@ export function useCreateIssue(projectId: string) {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["backlog-grouped", projectId] });
             qc.invalidateQueries({ queryKey: ["board", projectId] });
+            qc.invalidateQueries({ queryKey: ["issue-list", projectId] });
         }
     });
 }
@@ -39,12 +41,13 @@ export function useUpdateIssue(issueId: string, projectId: string) {
             await qc.refetchQueries({ queryKey: ["activities", issueId] });
             qc.invalidateQueries({ queryKey: ["issue", issueId] });
             qc.invalidateQueries({ queryKey: ["board", projectId] });
+            qc.invalidateQueries({ queryKey: ["issue-list", projectId] });
             qc.invalidateQueries({ queryKey: ["backlog-grouped", projectId] });
         },
     });
 }
 
-export function useDeleteIssue( projectId: string) {
+export function useDeleteIssue(projectId: string) {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: async (issueId: string) => {
@@ -76,6 +79,7 @@ export function useDuplicateIssue(projectId: string) {
         onSuccess: (data) => {
             qc.invalidateQueries({ queryKey: ["backlog-grouped", projectId] });
             qc.invalidateQueries({ queryKey: ["board", projectId] });
+            qc.invalidateQueries({ queryKey: ["issue-list", projectId] });
             return data.id;
         },
     });
@@ -103,13 +107,23 @@ export function useProjectMembers(projectId: string) {
     });
 }
 
-export function useIssueActivities(issueId: string) {
-    return useQuery({
+interface ActivityPage {
+    items: IActivityLog[]; // whatever your Activity type is
+    meta: { nextCursor: string | null; hasMore: boolean };
+}
+
+export function useIssueActivities(issueId: string, limit = 10) {
+    return useInfiniteQuery({
         queryKey: ["activities", issueId],
-        queryFn: async () => {
-            const res = await api.get(`/issues/${issueId}/activities`);
-            return res.data.data;
+        queryFn: async ({ pageParam }: { pageParam?: string }) => {
+            const res = await api.get(`/issues/${issueId}/activities`, {
+                params: { limit, ...(pageParam ? { cursor: pageParam } : {}) },
+            });
+            return res.data.data as ActivityPage;
         },
+        initialPageParam: undefined as string | undefined,
+        getNextPageParam: (lastPage) =>
+            lastPage.meta.hasMore ? lastPage.meta.nextCursor ?? undefined : undefined,
         enabled: !!issueId,
     });
 }
@@ -175,5 +189,54 @@ export function useSearchProjectIssues(
             return res.data.data;
         },
         enabled: !!projectId && (options?.enabled ?? true),
+    });
+}
+
+
+export interface PaginatedResponse<T> {
+    items: T[];
+    meta: {
+        total: number;
+        page: number;
+        limit: number;
+        hasMore: boolean;
+    };
+}
+
+export interface IssueListParams extends IssueFilters {
+    page?: number;
+    limit?: number;
+    sortBy?: "position" | "priority" | "dueDate" | "createdAt" | "updatedAt" | "title" | "status";
+    sortOrder?: "asc" | "desc";
+}
+
+export function useIssueList(projectId: string, params: IssueListParams = {}) {
+    const { page = 1, limit = 25, sortBy = "position", sortOrder = "asc", ...filters } = params;
+
+    return useQuery<PaginatedResponse<IIssueWithRelations>>({
+        // page/limit/sort in the key too — every distinct combo caches separately,
+        // matches how useBoard keys on filters
+        queryKey: ["issue-list", projectId, filters, page, limit, sortBy, sortOrder],
+        queryFn: async () => {
+            const res = await api.get(`/projects/${projectId}/issues/list`, {
+                params: {
+                    assigneeId: filters.assigneeId,
+                    labelId: filters.labelId,
+                    priority: filters.priority,
+                    type: filters.type,
+                    dueDateFrom: filters.dueDateFrom,
+                    dueDateTo: filters.dueDateTo,
+                    noDueDate: filters.noDueDate,
+                    q: filters.q,
+                    page,
+                    limit,
+                    sortBy,
+                    sortOrder,
+                },
+            });
+            return res.data.data;
+        },
+        enabled: !!projectId,
+        placeholderData: (prev) => prev, // keep old page's rows visible while next page loads — avoids table flicker
     });
 }

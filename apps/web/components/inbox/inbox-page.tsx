@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import {
   CheckCheck,
@@ -14,7 +14,6 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@devflow/ui/lib/cn";
-import { Spinner } from "@devflow/ui/components/spinner";
 import { Button } from "@devflow/ui/components/button";
 import {
   useNotifications,
@@ -24,6 +23,8 @@ import {
   useDeleteNotification,
 } from "../../hooks/use-notifications";
 import type { NotificationType, INotification } from "@devflow/types";
+import PageLoading from "../shared/page-loading";
+import PageError from "../shared/page-error";
 
 // ─── Notification icon by type ────────────────────────────────────
 function NotifIcon({ type }: { type: NotificationType }) {
@@ -59,7 +60,6 @@ function NotifRow({
   onDelete: (id: string) => void;
 }) {
   const router = useRouter();
-  const { workspaceSlug } = useParams<{ workspaceSlug: string }>();
 
   function handleClick() {
     if (!notif.isRead) onRead(notif.id);
@@ -74,19 +74,16 @@ function NotifRow({
         notif.isRead ? "opacity-50 hover:opacity-70" : "hover:bg-bg-hover",
       )}
     >
-      {/* Unread dot */}
       <div className="flex items-center justify-center w-[8px] pt-1 shrink-0">
         {!notif.isRead && (
           <div className="h-[6px] w-[6px] rounded-full bg-accent shrink-0" />
         )}
       </div>
 
-      {/* Icon */}
       <div className="pt-0.5 shrink-0">
         <NotifIcon type={notif.type} />
       </div>
 
-      {/* Content */}
       <div className="flex-1 min-w-0">
         <p
           className={cn(
@@ -101,7 +98,6 @@ function NotifRow({
         </p>
       </div>
 
-      {/* Delete button — visible on hover */}
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -115,8 +111,35 @@ function NotifRow({
   );
 }
 
-// ─── Empty state ──────────────────────────────────────────────────
-function EmptyInbox() {
+// ─── Grouped section (Unread / Read) ──────────────────────────────
+function NotificationGroup({
+  label,
+  notifications,
+  onRead,
+  onDelete,
+}: {
+  label: string;
+  notifications: INotification[];
+  onRead: (id: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  if (notifications.length === 0) return null;
+
+  return (
+    <>
+      <div className="px-5 py-2 bg-bg-app border-b border-border-default">
+        <p className="text-[10px] text-text-muted uppercase tracking-[0.06em] font-mono">
+          {label}
+        </p>
+      </div>
+      {notifications.map((n) => (
+        <NotifRow key={n.id} notif={n} onRead={onRead} onDelete={onDelete} />
+      ))}
+    </>
+  );
+}
+
+function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center flex-1 gap-3 pb-16">
       <div className="h-10 w-10 rounded-full bg-bg-surface border border-border-default flex items-center justify-center">
@@ -127,9 +150,8 @@ function EmptyInbox() {
   );
 }
 
-// ─── Main inbox page ──────────────────────────────────────────────
 export function InboxPage() {
-  const { data, isLoading } = useNotifications();
+  const { data, isLoading, isError, refetch } = useNotifications();
   const { mutate: markAsRead } = useMarkAsRead();
   const { mutate: markAllAsRead, isPending: markingAll } = useMarkAllAsRead();
   const { mutate: clearRead, isPending: clearing } =
@@ -138,11 +160,24 @@ export function InboxPage() {
 
   const notifications = data?.notifications ?? [];
   const unreadCount = data?.unreadCount ?? 0;
-  const hasRead = notifications.some((n) => n.isRead);
+  const unread = notifications.filter((n) => !n.isRead);
+  const read = notifications.filter((n) => n.isRead);
+
+  if (isLoading) {
+    return <PageLoading />;
+  }
+
+  if (isError) {
+    return (
+      <PageError
+        message="Couldn't load your notifications"
+        onRetry={() => refetch()}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Header */}
       <div className="flex items-center justify-between px-5 h-[38px] border-b border-border-default shrink-0">
         <div className="flex items-center gap-2">
           <span className="text-[13px] font-medium text-text-primary">
@@ -167,7 +202,7 @@ export function InboxPage() {
               Mark all read
             </Button>
           )}
-          {hasRead && (
+          {read.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
@@ -181,56 +216,22 @@ export function InboxPage() {
         </div>
       </div>
 
-      {/* Body */}
-      {isLoading ? (
-        <div className="flex flex-1 items-center justify-center">
-          <Spinner size="sm" />
-        </div>
-      ) : notifications.length === 0 ? (
-        <EmptyInbox />
+      {notifications.length === 0 ? (
+        <EmptyState />
       ) : (
         <div className="flex-1 overflow-y-auto">
-          {/* Unread section */}
-          {notifications.filter((n) => !n.isRead).length > 0 && (
-            <>
-              <div className="px-5 py-2 bg-bg-app border-b border-border-default">
-                <p className="text-[10px] text-text-muted uppercase tracking-[0.06em] font-mono">
-                  Unread
-                </p>
-              </div>
-              {notifications
-                .filter((n) => !n.isRead)
-                .map((n) => (
-                  <NotifRow
-                    key={n.id}
-                    notif={n}
-                    onRead={(id) => markAsRead(id)}
-                    onDelete={(id) => deleteNotif(id)}
-                  />
-                ))}
-            </>
-          )}
-
-          {/* Read section */}
-          {notifications.filter((n) => n.isRead).length > 0 && (
-            <>
-              <div className="px-5 py-2 bg-bg-app border-b border-border-default">
-                <p className="text-[10px] text-text-muted uppercase tracking-[0.06em] font-mono">
-                  Read
-                </p>
-              </div>
-              {notifications
-                .filter((n) => n.isRead)
-                .map((n) => (
-                  <NotifRow
-                    key={n.id}
-                    notif={n}
-                    onRead={(id) => markAsRead(id)}
-                    onDelete={(id) => deleteNotif(id)}
-                  />
-                ))}
-            </>
-          )}
+          <NotificationGroup
+            label="Unread"
+            notifications={unread}
+            onRead={markAsRead}
+            onDelete={deleteNotif}
+          />
+          <NotificationGroup
+            label="Read"
+            notifications={read}
+            onRead={markAsRead}
+            onDelete={deleteNotif}
+          />
         </div>
       )}
     </div>

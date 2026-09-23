@@ -1,7 +1,7 @@
-import {Router} from "express";
+import { Router } from "express";
 import { authenticate } from "../../middlewares/auth.middleware";
-import { getMe,updateProfile } from "../../controllers/user.controller";
-import { getMyIssues } from "../../controllers/issue.controller";
+import { getMe, getSidebarCounts, updateProfile } from "../../controllers/user.controller";
+import { getMyIssuesBoard, getMyIssuesList } from "../../controllers/issue.controller";
 
 const router = Router();
 
@@ -10,6 +10,8 @@ router.use(authenticate);
 // /users
 router.get("/me", getMe);
 router.patch("/me", updateProfile);
-router.get("/my-issues", getMyIssues);
+router.get("/my-issues/board", getMyIssuesBoard)
+router.get("/my-issues/list", getMyIssuesList)
+router.get("/me/counts", getSidebarCounts)
 
 export default router

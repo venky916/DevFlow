@@ -2,13 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import {
-  useQueryState,
-  useQueryStates,
-  parseAsString,
-  parseAsBoolean,
-} from "nuqs";
-import { Plus, ChevronDown, ChevronRight, RotateCw } from "lucide-react";
+import { useQueryStates, parseAsString, parseAsBoolean } from "nuqs";
+import { Plus, ChevronDown, ChevronRight, RotateCw, Play } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@devflow/ui/components/button";
 import { Badge } from "@devflow/ui/components/badge";
 import { SearchBox } from "@devflow/ui/components/search-box";
@@ -29,51 +25,79 @@ import {
   verticalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { toast } from "sonner";
 import { useWorkspaces } from "../../hooks/use-workspaces";
 import { useProjects } from "../../hooks/use-projects";
 import { useBacklogGrouped, useMoveToSprint } from "../../hooks/use-backlog";
 import { useMoveIssue } from "../../hooks/use-board";
+import { useStartSprint } from "../../hooks/use-sprints";
 import { useProjectMembers, useProjectSprints } from "../../hooks/use-issues";
+import { useCanMoveIssue } from "../../hooks/use-can-move-issue";
 import { CreateIssueModal } from "../issue/create-issue-modal";
 import { IssueSlideOver } from "../issue/issue-slide-over";
 import { IssueRow } from "./issue-row";
 import { FilterBar, type IssueFilters } from "../shared/filter-bar";
 import { getFractionalPosition } from "../../lib/fractional-position";
 import { PRIORITY_COLORS } from "../../lib/issue-constants";
+import PageLoading from "../shared/page-loading";
+import PageError from "../shared/page-error";
 import type { IIssueWithRelations, ISprint } from "@devflow/types";
 
 function SprintSection({
   sprint,
   onOpen,
+  canStart,
+  hasActiveSprint,
+  onStart,
+  starting,
 }: {
   sprint: ISprint & { issues: IIssueWithRelations[] };
   onOpen: (issueId: string) => void;
+  canStart: boolean;
+  hasActiveSprint: boolean;
+  onStart: (sprintId: string) => void;
+  starting: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const { setNodeRef, isOver } = useDroppable({ id: sprint.id });
 
   return (
     <div className="flex flex-col">
-      <button
-        onClick={() => setCollapsed((v) => !v)}
-        className="flex items-center gap-2 px-2 py-2 hover:bg-bg-hover rounded-[4px] transition-colors group"
-      >
-        {collapsed ? (
-          <ChevronRight className="h-3.5 w-3.5 text-text-muted shrink-0" />
-        ) : (
-          <ChevronDown className="h-3.5 w-3.5 text-text-muted shrink-0" />
+      <div className="flex items-center gap-2 px-2 py-2 hover:bg-bg-hover rounded-[4px] transition-colors">
+        <button
+          onClick={() => setCollapsed((v) => !v)}
+          className="flex items-center gap-2 flex-1"
+        >
+          {collapsed ? (
+            <ChevronRight className="h-3.5 w-3.5 text-text-muted shrink-0" />
+          ) : (
+            <ChevronDown className="h-3.5 w-3.5 text-text-muted shrink-0" />
+          )}
+          <span className="text-[13px] font-medium text-text-primary">
+            {sprint.name}
+          </span>
+          <Badge variant={sprint.status === "ACTIVE" ? "success" : "warning"}>
+            {sprint.status === "ACTIVE" ? "Active" : "Planned"}
+          </Badge>
+          <span className="text-[11px] font-mono text-text-muted ml-1">
+            {sprint.issues.length} issues
+          </span>
+        </button>
+
+        {canStart && sprint.status === "PLANNED" && (
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => onStart(sprint.id)}
+            disabled={starting || hasActiveSprint}
+            title={
+              hasActiveSprint ? "Complete the active sprint first" : undefined
+            }
+          >
+            <Play className="h-3 w-3 mr-1" />
+            Start
+          </Button>
         )}
-        <span className="text-[13px] font-medium text-text-primary">
-          {sprint.name}
-        </span>
-        <Badge variant={sprint.status === "ACTIVE" ? "success" : "neutral"}>
-          {sprint.status === "ACTIVE" ? "Active" : "Planned"}
-        </Badge>
-        <span className="text-[11px] font-mono text-text-muted ml-1">
-          {sprint.issues.length} issues
-        </span>
-      </button>
+      </div>
 
       <div
         ref={setNodeRef}
@@ -198,19 +222,39 @@ export function BacklogPage() {
     setRawFilters(normalized);
   };
 
-  const { data: workspaces } = useWorkspaces();
+  const {
+    data: workspaces,
+    isLoading: wsLoading,
+    isError: wsError,
+    refetch: refetchWorkspaces,
+  } = useWorkspaces();
   const workspace = workspaces?.find((w) => w.slug === workspaceSlug);
-  const { data: projects } = useProjects(workspace?.id ?? "");
+
+  const {
+    data: projects,
+    isLoading: projLoading,
+    isError: projError,
+    refetch: refetchProjects,
+  } = useProjects(workspace?.id ?? "");
   const project = projects?.find((p) => p.slug === projectSlug);
 
-  const { data, isLoading, isFetching, refetch } = useBacklogGrouped(
-    project?.id ?? "",
-    filters,
-  );
+  const {
+    data,
+    isLoading: backlogLoading,
+    isFetching,
+    isError: backlogError,
+    refetch,
+  } = useBacklogGrouped(project?.id ?? "", filters);
   const { data: sprints } = useProjectSprints(project?.id ?? "");
   const { data: members } = useProjectMembers(project?.id ?? "");
   const { mutate: moveToSprint } = useMoveToSprint(project?.id ?? "");
   const { mutate: moveIssue } = useMoveIssue();
+  const { mutate: startSprint, isPending: starting } = useStartSprint(
+    project?.id ?? "",
+  );
+
+  const { canCreateIssue, canMove, canMoveToSprint, canStartSprint } =
+    useCanMoveIssue();
 
   const [localSprints, setLocalSprints] = useState<
     (ISprint & { issues: IIssueWithRelations[] })[]
@@ -269,8 +313,23 @@ export function BacklogPage() {
     const movedIssue = findIssue(issueId);
     if (!movedIssue) return;
 
+    const isCrossSection = fromContainer !== toContainer;
+
+    // ─── permission gate — checked BEFORE any local state mutation ──
+    if (isCrossSection) {
+      if (!canMoveToSprint) {
+        toast.error("Only leads can move issues between sprints and backlog");
+        return;
+      }
+    } else {
+      if (!canMove({ assigneeId: movedIssue.assigneeId ?? null })) {
+        toast.error("You can't reorder this issue");
+        return;
+      }
+    }
+
     // ─── same-section reorder ──────────────────────────────────
-    if (fromContainer === toContainer) {
+    if (!isCrossSection) {
       const list = getListFor(fromContainer);
       const oldIndex = list.findIndex((i) => i.id === issueId);
       const newIndex = list.findIndex((i) => i.id === overId);
@@ -362,24 +421,55 @@ export function BacklogPage() {
     );
   };
 
+  const handleStart = (sprintId: string) => {
+    const hasActive = localSprints.some((s) => s.status === "ACTIVE");
+    if (hasActive) {
+      toast.error("Complete the active sprint first");
+      return;
+    }
+    startSprint(sprintId, {
+      onSuccess: () => toast.success("Sprint started!"),
+      onError: () => toast.error("Failed to start sprint"),
+    });
+  };
+
   useEffect(() => {
     if (!data) return;
     setLocalSprints(data.sprints);
     setLocalBacklog(data.backlogIssues);
   }, [data]);
 
-  if (isLoading) {
+  if (wsLoading || projLoading) {
+    return <PageLoading />;
+  }
+
+  if (wsError) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="h-5 w-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-      </div>
+      <PageError
+        message="Couldn't load workspace"
+        onRetry={() => refetchWorkspaces()}
+      />
     );
+  }
+
+  if (projError) {
+    return (
+      <PageError
+        message="Couldn't load project"
+        onRetry={() => refetchProjects()}
+      />
+    );
+  }
+
+  if (!project) {
+    return <PageLoading />; // ProjectAccessGuard safety net
   }
 
   const totalIssues =
     (data?.sprints.reduce((acc, s) => acc + s.issues.length, 0) ?? 0) +
     (data?.backlogIssues.length ?? 0);
   const memberUsers = members?.map((m) => m.user!).filter(Boolean) ?? [];
+  const hasActiveSprint = localSprints.some((s) => s.status === "ACTIVE");
 
   return (
     <div className="flex flex-col w-full h-full overflow-hidden">
@@ -392,23 +482,19 @@ export function BacklogPage() {
             </span>
           </h1>
           <div className="h-4 w-px bg-border-default" />
-          {project && (
-            <SearchBox
-              value={filters.q ?? ""}
-              onChange={(q) =>
-                handleFiltersChange({ ...filters, q: q || undefined })
-              }
-            />
-          )}
-          {project && (
-            <FilterBar
-              fields={["assignee", "label", "priority", "type", "dueDate"]}
-              projectId={project.id}
-              members={memberUsers}
-              filters={filters}
-              onChange={handleFiltersChange}
-            />
-          )}
+          <SearchBox
+            value={filters.q ?? ""}
+            onChange={(q) =>
+              handleFiltersChange({ ...filters, q: q || undefined })
+            }
+          />
+          <FilterBar
+            fields={["assignee", "label", "priority", "type", "dueDate"]}
+            projectId={project.id}
+            members={memberUsers}
+            filters={filters}
+            onChange={handleFiltersChange}
+          />
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button
@@ -421,28 +507,39 @@ export function BacklogPage() {
               className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`}
             />
           </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setShowCreate(true)}
-          >
-            <Plus className="h-3.5 w-3.5 mr-1.5" />
-            Issue
-          </Button>
+          {canCreateIssue && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowCreate(true)}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              Issue
+            </Button>
+          )}
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-4">
-        {!data || totalIssues === 0 ? (
+        {backlogLoading ? (
+          <PageLoading />
+        ) : backlogError ? (
+          <PageError
+            message="Couldn't load backlog"
+            onRetry={() => refetch()}
+          />
+        ) : !data || totalIssues === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 border border-border-default rounded-[4px]">
             <p className="text-[13px] text-text-muted">No issues yet</p>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setShowCreate(true)}
-            >
-              Create an issue
-            </Button>
+            {canCreateIssue && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowCreate(true)}
+              >
+                Create an issue
+              </Button>
+            )}
           </div>
         ) : (
           <DndContext
@@ -452,11 +549,15 @@ export function BacklogPage() {
             onDragEnd={handleDragEnd}
           >
             <div className="flex flex-col gap-4">
-              {localSprints.map((sprint: any) => (
+              {localSprints.map((sprint) => (
                 <SprintSection
                   key={sprint.id}
                   sprint={sprint}
                   onOpen={setSelectedIssueId}
+                  canStart={canStartSprint}
+                  hasActiveSprint={hasActiveSprint}
+                  onStart={handleStart}
+                  starting={starting}
                 />
               ))}
               <BacklogSection
@@ -487,25 +588,22 @@ export function BacklogPage() {
         )}
       </div>
 
-      {project && (
-        <>
-          <CreateIssueModal
-            open={showCreate}
-            onClose={() => setShowCreate(false)}
-            projectId={project.id}
-            sprints={sprints ?? []}
-            members={memberUsers}
-            activeSprint={null}
-          />
-          <IssueSlideOver
-            issueId={selectedIssueId}
-            onClose={() => setSelectedIssueId(null)}
-            projectId={project.id}
-            workspaceSlug={workspaceSlug}
-            projectSlug={projectSlug}
-          />
-        </>
-      )}
+      <CreateIssueModal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        projectId={project.id}
+        sprints={sprints ?? []}
+        members={memberUsers}
+        activeSprint={null}
+        canSetSprint={canMoveToSprint}
+      />
+      <IssueSlideOver
+        issueId={selectedIssueId}
+        onClose={() => setSelectedIssueId(null)}
+        projectId={project.id}
+        workspaceSlug={workspaceSlug}
+        projectSlug={projectSlug}
+      />
     </div>
   );
 }

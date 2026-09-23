@@ -3,7 +3,7 @@ import { prisma } from "@devflow/db";
 import { asyncHandler } from "../lib/asyncHandler";
 import { ApiError } from "../lib/ApiError";
 import { sendSuccess } from "../lib/apiResponse";
-import { extractKeyFromUrl, generatePresignedDownloadUrl } from "@devflow/storage";
+import { extractKeyFromUrl } from "@devflow/storage";
 import { updateProfileSchema, updateAvatarSchema } from "@devflow/validators";
 import { buildUpdateData } from "../lib/updateBuilder";
 import { signUrl } from "../lib/signUrl";
@@ -108,4 +108,20 @@ export const removeAvatar = asyncHandler(async (req: Request, res: Response) => 
     }
 
     sendSuccess(res, user, 'Avatar removed successfully')
+})
+
+// ─── SIDEBAR COUNTS ────────────────────────────────────────────
+export const getSidebarCounts = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user!.id
+
+    const [unreadNotifications, myOpenIssues] = await Promise.all([
+        prisma.notification.count({
+            where: { userId, isRead: false }
+        }),
+        prisma.issue.count({
+            where: { assigneeId: userId, status: { not: "DONE" } }
+        })
+    ])
+
+    sendSuccess(res, { unreadNotifications, myOpenIssues }, "Sidebar counts fetched successfully")
 })

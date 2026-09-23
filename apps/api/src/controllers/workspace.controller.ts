@@ -229,7 +229,16 @@ export const getWorkspaceMembers = asyncHandler(async (req: Request, res: Respon
     const cached = await getCache(cacheKey)
 
     if (cached) {
-        sendSuccess(res, cached, "Members fetched successfully")
+        const signedCached = await Promise.all(
+            cached?.map(async (m: any) => ({
+                ...m,
+                user: {
+                    ...m.user,
+                    avatarUrl: m.user.avatarUrl ? await signUrl(m.user.avatarUrl) : null
+                }
+            }))
+        )
+        sendSuccess(res, signedCached, "Members fetched successfully")
         return
     }
 
@@ -253,7 +262,16 @@ export const getWorkspaceMembers = asyncHandler(async (req: Request, res: Respon
     })
 
     await setCache(cacheKey, members)
-    sendSuccess(res, members, 'Members fetched successfully')
+    const signed = await Promise.all(
+        members.map(async (m) => ({
+            ...m,
+            user: {
+                ...m.user,
+                avatarUrl: m.user.avatarUrl ? await signUrl(m.user.avatarUrl) : null
+            }
+        }))
+    )
+    sendSuccess(res, signed, 'Members fetched successfully')
 })
 
 // ─── PATCH /workspaces/:id/members/:uid ──────────────────────────
@@ -333,6 +351,16 @@ export const removeMember = asyncHandler(async (req: Request, res: Response) => 
 
     // cascade: remove their project-member rows for projects in this workspace, same transaction
     await prisma.$transaction(async (tx) => {
+        // unassign their issues across every project in this workspace —
+        // must run before the ProjectMember rows are deleted, same tx
+        await tx.issue.updateMany({
+            where: {
+                assigneeId: uid as string,
+                project: { workspaceId: id as string },
+            },
+            data: { assigneeId: null },
+        })
+
         await tx.projectMember.deleteMany({
             where: {
                 userId: uid as string,

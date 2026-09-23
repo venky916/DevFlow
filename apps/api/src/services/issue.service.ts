@@ -79,7 +79,17 @@ export const issueService = {
         if (!updated) throw ApiError.internal('Failed to update issue');
 
         await issueEventsService.invalidateBoardCache(updated.projectId, updated.sprintId ?? null);
-        await activityService.logIssueUpdated(issueId, updated.projectId, userId, { title, description, priority, type, assigneeId, status, dueDate });
+        const changes: Record<string, { from: any; to: any }> = {};
+        const fields = { title, description, priority, type, assigneeId, status, dueDate } as const;
+        for (const [key, newVal] of Object.entries(fields)) {
+            if (newVal === undefined) continue; // field wasn't part of this update at all
+            const oldVal = (issue as any)[key] instanceof Date ? (issue as any)[key].toISOString() : (issue as any)[key];
+            const normalizedNew = newVal instanceof Date ? newVal.toISOString() : newVal;
+            if (oldVal !== normalizedNew) changes[key] = { from: oldVal, to: normalizedNew };
+        }
+        if (Object.keys(changes).length > 0) {
+            await activityService.logIssueUpdated(issueId, updated.projectId, userId, changes);
+        }
 
         if (assigneeId && assigneeId !== issue.assigneeId) {
             await notificationService.notifyIssueAssigned(assigneeId, userId, issue.id, updated.title, updated.projectId);
@@ -96,7 +106,9 @@ export const issueService = {
 
         const updated = await issueRepository.moveIssue(issueId, status, position);
 
-        await activityService.logIssueStatusChanged(issueId, updated.projectId, userId, issue.status, status);
+        if (issue.status !== status) {
+            await activityService.logIssueStatusChanged(issueId, updated.projectId, userId, issue.status, status);
+        }
         await issueEventsService.publishMoved(updated.projectId, issueId, status, position);
 
         const sprintIds = [issue.sprintId ?? null];

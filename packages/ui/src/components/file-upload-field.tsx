@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { Upload, X, Loader2, FileText } from "lucide-react";
+import { Upload, X, Loader2, FileText, AlertCircle } from "lucide-react";
 import { cn } from "../lib/cn";
 import type { UploadedFileInfo } from "@devflow/types";
 
@@ -69,7 +69,7 @@ export function FileUploadField({
   return (
     <div
       className={cn(
-        "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[4px] border bg-bg-surface",
+        "group relative w-full aspect-square flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-[4px] border bg-bg-surface",
         status === "error" ? "border-danger-text" : "border-border-default",
         status === "done" &&
           onPreview &&
@@ -77,58 +77,58 @@ export function FileUploadField({
         className,
       )}
       onClick={status === "done" ? onPreview : undefined}
+      title={
+        status === "error" ? (errorMessage ?? "Upload failed") : file?.fileName
+      }
     >
+      {status !== "uploading" && onRemove && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          className="absolute top-1 right-1 h-5 w-5 flex items-center justify-center rounded-full bg-bg-overlay text-text-muted opacity-0 group-hover:opacity-100 hover:text-danger-text transition-opacity"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      )}
+
       {file?.mimeType.startsWith("image/") && file.url ? (
         <img
           src={file.url}
           alt={file.fileName}
-          className="h-8 w-8 rounded-[4px] object-cover shrink-0"
+          className="h-9 w-9 rounded-[4px] object-cover shrink-0"
         />
+      ) : status === "error" ? (
+        <AlertCircle className="h-5 w-5 text-danger-text shrink-0" />
       ) : (
-        <div className="h-8 w-8 rounded-[4px] bg-bg-overlay flex items-center justify-center shrink-0">
-          <FileText className="h-3.5 w-3.5 text-text-muted" />
+        <div className="h-9 w-9 rounded-[4px] bg-bg-overlay flex items-center justify-center shrink-0">
+          <FileText className="h-4 w-4 text-text-muted" />
         </div>
       )}
 
-      <div className="flex-1 min-w-0">
-        <p className="text-[13px] text-text-primary truncate">
-          {file?.fileName}
-        </p>
-        {status === "uploading" ? (
-          <div className="h-[3px] bg-bg-overlay rounded-full mt-1 overflow-hidden">
-            <div
-              className="h-full bg-accent transition-all"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        ) : status === "error" ? (
-          <p className="text-[11px] text-danger-text mt-0.5">
-            {errorMessage ?? "Upload failed"}
-          </p>
-        ) : (
-          file && (
-            <p className="text-[11px] text-text-muted mt-0.5 font-mono">
-              {formatBytes(file.fileSize)}
-            </p>
-          )
-        )}
-      </div>
+      <p className="w-full text-[11px] text-text-primary text-center truncate px-1">
+        {file?.fileName}
+      </p>
 
       {status === "uploading" ? (
-        <Loader2 className="h-3.5 w-3.5 animate-spin text-text-muted shrink-0" />
+        <div className="w-full h-[3px] bg-bg-overlay rounded-full mt-0.5 overflow-hidden">
+          <div
+            className="h-full bg-accent transition-all"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       ) : (
-        onRemove && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation(); // NEW — don't trigger preview when removing
-              onRemove();
-            }}
-            className="text-text-muted hover:text-danger-text transition-colors shrink-0"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
+        file && (
+          <span className="text-[10px] text-text-muted font-mono">
+            {formatBytes(file.fileSize)}
+          </span>
         )
+      )}
+
+      {status === "uploading" && (
+        <Loader2 className="absolute top-1 right-1 h-3.5 w-3.5 animate-spin text-text-muted" />
       )}
     </div>
   );

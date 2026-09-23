@@ -1,7 +1,9 @@
+import { WorkspaceAccessGuard } from "../../../components/workspace/workspace-access-guard";
+
 export default function WorkspaceLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return <WorkspaceAccessGuard>{children}</WorkspaceAccessGuard>;
 }

@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Badge } from "@devflow/ui/components/badge";
 import { useIssueById } from "../../../hooks/use-issues";
 import { useIssueForm } from "../../../hooks/use-issue-form";
+import { useCanMoveIssue } from "../../../hooks/use-can-move-issue";
+import { usePermissions } from "../../../hooks/use-permissions";
 import { STATUS_LABELS, getStatusVariant } from "../../../lib/issue-constants";
 import { IssueMainInfo } from "./issue-main-info";
 import { IssuePropertiesPanel } from "./issue-properties-panel";
@@ -66,17 +68,12 @@ function IssueDetailContent({
   onSaving: (v: boolean) => void;
 }) {
   const form = useIssueForm(issue, issue.projectId, onSaving);
+  const { canDeleteIssue } = useCanMoveIssue();
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex items-center justify-between gap-3 px-6 h-[38px] border-b border-border-default shrink-0">
         <div className="flex items-center gap-3">
-          <button
-            onClick={onBack}
-            className="text-text-muted hover:text-text-primary transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
           <span className="text-[11px] font-mono text-accent">
             #{issue.id.slice(-6).toUpperCase()}
           </span>
@@ -88,7 +85,7 @@ function IssueDetailContent({
           <IssueActionsMenu
             issue={issue}
             projectId={issue.projectId}
-            canDelete={true}
+            canDelete={canDeleteIssue}
             onDeleted={onBack}
             onDuplicated={onNavigate}
           />
@@ -105,6 +102,8 @@ function IssueDetailContent({
             handleSubmit={form.handleSubmit}
             save={form.save}
             onNavigate={onNavigate}
+            canEditIssue={form.canEditIssue}
+            canUploadAttachment={form.canUploadAttachment}
           />
           <div className="h-px bg-border-default" />
           <CommentsSection projectId={issue.projectId} issueId={issue.id} />

@@ -81,46 +81,57 @@ export function AttachmentPreviewModal({
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-2">
-          {canDelete && onDelete && (
+        <div className="flex items-center justify-between gap-2 pt-3 border-t border-border-default">
+          <div className="flex items-center">
+            {canDelete && onDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onDelete}
+                disabled={isDeleting}
+                className="flex items-center gap-1.5 text-danger-text hover:bg-danger-subtle"
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <>
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Delete
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
-              onClick={onDelete}
-              disabled={isDeleting}
-              className="text-danger-text hover:bg-danger-subtle mr-auto"
+              onClick={handleOpen}
+              className="flex items-center gap-1.5"
             >
-              {isDeleting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <>
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Delete
-                </>
-              )}
+              <ExternalLink className="h-3.5 w-3.5" />
+              Open
             </Button>
-          )}
-          <Button variant="ghost" size="sm" onClick={handleOpen}>
-            <ExternalLink className="h-3.5 w-3.5" />
-            Open
-          </Button>
-          {onDownload && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleDownload}
-              disabled={isDownloading}
-            >
-              {isDownloading ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <>
-                  <Download className="h-3.5 w-3.5" />
-                  Download
-                </>
-              )}
-            </Button>
-          )}
+            {onDownload && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleDownload}
+                disabled={isDownloading}
+                className="flex items-center gap-1.5"
+              >
+                {isDownloading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <>
+                    <Download className="h-3.5 w-3.5" />
+                    Download
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </Modal>

@@ -1,11 +1,15 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { Tabs } from "@devflow/ui/components/tabs";
-import { Spinner } from "@devflow/ui/components/spinner";
-import { useAuthStore } from "../../../stores/auth.store";
 import { useWorkspaces } from "../../../hooks/use-workspaces";
+import { usePermissions } from "../../../hooks/use-permissions";
+import { canWorkspace } from "../../../lib/permissions";
+import PageLoading from "../../shared/page-loading";
+import PageError from "../../shared/page-error";
 import { GeneralTab } from "./general-tab";
 import { MembersTab } from "./members-tab";
 import { SendInviteTab } from "./send-invite-tab";
@@ -13,34 +17,50 @@ import { PendingInvitesTab } from "./pending-invites-tab";
 
 export function WorkspaceSettings() {
   const { workspaceSlug } = useParams<{ workspaceSlug: string }>();
-  const user = useAuthStore((s) => s.user);
-  const { data: workspaces } = useWorkspaces();
+  const router = useRouter();
+  const {
+    data: workspaces,
+    isLoading: wsLoading,
+    isError,
+    refetch,
+  } = useWorkspaces();
   const workspace = workspaces?.find((w) => w.slug === workspaceSlug);
 
-    const [tab, setTab] = useQueryState("tab", { defaultValue: "general" });
+  const { workspaceRole, isLoading: permLoading } = usePermissions();
+  const isAdmin = canWorkspace(workspaceRole, "UPDATE_WORKSPACE");
 
-  if (!workspace) {
+  const [tab, setTab] = useQueryState("tab", { defaultValue: "general" });
+
+  useEffect(() => {
+    if (wsLoading || permLoading || !workspace) return;
+    if (!isAdmin) {
+      router.replace(
+        `/no-access?reason=insufficient-role&workspace=${workspaceSlug}`,
+      );
+    }
+  }, [wsLoading, permLoading, isAdmin, workspace, router, workspaceSlug]);
+
+  if (wsLoading || permLoading) {
+    return <PageLoading />;
+  }
+
+  if (isError) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Spinner size="sm" />
-      </div>
+      <PageError
+        message="Couldn't load workspace settings"
+        onRetry={() => refetch()}
+      />
     );
   }
 
-  // compute isAdmin once here, pass down as prop
-  const isAdmin =
-    workspace.members?.find((m) => m.userId === user?.id)?.role === "ADMIN";
+  if (!workspace || !isAdmin) {
+    // workspace missing → WorkspaceAccessGuard should've already caught this, this is a safety net
+    // !isAdmin → redirect effect above is in flight
+    return <PageLoading />;
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex items-center px-5 h-[38px] border-b border-border-default shrink-0">
-        <div className="flex items-center gap-1.5 text-[12px] font-mono">
-          <span className="text-text-muted">{workspace.name}</span>
-          <span className="text-text-muted">/</span>
-          <span className="text-text-secondary">Settings</span>
-        </div>
-      </div>
-
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-[680px] px-8 py-6">
           <h1 className="text-[16px] font-medium text-text-primary mb-6">

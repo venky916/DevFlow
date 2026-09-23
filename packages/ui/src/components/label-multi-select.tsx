@@ -16,6 +16,7 @@ interface LabelMultiSelectProps {
   selectedIds: string[];
   onChange: (ids: string[]) => void;
   label?: string;
+  disabled?: boolean;
 }
 
 export function LabelMultiSelect({
@@ -23,10 +24,12 @@ export function LabelMultiSelect({
   selectedIds,
   onChange,
   label,
+  disabled,
 }: LabelMultiSelectProps) {
   const selectedLabels = labels.filter((l) => selectedIds.includes(l.id));
 
   const toggle = (labelId: string) => {
+    if (disabled) return;
     if (selectedIds.includes(labelId)) {
       onChange(selectedIds.filter((id) => id !== labelId));
     } else {
@@ -46,7 +49,8 @@ export function LabelMultiSelect({
         <Popover.Trigger asChild>
           <button
             type="button"
-            className="flex min-h-9 w-full items-center gap-1.5 flex-wrap rounded-[4px] border border-border-emphasis bg-bg-overlay px-3 py-1.5 text-left transition-colors focus:outline-none focus:border-accent"
+            disabled={disabled}
+            className="flex min-h-9 w-full items-center gap-1.5 flex-wrap rounded-[4px] border border-border-emphasis bg-bg-overlay px-3 py-1.5 text-left transition-colors focus:outline-none focus:border-accent disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {selectedLabels.length === 0 ? (
               <span className="flex items-center gap-2 text-sm text-text-disabled">
@@ -57,23 +61,25 @@ export function LabelMultiSelect({
               selectedLabels.map((l) => (
                 <span key={l.id} className="inline-flex items-center gap-0.5">
                   <LabelChip name={l.name} color={l.color} size="sm" />
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggle(l.id);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
+                  {!disabled && (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
                         e.stopPropagation();
                         toggle(l.id);
-                      }
-                    }}
-                    className="text-text-muted hover:text-text-primary transition-colors"
-                  >
-                    <X className="h-2.5 w-2.5" />
-                  </span>
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.stopPropagation();
+                          toggle(l.id);
+                        }
+                      }}
+                      className="text-text-muted hover:text-text-primary transition-colors"
+                    >
+                      <X className="h-2.5 w-2.5" />
+                    </span>
+                  )}
                 </span>
               ))
             )}

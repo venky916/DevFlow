@@ -3,15 +3,14 @@
 import { toast } from "sonner";
 import { Clock, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { Badge } from "@devflow/ui/components/badge";
 import { Spinner } from "@devflow/ui/components/spinner";
 import {
   useWorkspaceInvites,
   useCancelInvite,
 } from "../../../hooks/use-workspace-settings";
 import { SectionHeading } from "../../shared/section-heading";
-import { workspaceRoleVariant } from "../../../lib/roles";
 import type { WorkspaceRole } from "@devflow/types";
+import { RoleBadge } from "../../shared/role-badge";
 
 interface Props {
   workspaceId: string;
@@ -58,11 +57,7 @@ export function PendingInvitesTab({ workspaceId }: Props) {
                   {invite.email}
                 </p>
                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                  <Badge
-                    variant={workspaceRoleVariant(invite.role as WorkspaceRole)}
-                  >
-                    {invite.role}
-                  </Badge>
+                  <RoleBadge role={invite.role as WorkspaceRole} />
                   <span className="text-[11px] text-text-muted">
                     expires{" "}
                     {formatDistanceToNow(new Date(invite.expiresAt), {

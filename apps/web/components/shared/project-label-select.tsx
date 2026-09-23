@@ -8,6 +8,7 @@ interface Props {
   selectedIds: string[];
   onChange: (ids: string[]) => void;
   label?: string;
+  disabled?: boolean;
 }
 
 export function ProjectLabelSelect({
@@ -15,6 +16,7 @@ export function ProjectLabelSelect({
   selectedIds,
   onChange,
   label,
+  disabled,
 }: Props) {
   const { data: labels } = useProjectLabels(projectId);
 
@@ -24,6 +26,7 @@ export function ProjectLabelSelect({
       selectedIds={selectedIds}
       onChange={onChange}
       label={label}
+      disabled={disabled}
     />
   );
 }

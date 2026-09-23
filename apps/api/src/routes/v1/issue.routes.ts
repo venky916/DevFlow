@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authenticate } from "../../middlewares/auth.middleware";
 import { attachIssueProject, requireIssueMoveAccess, requireProjectMember, requireProjectRole } from "../../middlewares/permission.middleware";
-import { attachChildIssue, createIssue, createSubIssue, deleteIssue, detachChildIssue, getBacklogGrouped, getBacklogIssues, getBoardIssues, getIssueById, getSubIssues, moveIssue, moveIssueToSprint, searchProjectIssues, updateIssue } from "../../controllers/issue.controller";
+import { attachChildIssue, createIssue, createSubIssue, deleteIssue, detachChildIssue, getBacklogGrouped, getBacklogIssues, getBoardIssues, getIssueById, getListIssues, getSubIssues, moveIssue, moveIssueToSprint, searchProjectIssues, updateIssue } from "../../controllers/issue.controller";
 
 const router = Router({ mergeParams: true });
 router.use(authenticate);
@@ -9,6 +9,7 @@ router.use(authenticate);
 // /projects/:id/issues
 router.post("/", requireProjectRole('LEAD', 'DEVELOPER'), createIssue)
 router.get("/board", requireProjectMember, getBoardIssues)
+router.get("/list", requireProjectMember, getListIssues)   // ← new
 router.get("/backlog", requireProjectMember, getBacklogIssues)
 router.get("/backlog/grouped", requireProjectMember, getBacklogGrouped)
 router.get("/search", requireProjectMember, searchProjectIssues)

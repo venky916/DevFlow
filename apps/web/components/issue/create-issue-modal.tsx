@@ -22,7 +22,6 @@ import { ProjectLabelSelect } from "../shared/project-label-select";
 import type { ISprint, IUserPublic } from "@devflow/types";
 import { useAttachmentUpload } from "../../hooks/use-attachment-upload";
 import { FileUploadList } from "@devflow/ui/components/file-upload-list";
-
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -30,6 +29,7 @@ interface Props {
   sprints: ISprint[];
   members: IUserPublic[];
   activeSprint: ISprint | null;
+  canSetSprint: boolean;
 }
 
 export function CreateIssueModal({
@@ -39,6 +39,7 @@ export function CreateIssueModal({
   sprints,
   members,
   activeSprint,
+  canSetSprint,
 }: Props) {
   const { mutateAsync, isPending } = useCreateIssue(projectId);
   const {
@@ -49,9 +50,6 @@ export function CreateIssueModal({
     readyAttachments,
   } = useAttachmentUpload();
 
-  // opened from the board (activeSprint passed) → issue is locked to that
-  // sprint and starts at TODO. Opened from backlog (activeSprint === null)
-  // → sprint stays optional/editable, status starts at BACKLOG.
   const isBoardContext = !!activeSprint;
 
   const {
@@ -148,7 +146,7 @@ export function CreateIssueModal({
                 {activeSprint!.name}
               </div>
             </div>
-          ) : (
+          ) : canSetSprint ? (
             <Select
               label="Sprint"
               placeholder="No sprint"
@@ -156,6 +154,14 @@ export function CreateIssueModal({
               value={watch("sprintId") ?? ""}
               onValueChange={(v) => setValue("sprintId", v || null)}
             />
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[12px] text-text-secondary">Sprint</span>
+              <div className="flex items-center gap-1.5 h-9 px-3 rounded-[4px] border border-border-default bg-bg-surface text-[13px] text-text-muted">
+                <Lock className="h-3 w-3" />
+                Backlog
+              </div>
+            </div>
           )}
           <Select
             label="Assignee"
@@ -176,6 +182,7 @@ export function CreateIssueModal({
               value={(field.value as Date | null) ?? null}
               onChange={field.onChange}
               error={errors.dueDate?.message}
+              minDate={new Date()}
             />
           )}
         />

@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { useMe } from "../../../hooks/use-auth";
 import {
@@ -7,6 +9,8 @@ import {
   useUpdateComment,
 } from "../../../hooks/use-comments";
 import { useMentionSuggestion } from "../../../hooks/use-mention-suggestion";
+import { usePermissions } from "../../../hooks/use-permissions";
+import { canDeleteComment, canEditComment } from "../../../lib/permissions";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { Avatar } from "@devflow/ui/components/avatar";
@@ -25,6 +29,7 @@ export function CommentsSection({ issueId, projectId }: CommentsSectionProps) {
   const { mutateAsync: updateComment } = useUpdateComment(issueId);
   const { mutateAsync: deleteComment } = useDeleteComment(issueId);
   const { data: me } = useMe();
+  const { access } = usePermissions();
   const mentionSuggestion = useMentionSuggestion(projectId);
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -69,53 +74,64 @@ export function CommentsSection({ issueId, projectId }: CommentsSectionProps) {
         <Loader2 className="h-4 w-4 animate-spin text-accent" />
       ) : (
         <div className="flex flex-col gap-5">
-          {comments?.map((comment: any) => (
-            <div key={comment.id} className="flex items-start gap-3">
-              <Avatar name={comment.user?.name ?? "?"} size="sm" />
-              <div className="flex-1 flex flex-col gap-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-medium text-text-primary">
-                    {comment.user?.name ?? "Unknown"}
-                  </span>
-                  <span className="text-[11px] text-text-muted">
-                    {formatDistanceToNow(new Date(comment.createdAt), {
-                      addSuffix: true,
-                    })}
-                  </span>
-                </div>
+          {comments?.map((comment: any) => {
+            const canEdit = me ? canEditComment(comment, me.id) : false;
+            const canDelete = me
+              ? canDeleteComment(access, comment, me.id)
+              : false;
 
-                {editingId === comment.id ? (
-                  <CommentBox
-                    initialContent={comment.content}
-                    placeholder="Edit comment..."
-                    mentionSuggestion={mentionSuggestion}
-                    submitLabel="Save"
-                    onSubmit={(json) => handleEdit(comment.id, json)}
-                    onCancel={() => setEditingId(null)}
-                  />
-                ) : (
-                  <CommentContent content={comment.content} />
-                )}
-
-                {me?.id === comment.user?.id && editingId !== comment.id && (
-                  <div className="flex gap-3 mt-0.5">
-                    <button
-                      onClick={() => setEditingId(comment.id)}
-                      className="text-[11px] text-text-muted hover:text-text-primary transition-colors cursor-pointer"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(comment.id)}
-                      className="text-[11px] text-text-muted hover:text-danger-text transition-colors cursor-pointer"
-                    >
-                      Delete
-                    </button>
+            return (
+              <div key={comment.id} className="flex items-start gap-3">
+                <Avatar name={comment.user?.name ?? "?"} size="sm" />
+                <div className="flex-1 flex flex-col gap-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[12px] font-medium text-text-primary">
+                      {comment.user?.name ?? "Unknown"}
+                    </span>
+                    <span className="text-[11px] text-text-muted">
+                      {formatDistanceToNow(new Date(comment.createdAt), {
+                        addSuffix: true,
+                      })}
+                    </span>
                   </div>
-                )}
+
+                  {editingId === comment.id ? (
+                    <CommentBox
+                      initialContent={comment.content}
+                      placeholder="Edit comment..."
+                      mentionSuggestion={mentionSuggestion}
+                      submitLabel="Save"
+                      onSubmit={(json) => handleEdit(comment.id, json)}
+                      onCancel={() => setEditingId(null)}
+                    />
+                  ) : (
+                    <CommentContent content={comment.content} />
+                  )}
+
+                  {editingId !== comment.id && (canEdit || canDelete) && (
+                    <div className="flex gap-3 mt-0.5">
+                      {canEdit && (
+                        <button
+                          onClick={() => setEditingId(comment.id)}
+                          className="text-[11px] text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                        >
+                          Edit
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          onClick={() => handleDelete(comment.id)}
+                          className="text-[11px] text-text-muted hover:text-danger-text transition-colors cursor-pointer"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

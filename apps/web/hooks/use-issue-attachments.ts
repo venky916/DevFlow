@@ -3,9 +3,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import { useGetPresignedUrl, uploadFileToB2 } from "./use-upload";
 import type { PendingAttachment, UploadedFileInfo, IAttachment } from "@devflow/types";
+import { useAuthStore } from "../stores/auth.store";
 
-export function useIssueAttachments(issueId: string, initial: IAttachment[] = []) {
+export function useIssueAttachments(
+    issueId: string,
+    projectId: string, // NEW
+    initial: IAttachment[] = [],
+) {
     const qc = useQueryClient();
+    const currentUser = useAuthStore((s) => s.user);
     const { mutateAsync: getPresignedUrl } = useGetPresignedUrl();
 
     const [items, setItems] = useState<PendingAttachment[]>(
@@ -14,11 +20,12 @@ export function useIssueAttachments(issueId: string, initial: IAttachment[] = []
             status: "done",
             progress: 100,
             file: f,
-            fileKey: null, // already-saved attachments don't need fileKey locally — backend owns it
+            fileKey: null,
             attachmentId: f.id,
             localName: f.fileName,
             localSize: f.fileSize,
             localMimeType: f.mimeType,
+            uploader: f.uploader,
         })),
     );
 
@@ -70,6 +77,7 @@ export function useIssueAttachments(issueId: string, initial: IAttachment[] = []
                             fileName: file.name,
                             mimeType: file.type,
                             fileSize: file.size,
+                            projectId, // NEW
                         });
                         setItems((prev) => prev.map((i) => (i.id === id ? { ...i, progress: 50 } : i)));
 
@@ -98,6 +106,7 @@ export function useIssueAttachments(issueId: string, initial: IAttachment[] = []
                                             mimeType: file.type,
                                             url: publicUrl,
                                         },
+                                        uploader: saved.uploader ?? currentUser ?? undefined,
                                     }
                                     : i,
                             ),
@@ -112,14 +121,13 @@ export function useIssueAttachments(issueId: string, initial: IAttachment[] = []
                 })();
             });
         },
-        [getPresignedUrl, saveAttachment],
+        [getPresignedUrl, saveAttachment, projectId], // projectId added to deps
     );
 
     const removeFile = useCallback(
         async (id: string) => {
             const item = items.find((i) => i.id === id);
 
-            // never made it to the backend (mid-upload, or upload failed) — just drop it locally
             if (!item?.attachmentId) {
                 setItems((prev) => prev.filter((i) => i.id !== id));
                 return;

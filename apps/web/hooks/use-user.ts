@@ -42,3 +42,18 @@ export function useUpdateAvatar() {
         onSuccess: () => qc.invalidateQueries({ queryKey: ["me"] }),
     });
 }
+
+export interface ISidebarCounts {
+    unreadNotifications: number;
+    myOpenIssues: number;
+}
+
+export function useSidebarCounts() {
+    return useQuery<ISidebarCounts>({
+        queryKey: ["me", "counts"],
+        queryFn: async () => {
+            const res = await api.get("/users/me/counts");
+            return res.data.data;
+        },
+    });
+}

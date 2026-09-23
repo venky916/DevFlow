@@ -12,6 +12,7 @@ import {
   useSearchProjectIssues,
 } from "../../hooks/use-issues";
 import { usePermissions } from "../../hooks/use-permissions";
+import { canProject } from "../../lib/permissions";
 import { STATUS_LABELS, getStatusVariant } from "../../lib/issue-constants";
 import type { IIssueWithRelations, IssueStatus } from "@devflow/types";
 
@@ -22,7 +23,10 @@ interface Props {
 }
 
 export function SubIssueList({ issue, projectId, onNavigate }: Props) {
-  const { isLeadOrAbove } = usePermissions();
+  const { access } = usePermissions();
+  const canCreateSubIssue = canProject(access, "CREATE_SUB_ISSUE");
+  const canAttachChild = canProject(access, "ATTACH_CHILD_ISSUE");
+  const canDetachChild = canProject(access, "DETACH_CHILD_ISSUE");
 
   const { mutateAsync: createSubIssue, isPending: creating } =
     useCreateSubIssue(issue.id);
@@ -53,14 +57,13 @@ export function SubIssueList({ issue, projectId, onNavigate }: Props) {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
-  // only fetch while the search box is actually open and this issue can have children
   const { data: results, isLoading: searching } = useSearchProjectIssues(
     projectId,
     debouncedQuery,
     {
       excludeId: issue.id,
       mode: "child",
-      enabled: isEligibleParent && searchOpen,
+      enabled: isEligibleParent && searchOpen && canAttachChild,
     },
   );
 
@@ -95,12 +98,33 @@ export function SubIssueList({ issue, projectId, onNavigate }: Props) {
   };
 
   const children = issue.children ?? [];
+  const total = children.length;
+  const doneCount = children.filter((c: any) => c.status === "DONE").length;
+  const progress = total > 0 ? (doneCount / total) * 100 : 0;
+
+  console.log("SubIssueList render", { total, doneCount, progress, children });
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-[11px] uppercase tracking-[0.04em] font-mono text-text-muted">
-        Sub-issues{children.length > 0 ? ` (${children.length})` : ""}
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] uppercase tracking-[0.04em] font-mono text-text-muted">
+          Sub-issues{total > 0 ? ` (${total})` : ""}
+        </p>
+
+        {total > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-mono text-text-muted">
+              {doneCount}/{total}
+            </span>
+            <div className="w-16 h-[3px] rounded-full bg-bg-surface-hover overflow-hidden">
+              <div
+                className="h-full rounded-full bg-success-text transition-all"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
 
       {children.length > 0 && (
         <div className="flex flex-col gap-1 rounded-[6px] border border-border-default overflow-hidden">
@@ -123,7 +147,7 @@ export function SubIssueList({ issue, projectId, onNavigate }: Props) {
               {child.assignee && (
                 <Avatar name={child.assignee.name ?? "?"} size="sm" />
               )}
-              {isLeadOrAbove && (
+              {canDetachChild && (
                 <button
                   onClick={() => handleDetach(child.id)}
                   className="text-text-muted hover:text-status-danger-text transition-colors opacity-0 group-hover:opacity-100"
@@ -137,63 +161,67 @@ export function SubIssueList({ issue, projectId, onNavigate }: Props) {
         </div>
       )}
 
-      {isLeadOrAbove && (
+      {(canCreateSubIssue || canAttachChild) && (
         <div className="flex flex-col gap-2">
-          <div ref={searchRef} className="relative">
-            <div className="flex items-center gap-2 border border-border-default rounded-[4px] px-3 py-2">
-              <Search className="h-3.5 w-3.5 text-text-muted shrink-0" />
-              <input
-                className="flex-1 bg-transparent text-[13px] text-text-primary placeholder:text-text-disabled focus:outline-none"
-                placeholder="Search issues to attach..."
-                value={query}
-                onFocus={() => setSearchOpen(true)}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setSearchOpen(true);
-                }}
-              />
-              {(searching || attaching) && (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-text-muted shrink-0" />
-              )}
-            </div>
-
-            {searchOpen && (
-              <div className="absolute z-10 mt-1 w-full max-h-[220px] overflow-y-auto bg-bg-surface border border-border-default rounded-[4px] shadow-lg">
-                {!results?.length ? (
-                  <p className="px-3 py-2 text-[12px] text-text-disabled">
-                    {searching ? "Searching..." : "No eligible issues found"}
-                  </p>
-                ) : (
-                  results.map((r) => (
-                    <button
-                      key={r.id}
-                      onClick={() => handleAttach(r.id)}
-                      className="w-full text-left px-3 py-2 text-[13px] text-text-primary hover:bg-bg-surface-hover transition-colors"
-                    >
-                      {r.title}
-                    </button>
-                  ))
+          {canAttachChild && (
+            <div ref={searchRef} className="relative">
+              <div className="flex items-center gap-2 border border-border-default rounded-[4px] px-3 py-2">
+                <Search className="h-3.5 w-3.5 text-text-muted shrink-0" />
+                <input
+                  className="flex-1 bg-transparent text-[13px] text-text-primary placeholder:text-text-disabled focus:outline-none"
+                  placeholder="Search issues to attach..."
+                  value={query}
+                  onFocus={() => setSearchOpen(true)}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setSearchOpen(true);
+                  }}
+                />
+                {(searching || attaching) && (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-text-muted shrink-0" />
                 )}
               </div>
-            )}
-          </div>
 
-          <div className="flex items-center gap-2 border border-border-default rounded-[4px] px-3 py-2">
-            <Plus className="h-3.5 w-3.5 text-text-muted shrink-0" />
-            <input
-              className="flex-1 bg-transparent text-[13px] text-text-primary placeholder:text-text-disabled focus:outline-none"
-              placeholder="Add sub-issue..."
-              value={addTitle}
-              onChange={(e) => setAddTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleAdd();
-                }
-              }}
-              disabled={creating}
-            />
-          </div>
+              {searchOpen && (
+                <div className="absolute z-10 mt-1 w-full max-h-[220px] overflow-y-auto bg-bg-surface border border-border-default rounded-[4px] shadow-lg">
+                  {!results?.length ? (
+                    <p className="px-3 py-2 text-[12px] text-text-disabled">
+                      {searching ? "Searching..." : "No eligible issues found"}
+                    </p>
+                  ) : (
+                    results.map((r) => (
+                      <button
+                        key={r.id}
+                        onClick={() => handleAttach(r.id)}
+                        className="w-full text-left px-3 py-2 text-[13px] text-text-primary hover:bg-bg-surface-hover transition-colors"
+                      >
+                        {r.title}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {canCreateSubIssue && (
+            <div className="flex items-center gap-2 border border-border-default rounded-[4px] px-3 py-2">
+              <Plus className="h-3.5 w-3.5 text-text-muted shrink-0" />
+              <input
+                className="flex-1 bg-transparent text-[13px] text-text-primary placeholder:text-text-disabled focus:outline-none"
+                placeholder="Add sub-issue..."
+                value={addTitle}
+                onChange={(e) => setAddTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAdd();
+                  }
+                }}
+                disabled={creating}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

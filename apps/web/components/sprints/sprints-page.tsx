@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@devflow/ui/components/button";
 import { useWorkspaces } from "../../hooks/use-workspaces";
 import { useProjects } from "../../hooks/use-projects";
@@ -12,10 +13,13 @@ import {
   useCompleteSprint,
   useDeleteSprint,
 } from "../../hooks/use-sprints";
+import { usePermissions } from "../../hooks/use-permissions";
+import { canProject } from "../../lib/permissions";
+import PageLoading from "../shared/page-loading";
+import PageError from "../shared/page-error";
 import { CreateSprintModal } from "./create-sprint-modal";
 import { EditSprintModal } from "./edit-sprint-modal";
 import { SprintCard } from "./sprint-card";
-import { toast } from "sonner";
 import type { ISprintWithCount } from "@devflow/types";
 
 export function SprintsPage() {
@@ -23,27 +27,103 @@ export function SprintsPage() {
     workspaceSlug: string;
     projectSlug: string;
   }>();
+  const router = useRouter();
 
   const [showModal, setShowModal] = useState(false);
   const [editingSprint, setEditingSprint] = useState<ISprintWithCount | null>(
     null,
   );
 
-  const { data: workspaces } = useWorkspaces();
+  const {
+    data: workspaces,
+    isLoading: wsLoading,
+    isError: wsError,
+    refetch: refetchWorkspaces,
+  } = useWorkspaces();
   const workspace = workspaces?.find((w) => w.slug === workspaceSlug);
-  const { data: projects } = useProjects(workspace?.id ?? "");
-  const project = projects?.find((p) => p.slug === projectSlug);
-  const { data: sprints, isLoading } = useSprints(project?.id ?? "");
 
-  const { mutate: startSprint, isPending: starting } = useStartSprint(
+  const {
+    data: projects,
+    isLoading: projLoading,
+    isError: projError,
+    refetch: refetchProjects,
+  } = useProjects(workspace?.id ?? "");
+  const project = projects?.find((p) => p.slug === projectSlug);
+
+  const {
+    data: sprints,
+    isLoading: sprintsLoading,
+    isError: sprintsError,
+    refetch: refetchSprints,
+  } = useSprints(project?.id ?? "");
+
+  const { access, isLoading: permLoading } = usePermissions();
+  const canAccessSprints = canProject(access, "CREATE_SPRINT");
+
+  const [startingId, setStartingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const { mutate: startSprint } = useStartSprint(
     project?.id ?? "",
   );
   const { mutate: completeSprint, isPending: completing } = useCompleteSprint(
     project?.id ?? "",
   );
-  const { mutate: deleteSprint, isPending: deleting } = useDeleteSprint(
+  const { mutate: deleteSprint } = useDeleteSprint(
     project?.id ?? "",
   );
+
+  useEffect(() => {
+    if (wsLoading || projLoading || permLoading || !project) return;
+    if (!canAccessSprints) {
+      router.replace(
+        `/no-access?reason=insufficient-role&workspace=${workspaceSlug}`,
+      );
+    }
+  }, [
+    wsLoading,
+    projLoading,
+    permLoading,
+    canAccessSprints,
+    project,
+    router,
+    workspaceSlug,
+  ]);
+
+  if (wsLoading || projLoading || sprintsLoading || permLoading) {
+    return <PageLoading />;
+  }
+
+  if (wsError) {
+    return (
+      <PageError
+        message="Couldn't load workspace"
+        onRetry={() => refetchWorkspaces()}
+      />
+    );
+  }
+
+  if (projError) {
+    return (
+      <PageError
+        message="Couldn't load project"
+        onRetry={() => refetchProjects()}
+      />
+    );
+  }
+
+  if (sprintsError) {
+    return (
+      <PageError
+        message="Couldn't load sprints"
+        onRetry={() => refetchSprints()}
+      />
+    );
+  }
+
+  if (!project || !canAccessSprints) {
+    return <PageLoading />; // !project → ProjectAccessGuard safety net; !canAccessSprints → redirect in flight
+  }
 
   const activeSprint = sprints?.find((s) => s.status === "ACTIVE");
   const plannedSprints = sprints?.filter((s) => s.status === "PLANNED") ?? [];
@@ -55,9 +135,11 @@ export function SprintsPage() {
       toast.error("Complete the active sprint first");
       return;
     }
+    setStartingId(sprintId);
     startSprint(sprintId, {
       onSuccess: () => toast.success("Sprint started!"),
       onError: () => toast.error("Failed to start sprint"),
+      onSettled: () => setStartingId(null),
     });
   };
 
@@ -70,32 +152,17 @@ export function SprintsPage() {
   };
 
   const handleDelete = (sprintId: string) => {
+    setDeletingId(sprintId);
     deleteSprint(sprintId, {
       onSuccess: () => toast.success("Sprint deleted"),
       onError: (err: any) =>
         toast.error(err?.response?.data?.message ?? "Failed to delete sprint"),
+      onSettled: () => setDeletingId(null),
     });
   };
 
-  if (!project) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <p className="text-text-muted">Project not found</p>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="h-5 w-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col w-full p-6 gap-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-medium text-text-primary">Sprints</h1>
         <Button variant="primary" size="sm" onClick={() => setShowModal(true)}>
@@ -106,7 +173,6 @@ export function SprintsPage() {
 
       <div className="h-px bg-border-default" />
 
-      {/* No sprints */}
       {!sprints?.length && (
         <div className="flex flex-col items-center justify-center py-20 gap-3 border border-border-default rounded-[4px]">
           <p className="text-[13px] text-text-muted">No sprints yet</p>
@@ -120,7 +186,6 @@ export function SprintsPage() {
         </div>
       )}
 
-      {/* Active sprint */}
       {activeSprint && (
         <div className="flex flex-col gap-3">
           <p className="text-[11px] uppercase tracking-[0.04em] font-mono text-text-muted">
@@ -136,7 +201,6 @@ export function SprintsPage() {
         </div>
       )}
 
-      {/* Planned sprints */}
       {plannedSprints.length > 0 && (
         <div className="flex flex-col gap-3">
           <p className="text-[11px] uppercase tracking-[0.04em] font-mono text-text-muted">
@@ -150,8 +214,8 @@ export function SprintsPage() {
                 onStart={() => handleStart(sprint.id)}
                 onEdit={() => setEditingSprint(sprint)}
                 onDelete={() => handleDelete(sprint.id)}
-                starting={starting}
-                deleting={deleting}
+                starting={startingId === sprint.id}
+                deleting={deletingId === sprint.id}
                 hasActiveSprint={!!activeSprint}
               />
             ))}
@@ -159,7 +223,6 @@ export function SprintsPage() {
         </div>
       )}
 
-      {/* Completed sprints */}
       {completedSprints.length > 0 && (
         <div className="flex flex-col gap-3">
           <p className="text-[11px] uppercase tracking-[0.04em] font-mono text-text-muted">
@@ -173,15 +236,13 @@ export function SprintsPage() {
         </div>
       )}
 
-      {project && (
-        <CreateSprintModal
-          open={showModal}
-          onClose={() => setShowModal(false)}
-          projectId={project.id}
-        />
-      )}
+      <CreateSprintModal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        projectId={project.id}
+      />
 
-      {project && editingSprint && (
+      {editingSprint && (
         <EditSprintModal
           open={!!editingSprint}
           onClose={() => setEditingSprint(null)}

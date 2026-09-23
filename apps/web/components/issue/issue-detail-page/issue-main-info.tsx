@@ -7,6 +7,9 @@ import type { IIssueWithRelations, PendingAttachment } from "@devflow/types";
 import { useIssueAttachments } from "../../../hooks/use-issue-attachments";
 import { FileUploadList } from "@devflow/ui/components/file-upload-list";
 import { api } from "../../../lib/axios";
+import { usePermissions } from "../../../hooks/use-permissions";
+import { useAuthStore } from "../../../stores/auth.store";
+import { canDeleteAttachment } from "../../../lib/permissions";
 
 interface Props {
   issue: IIssueWithRelations;
@@ -16,6 +19,8 @@ interface Props {
   handleSubmit: any;
   save: any;
   onNavigate: (issueId: string) => void;
+  canEditIssue: boolean;
+  canUploadAttachment: boolean;
 }
 
 export function IssueMainInfo({
@@ -26,19 +31,26 @@ export function IssueMainInfo({
   handleSubmit,
   save,
   onNavigate,
+  canEditIssue,
+  canUploadAttachment,
 }: Props) {
+  const { access } = usePermissions();
+  const userId = useAuthStore((s) => s.user?.id);
+
   const {
     items: attachmentItems,
     addFiles,
     removeFile,
   } = useIssueAttachments(
     issue.id,
+    projectId,
     issue.attachments?.map((a: any) => ({
       id: a.id,
       fileName: a.fileName,
       fileSize: a.fileSize ?? 0,
       mimeType: a.mimeType ?? "",
       url: a.url,
+      uploader: a.uploader,
     })) ?? [],
   );
 
@@ -49,36 +61,40 @@ export function IssueMainInfo({
     );
     window.location.href = res.data.data.downloadUrl;
   };
+
   return (
     <div className="flex flex-col gap-4">
       <ParentLink issue={issue} onNavigate={onNavigate} />
-
       {saving && (
         <span className="flex items-center gap-1 text-[11px] text-text-muted ml-auto">
           <Loader2 className="h-3 w-3 animate-spin" /> Saving...
         </span>
       )}
-
       <input
-        className="w-full bg-transparent text-[18px] font-semibold text-text-primary placeholder:text-text-disabled focus:outline-none"
+        className="w-full bg-transparent text-[18px] font-semibold text-text-primary placeholder:text-text-disabled focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
         placeholder="Issue title"
+        disabled={!canEditIssue}
         {...register("title")}
         onBlur={handleSubmit(save)}
       />
       <textarea
-        className="w-full bg-transparent text-[13px] text-text-secondary placeholder:text-text-disabled focus:outline-none resize-none min-h-[120px]"
+        className="w-full bg-transparent text-[13px] text-text-secondary placeholder:text-text-disabled focus:outline-none resize-none min-h-[120px] disabled:opacity-50 disabled:cursor-not-allowed"
         placeholder="Add a description..."
+        disabled={!canEditIssue}
         {...register("description")}
         onBlur={handleSubmit(save)}
       />
-
       <FileUploadList
         items={attachmentItems}
         onFilesAdded={addFiles}
         onRemove={removeFile}
         onDownload={handleDownload}
+        readOnly={!canUploadAttachment}
+        canDeleteItem={(item) =>
+          !!userId &&
+          canDeleteAttachment(access, { uploader: item.uploader }, userId)
+        }
       />
-
       <SubIssueList
         issue={issue}
         projectId={projectId}

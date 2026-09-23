@@ -13,6 +13,7 @@ import {
   forgotPasswordSchema,
   type ForgotPasswordForm,
 } from "@devflow/validators";
+import { Logo } from "../shared/logo";
 
 export function ForgotPasswordForm() {
   const [sent, setSent] = useState(false);
@@ -60,11 +61,7 @@ export function ForgotPasswordForm() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col items-center gap-2">
-        <div className="h-10 w-10 rounded-[4px] bg-accent flex items-center justify-center">
-          <span className="text-accent-text font-bold text-lg font-mono">
-            D
-          </span>
-        </div>
+        <Logo />
         <h1 className="text-xl font-semibold text-text-primary">
           Reset your password
         </h1>

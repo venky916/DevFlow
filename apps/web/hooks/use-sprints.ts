@@ -35,6 +35,7 @@ export function useUpdateSprint(projectId: string) {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["sprints", projectId] });
             qc.invalidateQueries({ queryKey: ["board", projectId] });
+            qc.invalidateQueries({ queryKey: ["issue-list", projectId] });
             qc.invalidateQueries({ queryKey: ["backlog-grouped", projectId] });
         },
     });
@@ -50,6 +51,7 @@ export function useDeleteSprint(projectId: string) {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["sprints", projectId] });
             qc.invalidateQueries({ queryKey: ["board", projectId] });
+            qc.invalidateQueries({ queryKey: ["issue-list", projectId] });
             qc.invalidateQueries({ queryKey: ["backlog-grouped", projectId] });
         },
     });
@@ -65,6 +67,7 @@ export function useStartSprint(projectId: string) {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["sprints", projectId] });
             qc.invalidateQueries({ queryKey: ["board", projectId] });
+            qc.invalidateQueries({ queryKey: ["issue-list", projectId] });
             qc.invalidateQueries({ queryKey: ["backlog-grouped", projectId] });
         },
     });
@@ -80,6 +83,7 @@ export function useCompleteSprint(projectId: string) {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["sprints", projectId] });
             qc.invalidateQueries({ queryKey: ["board", projectId] });
+            qc.invalidateQueries({ queryKey: ["issue-list", projectId] });
             qc.invalidateQueries({ queryKey: ["backlog-grouped", projectId] });
         },
     });

@@ -5,16 +5,33 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { LabelChip } from "@devflow/ui/components/label-chip";
 import { PRIORITY_COLORS } from "../../lib/issue-constants";
+import { useCanMoveIssue } from "../../hooks/use-can-move-issue";
+import { cn } from "@devflow/ui/lib/cn";
 import type { IIssueWithRelations } from "@devflow/types";
-import { Circle, Layers } from "lucide-react";
+import { Circle, Layers, Lock } from "lucide-react";
+import { Avatar } from "@devflow/ui/components/avatar";
 
+// widened type — on the Board page this extra field simply isn't there,
+// and that's fine: override then falls through to undefined → usePermissions
+// falls back to useParams(), same as before
+type CardIssue = IIssueWithRelations & {
+  project?: { slug: string; workspace: { slug: string } };
+};
 interface Props {
-  issue: IIssueWithRelations;
+  issue: CardIssue;
   onClick: (issueId: string) => void;
 }
 
 export function IssueCard({ issue, onClick }: Props) {
   const [hovered, setHovered] = useState(false);
+  const override = issue.project
+    ? {
+        workspaceSlug: issue.project.workspace.slug,
+        projectSlug: issue.project.slug,
+      }
+    : undefined;
+  const { canMove } = useCanMoveIssue(override);
+  const draggable = canMove({ assigneeId: issue.assigneeId ?? null });
 
   const {
     attributes,
@@ -25,6 +42,7 @@ export function IssueCard({ issue, onClick }: Props) {
     isDragging,
   } = useSortable({
     id: issue.id,
+    disabled: !draggable,
   });
 
   const style = {
@@ -41,12 +59,14 @@ export function IssueCard({ issue, onClick }: Props) {
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
+      {...(draggable ? { ...attributes, ...listeners } : {})}
       onClick={() => onClick(issue.id)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="flex flex-col p-[10px_12px] rounded-[4px] border border-border-default bg-bg-surface hover:border-border-emphasis cursor-pointer transition-colors"
+      className={cn(
+        "flex flex-col p-[10px_12px] rounded-[4px] border border-border-default bg-bg-surface hover:border-border-emphasis transition-colors",
+        draggable ? "cursor-pointer" : "cursor-default",
+      )}
     >
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-1.5">
@@ -55,9 +75,15 @@ export function IssueCard({ issue, onClick }: Props) {
           ) : (
             <Circle className="h-3 w-3 text-text-muted shrink-0" />
           )}
-          <p className="text-[13px] font-medium text-text-primary leading-snug">
+          <p className="text-[13px] font-medium text-text-primary leading-snug flex-1">
             {issue.title}
           </p>
+          {!draggable && (
+            <Lock
+              className="h-3 w-3 text-text-muted shrink-0"
+              // title="You can't move this issue"
+            />
+          )}
         </div>
 
         {labels.length > 0 && (
@@ -90,14 +116,15 @@ export function IssueCard({ issue, onClick }: Props) {
           </div>
 
           {issue.assignee && (
-            <div className="h-[18px] w-[18px] rounded-full bg-accent-subtle flex items-center justify-center text-accent text-[9px] font-medium shrink-0">
-              {issue.assignee.name?.[0]?.toUpperCase() ?? "?"}
-            </div>
+            <Avatar
+              name={issue.assignee.name ?? undefined}
+              src={issue.assignee.avatarUrl ?? undefined}
+              size="sm"
+            />
           )}
         </div>
       </div>
 
-      {/* hover expand — grid-rows trick animates height without knowing content size upfront */}
       <div
         className="grid transition-[grid-template-rows] duration-200 ease-out"
         style={{ gridTemplateRows: hovered && childCount > 0 ? "1fr" : "0fr" }}
@@ -117,9 +144,11 @@ export function IssueCard({ issue, onClick }: Props) {
                   {child.title}
                 </span>
                 {child.assignee && (
-                  <div className="h-[16px] w-[16px] rounded-full bg-accent-subtle flex items-center justify-center text-accent text-[8px] font-medium shrink-0">
-                    {child.assignee.name?.[0]?.toUpperCase() ?? "?"}
-                  </div>
+                  <Avatar
+                    name={child.assignee.name}
+                    src={child.assignee.avatarUrl ?? undefined}
+                    size="sm"
+                  />
                 )}
               </div>
             ))}

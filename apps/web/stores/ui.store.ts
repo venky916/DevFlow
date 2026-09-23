@@ -1,17 +1,27 @@
-import { create } from "zustand"
-import { persist } from "zustand/middleware"
+import { create } from "zustand";
 
 interface UIState {
-    sidebarCollapsed: boolean
-    toggleSidebar: () => void
+    mobileDrawerOpen: boolean;
+    openMobileDrawer: () => void;
+    closeMobileDrawer: () => void;
+    toggleMobileDrawer: () => void;
+
+    isCommandPaletteOpen: boolean;
+    openCommandPalette: () => void;
+    closeCommandPalette: () => void;
+    toggleCommandPalette: () => void;
 }
 
-export const useUIStore = create<UIState>()(
-    persist(
-        (set) => ({
-            sidebarCollapsed: false,
-            toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
-        }),
-        { name: "devflow-ui" }
-    )
-)
+export const useUIStore = create<UIState>()((set) => ({
+    mobileDrawerOpen: false,
+    openMobileDrawer: () => set({ mobileDrawerOpen: true }),
+    closeMobileDrawer: () => set({ mobileDrawerOpen: false }),
+    toggleMobileDrawer: () =>
+        set((state) => ({ mobileDrawerOpen: !state.mobileDrawerOpen })),
+
+    isCommandPaletteOpen: false,
+    openCommandPalette: () => set({ isCommandPaletteOpen: true }),
+    closeCommandPalette: () => set({ isCommandPaletteOpen: false }),
+    toggleCommandPalette: () =>
+        set((state) => ({ isCommandPaletteOpen: !state.isCommandPaletteOpen })),
+}));

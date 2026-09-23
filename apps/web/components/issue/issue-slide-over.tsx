@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { X, ExternalLink, Loader2 } from "lucide-react";
 import { cn } from "@devflow/ui/lib/cn";
 import { Badge } from "@devflow/ui/components/badge";
@@ -9,6 +10,7 @@ import { useIssueById } from "../../hooks/use-issues";
 import { IssueFields } from "./issue-fields";
 import { ActivityPanel } from "./activity-panel";
 import { STATUS_LABELS, getStatusVariant } from "../../lib/issue-constants";
+import { useCanMoveIssue } from "../../hooks/use-can-move-issue";
 import type { IssueStatus } from "@devflow/types";
 import { IssueActionsMenu } from "../shared/issue-actions-menu";
 
@@ -29,8 +31,18 @@ export function IssueSlideOver({
 }: Props) {
   const isOpen = !!issueId;
   const router = useRouter();
+  const pathname = usePathname();
+
+  const from = pathname.includes("/backlog")
+    ? "backlog"
+    : pathname.includes("/board")
+      ? "board"
+      : pathname.includes("/my-issues")
+        ? "my-issues"
+        : undefined;
   const [saving, setSaving] = useState(false);
   const { data: issue, isLoading } = useIssueById(issueId ?? "");
+  const { canDeleteIssue } = useCanMoveIssue({ workspaceSlug, projectSlug });
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -83,7 +95,7 @@ export function IssueSlideOver({
                 <button
                   onClick={() =>
                     router.push(
-                      `/${workspaceSlug}/${projectSlug}/issues/${issue.id}`,
+                      `/${workspaceSlug}/${projectSlug}/issues/${issue.id}${from ? `?from=${from}` : ""}`,
                     )
                   }
                   className="text-text-muted hover:text-text-primary transition-colors cursor-pointer"
@@ -93,7 +105,7 @@ export function IssueSlideOver({
                 <IssueActionsMenu
                   issue={issue}
                   projectId={projectId}
-                  canDelete={true}
+                  canDelete={canDeleteIssue}
                   onDeleted={onClose}
                   onDuplicated={(id: string) => {
                     onClose();
@@ -120,6 +132,8 @@ export function IssueSlideOver({
                   onNavigate={(id) =>
                     router.push(`/${workspaceSlug}/${projectSlug}/issues/${id}`)
                   }
+                  workspaceSlug={workspaceSlug} // NEW
+                  projectSlug={projectSlug} // NEW
                 />
               </div>
               <div className="w-[250px] border-l border-border-default overflow-y-auto p-3 shrink-0">

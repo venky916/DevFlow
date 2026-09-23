@@ -38,5 +38,9 @@ export interface IProjectWithMembers extends IProject {
         members: number,
         issues: number,
         sprints: number
-    }
+    },
+    currentUserAccess: {
+        isWorkspaceAdmin: boolean;
+        projectRole: "LEAD" | "DEVELOPER" | "VIEWER" | null;
+    };
 }

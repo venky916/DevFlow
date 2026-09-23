@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Controller } from "react-hook-form";
+import { ChevronDown } from "lucide-react";
 import { Avatar } from "@devflow/ui/components/avatar";
 import { Select } from "@devflow/ui/components/select";
 import { DatePicker } from "@devflow/ui/components/date-picker";
@@ -17,6 +19,8 @@ interface Props {
 }
 
 export function IssuePropertiesPanel({ issue, projectId, form }: Props) {
+  const [isOpen, setIsOpen] = useState(false);
+
   const {
     control,
     setValue,
@@ -26,117 +30,138 @@ export function IssuePropertiesPanel({ issue, projectId, form }: Props) {
     sprintOptions,
     memberOptions,
     hasChildren,
+    canEditIssue,
+    canMoveToSprint,
+    canEditDueDate,
   } = form;
 
   return (
-    <div className="flex flex-col gap-4">
-      <p className="text-[11px] uppercase tracking-[0.04em] font-mono text-text-muted">
+    <div className="flex flex-col border border-border-default rounded-md">
+      <button
+        type="button"
+        onClick={() => setIsOpen((v: boolean) => !v)}
+        className={`flex items-center justify-between px-4 py-3 text-[11px] uppercase tracking-[0.04em] font-mono text-text-muted cursor-pointer ${
+          isOpen ? " border-b border-border-default" : ""
+        }`}
+      >
         Properties
-      </p>
-      <div className="flex flex-col gap-3">
-        <FieldRow label="Status">
-          <Select
-            options={STATUS_OPTIONS}
-            value={watch("status")}
-            disabled={hasChildren}
-            onValueChange={(v: string) => {
-              setValue("status", v);
-              handleSubmit(save)();
-            }}
-          />
-          {hasChildren && (
-            <p className="text-[11px] text-text-muted mt-1">
-              Set automatically from sub-issues
-            </p>
-          )}
-        </FieldRow>
+        <ChevronDown
+          className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-0" : "-rotate-90"}`}
+        />
+      </button>
 
-        <FieldRow label="Priority">
-          <Select
-            options={PRIORITY_OPTIONS}
-            value={watch("priority")}
-            onValueChange={(v: string) => {
-              setValue("priority", v);
-              handleSubmit(save)();
-            }}
-          />
-        </FieldRow>
-
-        <FieldRow label="Type">
-          <IssueTypeSelect
-            value={watch("type") as IssueType}
-            onValueChange={(v: IssueType) => {
-              setValue("type", v);
-              handleSubmit(save)();
-            }}
-          />
-        </FieldRow>
-
-        <FieldRow label="Assignee">
-          <Select
-            placeholder="Unassigned"
-            options={memberOptions}
-            value={watch("assigneeId") ?? undefined}
-            onValueChange={(v: string) => {
-              setValue("assigneeId", v || null);
-              handleSubmit(save)();
-            }}
-          />
-        </FieldRow>
-
-        <FieldRow label="Sprint">
-          <Select
-            placeholder="No sprint"
-            options={sprintOptions}
-            value={issue.sprintId ?? undefined}
-            onValueChange={(v: string) => {
-              setValue("sprintId", v || null);
-              handleSubmit(save)();
-            }}
-          />
-        </FieldRow>
-
-        <FieldRow label="Due date">
-          <Controller
-            name="dueDate"
-            control={control}
-            render={({ field }) => (
-              <DatePicker
-                value={field.value ? new Date(field.value as string) : null}
-                onChange={(date) => {
-                  field.onChange(date ? date.toISOString() : null);
-                  handleSubmit(save)();
-                }}
-              />
+      {isOpen && (
+        <div className="flex flex-col gap-3 px-4 pb-4 pt-4">
+          <FieldRow label="Status">
+            <Select
+              options={STATUS_OPTIONS}
+              value={watch("status")}
+              disabled={hasChildren || !canEditIssue}
+              onValueChange={(v: string) => {
+                setValue("status", v);
+                handleSubmit(save)();
+              }}
+            />
+            {hasChildren && (
+              <p className="text-[11px] text-text-muted mt-1">
+                Set automatically from sub-issues
+              </p>
             )}
-          />
-        </FieldRow>
-
-        <FieldRow label="Labels">
-          <ProjectLabelSelect
-            projectId={projectId}
-            selectedIds={watch("labelIds") ?? []}
-            onChange={(ids: string[]) => {
-              setValue("labelIds", ids);
-              handleSubmit(save)();
-            }}
-          />
-        </FieldRow>
-
-        {issue.creator && (
-          <FieldRow label="Created by">
-            <div className="flex items-center gap-2">
-              <Avatar
-                name={issue.creator.name ?? issue.creator.email}
-                size="sm"
-              />
-              <span className="text-[12px] text-text-secondary">
-                {issue.creator.name ?? issue.creator.email}
-              </span>
-            </div>
           </FieldRow>
-        )}
-      </div>
+
+          <FieldRow label="Priority">
+            <Select
+              options={PRIORITY_OPTIONS}
+              value={watch("priority")}
+              disabled={!canEditIssue}
+              onValueChange={(v: string) => {
+                setValue("priority", v);
+                handleSubmit(save)();
+              }}
+            />
+          </FieldRow>
+
+          <FieldRow label="Type">
+            <IssueTypeSelect
+              value={watch("type") as IssueType}
+              disabled={!canEditIssue}
+              onValueChange={(v: IssueType) => {
+                setValue("type", v);
+                handleSubmit(save)();
+              }}
+            />
+          </FieldRow>
+
+          <FieldRow label="Assignee">
+            <Select
+              placeholder="Unassigned"
+              options={memberOptions}
+              value={watch("assigneeId") ?? undefined}
+              disabled={!canEditIssue}
+              onValueChange={(v: string) => {
+                setValue("assigneeId", v || null);
+                handleSubmit(save)();
+              }}
+            />
+          </FieldRow>
+
+          <FieldRow label="Sprint">
+            <Select
+              placeholder="No sprint"
+              options={sprintOptions}
+              value={watch("sprintId") ?? undefined}
+              disabled={!canEditIssue || !canMoveToSprint}
+              onValueChange={(v: string) => {
+                setValue("sprintId", v || null);
+                handleSubmit(save)();
+              }}
+            />
+          </FieldRow>
+
+          <FieldRow label="Due date">
+            <Controller
+              name="dueDate"
+              control={control}
+              render={({ field }) => (
+                <DatePicker
+                  value={field.value ? new Date(field.value as string) : null}
+                  disabled={!canEditIssue || !canEditDueDate}
+                  onChange={(date) => {
+                    field.onChange(date ? date.toISOString() : null);
+                    handleSubmit(save)();
+                  }}
+                />
+              )}
+            />
+          </FieldRow>
+
+          <FieldRow label="Labels">
+            <ProjectLabelSelect
+              projectId={projectId}
+              selectedIds={watch("labelIds") ?? []}
+              disabled={!canEditIssue}
+              onChange={(ids: string[]) => {
+                setValue("labelIds", ids);
+                handleSubmit(save)();
+              }}
+            />
+          </FieldRow>
+
+          {issue.creator && (
+            <FieldRow label="Created by">
+              <div className="flex items-center gap-2">
+                <Avatar
+                  name={issue.creator.name ?? issue.creator.email}
+                  size="sm"
+                />
+                <span className="text-[12px] text-text-secondary">
+                  {issue.creator.name ?? issue.creator.email}
+                </span>
+              </div>
+            </FieldRow>
+          )}
+        </div>
+      )}
     </div>
   );
 }

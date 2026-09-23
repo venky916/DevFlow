@@ -8,8 +8,12 @@ export const TTL = {
 
 export const CacheKeys = {
     board: (projectId: string, sprintId: string | null) => `board:${projectId}:${sprintId ?? "backlog"}`,
+    list: (projectId: string, sprintId: string | null, page: number, limit: number) =>
+        `list:${projectId}:${sprintId ?? "backlog"}:${page}:${limit}`,
     projectMembers: (projectId: string) => `members:project:${projectId}`,
-    workspaceMembers: (workspaceId: string) => `members:workspace:${workspaceId}`
+    workspaceMembers: (workspaceId: string) => `members:workspace:${workspaceId}`,
+    myIssuesBoard: (userId: string) => `my-issues:board:${userId}`,
+    myIssuesList: (userId: string, page: number, limit: number) => `my-issues:list:${userId}:${page}:${limit}`,
 }
 
 // ─── Get ──────────────────────────────────────────────────────

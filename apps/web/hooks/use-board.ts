@@ -36,6 +36,7 @@ export function useBoard(projectId: string, filters: IssueFilters = {}) {
             return res.data.data;
         },
         enabled: !!projectId,
+        placeholderData: (prev) => prev, // NEW — keep old filtered result on screen while new filter loads
     });
 
     useEffect(() => {

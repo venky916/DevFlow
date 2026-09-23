@@ -1,25 +1,31 @@
-// board-page.tsx
 "use client";
 
 import { useParams } from "next/navigation";
+import { useState } from "react";
 import {
   useQueryState,
   useQueryStates,
   parseAsString,
   parseAsBoolean,
+  parseAsStringEnum,
 } from "nuqs";
+import type { SortingState } from "@tanstack/react-table";
 import { KanbanBoard } from "./kanban-board";
 import { BoardHeader } from "./board-header";
+import { ListView } from "../shared/list-view";
 import { useBoard } from "../../hooks/use-board";
+import { useIssueList, type IssueListParams } from "../../hooks/use-issues";
 import { useWorkspaces } from "../../hooks/use-workspaces";
 import { useProjects } from "../../hooks/use-projects";
 import { useBoardStore } from "../../stores/board.store";
-import type { IIssueWithRelations, IUserPublic } from "@devflow/types";
+import type { IUserPublic } from "@devflow/types";
 import { useProjectSprints, useProjectMembers } from "../../hooks/use-issues";
 import { CreateIssueModal } from "../issue/create-issue-modal";
 import { IssueSlideOver } from "../issue/issue-slide-over";
-import { useState } from "react";
 import { IssueFilters } from "../shared/filter-bar";
+import PageLoading from "../shared/page-loading";
+import PageError from "../shared/page-error";
+import { useCanMoveIssue } from "../../hooks/use-can-move-issue";
 
 const filterParsers = {
   assigneeId: parseAsString,
@@ -40,25 +46,67 @@ export function BoardPage() {
   }>();
 
   const [issueId, setIssueId] = useQueryState("issue", parseAsString);
+  const [view, setView] = useQueryState(
+    "view",
+    parseAsStringEnum(["board", "list"]).withDefault("board"),
+  );
   const [rawFilters, setRawFilters] = useQueryStates(filterParsers);
   const [showCreateIssue, setShowCreateIssue] = useState(false);
   const activeSprint = useBoardStore((s) => s.activeSprint);
+  const { canMoveToSprint } = useCanMoveIssue();
 
-  // strip nulls so downstream consumers (useBoard's queryKey, FilterBar) see
-  // the same "absent = undefined" shape they already expect
+  const [listPage, setListPage] = useState(1);
+  const [listSorting, setListSorting] = useState<SortingState>([
+    { id: "position", desc: false },
+  ]);
+
   const filters = Object.fromEntries(
     Object.entries(rawFilters).filter(([, v]) => v !== null),
-  );
+  ) as IssueFilters;
 
-  const { data: workspaces } = useWorkspaces();
+  const {
+    data: workspaces,
+    isLoading: wsLoading,
+    isError: wsError,
+    refetch: refetchWorkspaces,
+  } = useWorkspaces();
   const workspace = workspaces?.find((w) => w.slug === workspaceSlug);
-  const { data: projects } = useProjects(workspace?.id ?? "");
+
+  const {
+    data: projects,
+    isLoading: projLoading,
+    isError: projError,
+    refetch: refetchProjects,
+  } = useProjects(workspace?.id ?? "");
   const project = projects?.find((p) => p.slug === projectSlug);
 
-  const { isLoading, isFetching, refetch } = useBoard(
-    project?.id ?? "",
-    filters,
-  );
+  // Board view's data — only meaningfully used when view === "board"
+  const {
+    isLoading: boardLoading,
+    isFetching,
+    refetch,
+    isError: boardError,
+  } = useBoard(project?.id ?? "", filters);
+
+  // List view's data — only meaningfully used when view === "list"
+  const listSortBy = (listSorting[0]?.id ??
+    "position") as IssueListParams["sortBy"];
+  const listSortOrder: "asc" | "desc" = listSorting[0]?.desc ? "desc" : "asc";
+
+  const {
+    data: listData,
+    isLoading: listLoading,
+    isFetching: listFetching,
+    isError: listError,
+    refetch: refetchList,
+  } = useIssueList(project?.id ?? "", {
+    ...filters,
+    page: listPage,
+    limit: 25,
+    sortBy: listSortBy,
+    sortOrder: listSortOrder,
+  });
+
   const { data: sprints } = useProjectSprints(project?.id ?? "");
   const { data: members } = useProjectMembers(project?.id ?? "");
 
@@ -67,63 +115,100 @@ export function BoardPage() {
 
   const handleFiltersChange = (f: IssueFilters) => {
     const normalized = Object.fromEntries(
-      Object.keys(filterParsers).map((key) => [
-        key,
-        (f as any)[key] ?? null, // undefined (or missing) → null, so nuqs removes the param
-      ]),
+      Object.keys(filterParsers).map((key) => [key, (f as any)[key] ?? null]),
     );
     setRawFilters(normalized);
+    setListPage(1);
   };
 
-  if (isLoading) {
+  if (wsLoading || projLoading) {
+    return <PageLoading />;
+  }
+
+  if (wsError) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="h-5 w-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-      </div>
+      <PageError
+        message="Couldn't load workspace"
+        onRetry={() => refetchWorkspaces()}
+      />
     );
+  }
+
+  if (projError) {
+    return (
+      <PageError
+        message="Couldn't load project"
+        onRetry={() => refetchProjects()}
+      />
+    );
+  }
+
+  if (!project) {
+    return <PageLoading />; // ProjectAccessGuard safety net
   }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {project && (
-        <BoardHeader
-          activeSprint={activeSprint}
-          members={memberUsers}
-          projectId={project.id}
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          onRefresh={() => refetch()}
-          isRefreshing={isFetching}
-          onCreateIssue={() => setShowCreateIssue(true)}
-        />
-      )}
+      <BoardHeader
+        activeSprint={activeSprint}
+        members={memberUsers}
+        projectId={project.id}
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        onRefresh={() => (view === "board" ? refetch() : refetchList())}
+        isRefreshing={view === "board" ? isFetching : listFetching}
+        onCreateIssue={() => setShowCreateIssue(true)}
+        view={view}
+        onViewChange={setView}
+      />
 
-      <div className="flex-1 overflow-hidden px-6 py-4">
-        {project && (
-          <KanbanBoard projectId={project.id} onIssueClick={setIssueId} />
+      <div className="flex-1 overflow-hidden">
+        {view === "board" ? (
+          boardLoading ? (
+            <PageLoading />
+          ) : boardError ? (
+            <PageError
+              message="Couldn't load issues"
+              onRetry={() => refetch()}
+            />
+          ) : (
+            <div className="h-full px-6 py-4">
+              <KanbanBoard projectId={project.id} onIssueClick={setIssueId} />
+            </div>
+          )
+        ) : (
+          <ListView
+            data={listData}
+            isLoading={listLoading}
+            isFetching={listFetching}
+            isError={listError}
+            refetch={refetchList}
+            page={listPage}
+            onPageChange={setListPage}
+            sorting={listSorting}
+            onSortingChange={setListSorting}
+            onIssueClick={setIssueId}
+          />
         )}
       </div>
 
-      {project && (
-        <CreateIssueModal
-          open={showCreateIssue}
-          onClose={() => setShowCreateIssue(false)}
-          projectId={project.id}
-          sprints={sprints ?? []}
-          members={memberUsers}
-          activeSprint={activeSprint}
-        />
-      )}
+      <CreateIssueModal
+        open={showCreateIssue}
+        onClose={() => setShowCreateIssue(false)}
+        projectId={project.id}
+        sprints={sprints ?? []}
+        members={memberUsers}
+        activeSprint={activeSprint}
+        canSetSprint={canMoveToSprint}
+      />
 
-      {project && (
-        <IssueSlideOver
-          issueId={issueId}
-          onClose={() => setIssueId(null)}
-          projectId={project.id}
-          workspaceSlug={workspaceSlug}
-          projectSlug={projectSlug}
-        />
-      )}
+      <IssueSlideOver
+        issueId={issueId}
+        onClose={() => setIssueId(null)}
+        projectId={project.id}
+        workspaceSlug={workspaceSlug}
+        projectSlug={projectSlug}
+      />
     </div>
   );
 }

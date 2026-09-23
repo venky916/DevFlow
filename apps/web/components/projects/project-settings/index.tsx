@@ -1,13 +1,15 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { Tabs } from "@devflow/ui/components/tabs";
-import { Spinner } from "@devflow/ui/components/spinner";
 import { useWorkspaces } from "../../../hooks/use-workspaces";
 import { useProjects } from "../../../hooks/use-projects";
-import { useProjectMembers } from "../../../hooks/use-project-settings";
-import { useAuthStore } from "../../../stores/auth.store";
+import { usePermissions } from "../../../hooks/use-permissions";
+import { canProject } from "../../../lib/permissions";
+import PageLoading from "../../shared/page-loading";
+import PageError from "../../shared/page-error";
 import { GeneralTab } from "./general-tab";
 import { MembersTab } from "./members-tab";
 import { AddMemberTab } from "./add-member-tab";
@@ -18,29 +20,81 @@ export function ProjectSettings() {
     workspaceSlug: string;
     projectSlug: string;
   }>();
-  const user = useAuthStore((s) => s.user);
+  const router = useRouter();
 
-  const { data: workspaces } = useWorkspaces();
+  const {
+    data: workspaces,
+    isLoading: wsLoading,
+    isError: wsError,
+    refetch: refetchWorkspaces,
+  } = useWorkspaces();
   const workspace = workspaces?.find((w) => w.slug === workspaceSlug);
-  const { data: projects } = useProjects(workspace?.id ?? "");
+
+  const {
+    data: projects,
+    isLoading: projLoading,
+    isError: projError,
+    refetch: refetchProjects,
+  } = useProjects(workspace?.id ?? "");
   const project = projects?.find((p) => p.slug === projectSlug);
-  const { data: members } = useProjectMembers(project?.id ?? "");
+
+  const { access, isWorkspaceAdmin, isLoading: permLoading } = usePermissions();
+  const canAccessSettings = canProject(access, "UPDATE_PROJECT");
+  const isLead = access.projectRole === "LEAD";
+
+  // Set of userIds who are workspace ADMINs — used so a project Lead can't
+  // change/remove a workspace admin's role even if that admin happens to
+  // also have a real ProjectMember row (e.g. the project's creator).
+  const workspaceAdminIds = new Set(
+    workspace?.members
+      ?.filter((m: any) => m.role === "ADMIN")
+      .map((m: any) => m.userId) ?? [],
+  );
 
   const [tab, setTab] = useQueryState("tab", { defaultValue: "general" });
 
-  if (!project || !workspace) {
+  useEffect(() => {
+    if (wsLoading || projLoading || permLoading || !project) return;
+    if (!canAccessSettings) {
+      router.replace(
+        `/no-access?reason=insufficient-role&workspace=${workspaceSlug}`,
+      );
+    }
+  }, [
+    wsLoading,
+    projLoading,
+    permLoading,
+    canAccessSettings,
+    project,
+    router,
+    workspaceSlug,
+  ]);
+
+  if (wsLoading || projLoading || permLoading) {
+    return <PageLoading />;
+  }
+
+  if (wsError) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Spinner size="sm" />
-      </div>
+      <PageError
+        message="Couldn't load workspace"
+        onRetry={() => refetchWorkspaces()}
+      />
     );
   }
 
-  const isLead =
-    members?.find((m: any) => m.userId === user?.id)?.role === "LEAD";
-  const isAdmin =
-    workspace.members?.find((m: any) => m.userId === user?.id)?.role ===
-    "ADMIN";
+  if (projError) {
+    return (
+      <PageError
+        message="Couldn't load project"
+        onRetry={() => refetchProjects()}
+      />
+    );
+  }
+
+  if (!project || !workspace || !canAccessSettings) {
+    return <PageLoading />; // !project → ProjectAccessGuard safety net; !canAccessSettings → redirect in flight
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -63,34 +117,36 @@ export function ProjectSettings() {
                     projectName={project.name}
                     projectDescription={project.description}
                     projectColor={project.color}
-                    canDelete={isAdmin}
+                    canDelete={isWorkspaceAdmin}
                   />
                 ),
               },
               {
                 label: "Members",
                 value: "members",
-                content: <MembersTab projectId={project.id} isLead={isLead} />,
+                content: (
+                  <MembersTab
+                    projectId={project.id}
+                    isLead={isLead || isWorkspaceAdmin}
+                    workspaceAdminIds={workspaceAdminIds}
+                  />
+                ),
               },
-              ...(isLead || isAdmin
-                ? [
-                    {
-                      label: "Add Member",
-                      value: "add-member",
-                      content: (
-                        <AddMemberTab
-                          projectId={project.id}
-                          workspaceId={workspace.id}
-                        />
-                      ),
-                    },
-                    {
-                      label: "Labels",
-                      value: "labels",
-                      content: <LabelsTab projectId={project.id} />,
-                    },
-                  ]
-                : []),
+              {
+                label: "Add Member",
+                value: "add-member",
+                content: (
+                  <AddMemberTab
+                    projectId={project.id}
+                    workspaceId={workspace.id}
+                  />
+                ),
+              },
+              {
+                label: "Labels",
+                value: "labels",
+                content: <LabelsTab projectId={project.id} />,
+              },
             ]}
           />
         </div>

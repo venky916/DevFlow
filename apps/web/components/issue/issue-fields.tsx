@@ -18,9 +18,18 @@ interface Props {
   projectId: string;
   onSaving: (saving: boolean) => void;
   onNavigate: (issueId: string) => void;
+  workspaceSlug: string; // NEW
+  projectSlug: string; // NEW
 }
 
-export function IssueFields({ issue, projectId, onSaving, onNavigate }: Props) {
+export function IssueFields({
+  issue,
+  projectId,
+  onSaving,
+  onNavigate,
+  workspaceSlug,
+  projectSlug,
+}: Props) {
   const {
     register,
     handleSubmit,
@@ -31,22 +40,27 @@ export function IssueFields({ issue, projectId, onSaving, onNavigate }: Props) {
     sprintOptions,
     memberOptions,
     hasChildren,
-  } = useIssueForm(issue, projectId, onSaving);
+    canEditIssue,
+    canMoveToSprint,
+    canEditDueDate,
+  } = useIssueForm(issue, projectId, onSaving, { workspaceSlug, projectSlug });
 
   return (
     <div className="flex flex-col gap-5">
       <ParentLink issue={issue} onNavigate={onNavigate} />
 
       <input
-        className="w-full bg-transparent text-[15px] font-medium text-text-primary placeholder:text-text-disabled focus:outline-none border-b border-transparent focus:border-border-emphasis pb-1 transition-colors"
+        className="w-full bg-transparent text-[15px] font-medium text-text-primary placeholder:text-text-disabled focus:outline-none border-b border-transparent focus:border-border-emphasis pb-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         placeholder="Issue title"
+        disabled={!canEditIssue}
         {...register("title")}
         onBlur={handleSubmit(save)}
       />
 
       <textarea
-        className="w-full bg-transparent text-[13px] text-text-secondary placeholder:text-text-disabled focus:outline-none resize-none min-h-[80px]"
+        className="w-full bg-transparent text-[13px] text-text-secondary placeholder:text-text-disabled focus:outline-none resize-none min-h-[80px] disabled:opacity-50 disabled:cursor-not-allowed"
         placeholder="Add description..."
+        disabled={!canEditIssue}
         {...register("description")}
         onBlur={handleSubmit(save)}
       />
@@ -58,7 +72,7 @@ export function IssueFields({ issue, projectId, onSaving, onNavigate }: Props) {
           <Select
             options={STATUS_OPTIONS}
             value={watch("status")}
-            disabled={hasChildren}
+            disabled={hasChildren || !canEditIssue}
             onValueChange={(v) => {
               setValue("status", v as any);
               handleSubmit(save)();
@@ -70,6 +84,7 @@ export function IssueFields({ issue, projectId, onSaving, onNavigate }: Props) {
           <Select
             options={PRIORITY_OPTIONS}
             value={watch("priority")}
+            disabled={!canEditIssue}
             onValueChange={(v) => {
               setValue("priority", v as any);
               handleSubmit(save)();
@@ -80,6 +95,7 @@ export function IssueFields({ issue, projectId, onSaving, onNavigate }: Props) {
         <FieldRow label="Type">
           <IssueTypeSelect
             value={watch("type") as IssueType}
+            disabled={!canEditIssue}
             onValueChange={(v) => {
               setValue("type", v);
               handleSubmit(save)();
@@ -92,6 +108,7 @@ export function IssueFields({ issue, projectId, onSaving, onNavigate }: Props) {
             placeholder="Unassigned"
             options={memberOptions}
             value={watch("assigneeId") ?? undefined}
+            disabled={!canEditIssue}
             onValueChange={(v) => {
               setValue("assigneeId", v || null);
               handleSubmit(save)();
@@ -104,6 +121,7 @@ export function IssueFields({ issue, projectId, onSaving, onNavigate }: Props) {
             placeholder="No sprint"
             options={sprintOptions}
             value={watch("sprintId") ?? undefined}
+            disabled={!canEditIssue || !canMoveToSprint}
             onValueChange={(v) => {
               setValue("sprintId" as any, v || null);
               handleSubmit(save)();
@@ -118,6 +136,7 @@ export function IssueFields({ issue, projectId, onSaving, onNavigate }: Props) {
             render={({ field }) => (
               <DatePicker
                 value={field.value ? new Date(field.value as string) : null}
+                disabled={!canEditIssue || !canEditDueDate}
                 onChange={(date) => {
                   field.onChange(date ? date.toISOString() : null);
                   handleSubmit(save)();
@@ -131,6 +150,7 @@ export function IssueFields({ issue, projectId, onSaving, onNavigate }: Props) {
           <ProjectLabelSelect
             projectId={projectId}
             selectedIds={watch("labelIds") ?? []}
+            disabled={!canEditIssue}
             onChange={(ids) => {
               setValue("labelIds", ids);
               handleSubmit(save)();
