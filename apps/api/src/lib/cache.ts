@@ -1,4 +1,4 @@
-import { redis } from "@devflow/backend-common"
+import { cache } from "@devflow/backend-common"
 import { logger } from "@devflow/backend-common"
 
 export const TTL = {
@@ -19,7 +19,7 @@ export const CacheKeys = {
 // ─── Get ──────────────────────────────────────────────────────
 export const getCache = async <T>(key: string): Promise<T | null> => {
     try {
-        const cached = await redis.get(key)
+        const cached = await cache.get(key)
         if (!cached) return null
         return JSON.parse(cached) as T
     } catch (error: any) {
@@ -32,7 +32,7 @@ export const getCache = async <T>(key: string): Promise<T | null> => {
 // ─── Set ──────────────────────────────────────────────────────
 export const setCache = async (key: string, value: any, ttl: number = TTL.BOARD) => {
     try {
-        await redis.set(key, JSON.stringify(value), 'EX', ttl)
+        await cache.set(key, JSON.stringify(value), 'EX', ttl)
     } catch (error: any) {
         // Redis down → couldn't cache → next request also misses → hits DB
         // DB already has the data, nothing lost
@@ -44,7 +44,7 @@ export const setCache = async (key: string, value: any, ttl: number = TTL.BOARD)
 // ─── Delete ───────────────────────────────────────────────────
 export const deleteCache = async (key: string) => {
     try {
-        await redis.del(key)
+        await cache.del(key)
     } catch (error: any) {
         // Dangerous — stale data stays until TTL expires (max 5-10 min)
         // TTL is our safety net here
@@ -57,7 +57,7 @@ export const deleteCache = async (key: string) => {
 export const deleteManyCache = async (keys: string[]) => {
     try {
         if (keys.length === 0) return
-        await redis.del(...keys)
+        await cache.del(...keys)
     } catch (error: any) {
         logger.error({ keys, error: error.message }, 'Redis DEL multiple failed')
     }

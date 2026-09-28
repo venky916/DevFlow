@@ -1,0 +1,66 @@
+services:
+  redis-cache:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports: ["6380:6379"]
+
+  redis-queue:
+    image: redis:7-alpine
+    command: redis-server --maxmemory-policy noeviction --appendonly yes
+    volumes: [redis-queue-data:/data]
+    ports: ["6381:6379"]
+
+  redis-pubsub:
+    image: redis:7-alpine
+    command: redis-server --maxmemory-policy noeviction
+    ports: ["6382:6379"]
+
+  api:
+    build: { context: ., dockerfile: docker/api.dev.Dockerfile }
+    env_file: apps/api/.env
+    ports: ["4000:4000"]
+    volumes:
+      - ./apps/api/src:/app/apps/api/src
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/packages/db/node_modules
+      - /app/packages/backend-common/node_modules
+      - /app/packages/queues/node_modules
+      - /app/packages/storage/node_modules
+      - /app/packages/types/node_modules
+      - /app/packages/validators/node_modules
+      - /app/packages/config/node_modules
+    depends_on: [redis-cache, redis-queue, redis-pubsub]
+
+  ws:
+    build: { context: ., dockerfile: docker/ws.dev.Dockerfile }
+    env_file: apps/ws/.env
+    ports: ["4001:4001"]
+    volumes:
+      - ./apps/ws/src:/app/apps/ws/src
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/packages/db/node_modules
+      - /app/packages/backend-common/node_modules
+      - /app/packages/types/node_modules
+      - /app/packages/validators/node_modules
+      - /app/packages/config/node_modules
+    depends_on: [redis-pubsub]
+
+  workers:
+    build: { context: ., dockerfile: docker/workers.dev.Dockerfile }
+    env_file: apps/workers/.env
+    volumes:
+      - ./apps/workers/src:/app/apps/workers/src
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/packages/db/node_modules
+      - /app/packages/backend-common/node_modules
+      - /app/packages/queues/node_modules
+      - /app/packages/storage/node_modules
+      - /app/packages/types/node_modules
+      - /app/packages/config/node_modules
+    depends_on: [redis-queue, redis-pubsub]
+
+volumes:
+  redis-queue-data:

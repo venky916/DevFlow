@@ -1,9 +1,22 @@
-// import Redis from "ioredis"
+import Redis from "ioredis"
+import { makeRedisOpts } from "./redis-opts";
 
-// export const redis = new Redis(process.env.REDIS_URL!)
+const opts = makeRedisOpts(process.env.REDIS_CACHE_URL);
 
-// // for pub/sub we need separate connections
-// // one connection can't do both commands + subscribe
-// export const publisher = new Redis(process.env.REDIS_URL!);
-// export const subscriber = new Redis(process.env.REDIS_URL!);
+class RedisManager {
+    private static instance: RedisManager;
+    private _cache: Redis | null = null;
 
+    private constructor() { }
+    static getInstance(): RedisManager {
+        if (!RedisManager.instance) RedisManager.instance = new RedisManager();
+        return RedisManager.instance;
+    }
+
+    get cache(): Redis {
+        if (!this._cache) this._cache = new Redis(process.env.REDIS_CACHE_URL!, opts);
+        return this._cache;
+    }
+}
+
+export const cache = RedisManager.getInstance().cache;

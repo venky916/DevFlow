@@ -1,0 +1,51 @@
+services:
+  redis-cache:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports: ["6380:6379"]
+
+  redis-queue:
+    image: redis:7-alpine
+    command: redis-server --maxmemory-policy noeviction --appendonly yes
+    volumes: [redis-queue-data:/data]
+    ports: ["6381:6379"]
+
+  redis-pubsub:
+    image: redis:7-alpine
+    command: redis-server --maxmemory-policy noeviction
+    ports: ["6382:6379"]
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+      args:
+        DATABASE_URL: ${DATABASE_URL}
+        DIRECT_URL: ${DIRECT_URL}
+    env_file: apps/api/.env
+    ports: ["4000:4000"]
+    depends_on: [redis-cache, redis-queue, redis-pubsub]
+
+  ws:
+    build:
+      context: .
+      dockerfile: docker/ws.Dockerfile
+      args:
+        DATABASE_URL: ${DATABASE_URL}
+        DIRECT_URL: ${DIRECT_URL}
+    env_file: apps/ws/.env
+    ports: ["4001:4001"]
+    depends_on: [redis-pubsub]
+
+  workers:
+    build:
+      context: .
+      dockerfile: docker/workers.Dockerfile
+      args:
+        DATABASE_URL: ${DATABASE_URL}
+        DIRECT_URL: ${DIRECT_URL}
+    env_file: apps/workers/.env
+    depends_on: [redis-queue, redis-pubsub]
+
+volumes:
+  redis-queue-data:
