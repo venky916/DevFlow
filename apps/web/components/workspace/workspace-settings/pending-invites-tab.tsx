@@ -1,16 +1,15 @@
-"use client";
+'use client';
 
-import { toast } from "sonner";
-import { Clock, Trash2 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { Spinner } from "@devflow/ui/components/spinner";
-import {
-  useWorkspaceInvites,
-  useCancelInvite,
-} from "../../../hooks/use-workspace-settings";
-import { SectionHeading } from "../../shared/section-heading";
-import type { WorkspaceRole } from "@devflow/types";
-import { RoleBadge } from "../../shared/role-badge";
+import { formatDistanceToNow } from 'date-fns';
+import { Clock, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+import type { WorkspaceRole } from '@devflow/types';
+import { Spinner } from '@devflow/ui/components/spinner';
+
+import { useCancelInvite, useWorkspaceInvites } from '../../../hooks/use-workspace-settings';
+import { RoleBadge } from '../../shared/role-badge';
+import { SectionHeading } from '../../shared/section-heading';
 
 interface Props {
   workspaceId: string;
@@ -35,7 +34,7 @@ export function PendingInvitesTab({ workspaceId }: Props) {
         description="Invites that have been sent but not yet accepted."
       />
       {!invites?.length ? (
-        <div className="flex flex-col items-center justify-center py-12 gap-2 border border-border-default rounded-[4px]">
+        <div className="flex flex-col items-center justify-center gap-2 rounded-[4px] border border-border-default py-12">
           <Clock className="h-5 w-5 text-text-muted" />
           <p className="text-[13px] text-text-muted">No pending invites</p>
         </div>
@@ -44,22 +43,20 @@ export function PendingInvitesTab({ workspaceId }: Props) {
           {invites.map((invite) => (
             <div
               key={invite.id}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-[4px] border border-border-default"
+              className="flex items-center gap-3 rounded-[4px] border border-border-default px-3 py-2.5"
             >
-              <div className="h-6 w-6 rounded-full bg-bg-surface border border-border-default flex items-center justify-center shrink-0">
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border-default bg-bg-surface">
                 <span className="text-[10px] text-text-muted">
                   {invite?.email?.[0]?.toUpperCase()}
                 </span>
               </div>
 
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] text-text-primary truncate">
-                  {invite.email}
-                </p>
-                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] text-text-primary">{invite.email}</p>
+                <div className="mt-0.5 flex flex-wrap items-center gap-2">
                   <RoleBadge role={invite.role as WorkspaceRole} />
                   <span className="text-[11px] text-text-muted">
-                    expires{" "}
+                    expires{' '}
                     {formatDistanceToNow(new Date(invite.expiresAt), {
                       addSuffix: true,
                     })}
@@ -75,11 +72,11 @@ export function PendingInvitesTab({ workspaceId }: Props) {
               <button
                 onClick={() =>
                   cancelInvite(invite.id, {
-                    onSuccess: () => toast.success("Invite cancelled"),
-                    onError: () => toast.error("Failed to cancel invite"),
+                    onSuccess: () => toast.success('Invite cancelled'),
+                    onError: () => toast.error('Failed to cancel invite'),
                   })
                 }
-                className="text-text-muted hover:text-danger-text transition-colors shrink-0"
+                className="shrink-0 text-text-muted transition-colors hover:text-danger-text"
                 title="Cancel invite"
               >
                 <Trash2 className="h-3.5 w-3.5" />

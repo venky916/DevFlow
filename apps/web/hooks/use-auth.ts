@@ -1,40 +1,41 @@
-"use client"
+'use client';
 
-import { useEffect } from "react"
-import { useAuthStore } from "../stores/auth.store"
-import { api } from "../lib/axios";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+
+import { api } from '../lib/axios';
+import { useAuthStore } from '../stores/auth.store';
 
 export function useAuth() {
-    const { user, setUser, clearAuth, setLoading, isLoading } = useAuthStore();
+  const { user, setUser, clearAuth, setLoading, isLoading } = useAuthStore();
 
-    useEffect(() => {
-        if (user) return
+  useEffect(() => {
+    if (user) return;
 
-        const fetchUser = async () => {
-            setLoading(true);
-            try {
-                const { data } = await api.get("/auth/me");
-                setUser(data.user);
-            } catch {
-                clearAuth();
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchUser = async () => {
+      setLoading(true);
+      try {
+        const { data } = await api.get('/auth/me');
+        setUser(data.user);
+      } catch {
+        clearAuth();
+      } finally {
+        setLoading(false);
+      }
+    };
 
-        fetchUser();
-    }, []);
+    fetchUser();
+  }, []);
 
-    return { user, isLoading }
+  return { user, isLoading };
 }
 
 export function useMe() {
-    return useQuery({
-        queryKey: ["me"],
-        queryFn: async () => {
-            const res = await api.get("/users/me");
-            return res.data.data;
-        },
-    });
+  return useQuery({
+    queryKey: ['me'],
+    queryFn: async () => {
+      const res = await api.get('/users/me');
+      return res.data.data;
+    },
+  });
 }

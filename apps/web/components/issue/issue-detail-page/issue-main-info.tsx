@@ -1,15 +1,17 @@
-"use client";
+'use client';
 
-import { Loader2 } from "lucide-react";
-import { ParentLink } from "../../shared/parent-link";
-import { SubIssueList } from "../../shared/sub-issue-list";
-import type { IIssueWithRelations, PendingAttachment } from "@devflow/types";
-import { useIssueAttachments } from "../../../hooks/use-issue-attachments";
-import { FileUploadList } from "@devflow/ui/components/file-upload-list";
-import { api } from "../../../lib/axios";
-import { usePermissions } from "../../../hooks/use-permissions";
-import { useAuthStore } from "../../../stores/auth.store";
-import { canDeleteAttachment } from "../../../lib/permissions";
+import { Loader2 } from 'lucide-react';
+
+import type { IIssueWithRelations, PendingAttachment } from '@devflow/types';
+import { FileUploadList } from '@devflow/ui/components/file-upload-list';
+
+import { useIssueAttachments } from '../../../hooks/use-issue-attachments';
+import { usePermissions } from '../../../hooks/use-permissions';
+import { api } from '../../../lib/axios';
+import { canDeleteAttachment } from '../../../lib/permissions';
+import { useAuthStore } from '../../../stores/auth.store';
+import { ParentLink } from '../../shared/parent-link';
+import { SubIssueList } from '../../shared/sub-issue-list';
 
 interface Props {
   issue: IIssueWithRelations;
@@ -48,7 +50,7 @@ export function IssueMainInfo({
       id: a.id,
       fileName: a.fileName,
       fileSize: a.fileSize ?? 0,
-      mimeType: a.mimeType ?? "",
+      mimeType: a.mimeType ?? '',
       url: a.url,
       uploader: a.uploader,
     })) ?? [],
@@ -56,9 +58,7 @@ export function IssueMainInfo({
 
   const handleDownload = async (item: PendingAttachment) => {
     if (!item.attachmentId) return;
-    const res = await api.get(
-      `/issues/${issue.id}/attachments/${item.attachmentId}/download-url`,
-    );
+    const res = await api.get(`/issues/${issue.id}/attachments/${item.attachmentId}/download-url`);
     window.location.href = res.data.data.downloadUrl;
   };
 
@@ -66,22 +66,22 @@ export function IssueMainInfo({
     <div className="flex flex-col gap-4">
       <ParentLink issue={issue} onNavigate={onNavigate} />
       {saving && (
-        <span className="flex items-center gap-1 text-[11px] text-text-muted ml-auto">
+        <span className="ml-auto flex items-center gap-1 text-[11px] text-text-muted">
           <Loader2 className="h-3 w-3 animate-spin" /> Saving...
         </span>
       )}
       <input
-        className="w-full bg-transparent text-[18px] font-semibold text-text-primary placeholder:text-text-disabled focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-transparent text-[18px] font-semibold text-text-primary placeholder:text-text-disabled focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
         placeholder="Issue title"
         disabled={!canEditIssue}
-        {...register("title")}
+        {...register('title')}
         onBlur={handleSubmit(save)}
       />
       <textarea
-        className="w-full bg-transparent text-[13px] text-text-secondary placeholder:text-text-disabled focus:outline-none resize-none min-h-[120px] disabled:opacity-50 disabled:cursor-not-allowed"
+        className="min-h-[120px] w-full resize-none bg-transparent text-[13px] text-text-secondary placeholder:text-text-disabled focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
         placeholder="Add a description..."
         disabled={!canEditIssue}
-        {...register("description")}
+        {...register('description')}
         onBlur={handleSubmit(save)}
       />
       <FileUploadList
@@ -91,15 +91,10 @@ export function IssueMainInfo({
         onDownload={handleDownload}
         readOnly={!canUploadAttachment}
         canDeleteItem={(item) =>
-          !!userId &&
-          canDeleteAttachment(access, { uploader: item.uploader }, userId)
+          !!userId && canDeleteAttachment(access, { uploader: item.uploader }, userId)
         }
       />
-      <SubIssueList
-        issue={issue}
-        projectId={projectId}
-        onNavigate={onNavigate}
-      />
+      <SubIssueList issue={issue} projectId={projectId} onNavigate={onNavigate} />
     </div>
   );
 }

@@ -1,26 +1,23 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect } from "react";
-import { ChevronDown, X, Calendar } from "lucide-react";
-import { PRIORITY_OPTIONS, TYPE_OPTIONS } from "../../lib/issue-constants";
-import { useProjectLabels } from "../../hooks/use-project-settings";
-import type { IUserPublic } from "@devflow/types";
-import { useProjectSprints } from "../../hooks/use-issues";
+import { useEffect, useRef, useState } from 'react';
+import { Calendar, ChevronDown, X } from 'lucide-react';
+
+import type { IUserPublic } from '@devflow/types';
+
+import { useProjectSprints } from '../../hooks/use-issues';
+import { useProjectLabels } from '../../hooks/use-project-settings';
+import { PRIORITY_OPTIONS, TYPE_OPTIONS } from '../../lib/issue-constants';
 
 export type FilterField =
-  | "assignee"
-  | "label"
-  | "priority"
-  | "type"
-  | "dueDate"
-  | "project"
-  | "sprint";
-export type DueDatePreset =
-  | "overdue"
-  | "today"
-  | "this_week"
-  | "no_due_date"
-  | "custom";
+  | 'assignee'
+  | 'label'
+  | 'priority'
+  | 'type'
+  | 'dueDate'
+  | 'project'
+  | 'sprint';
+export type DueDatePreset = 'overdue' | 'today' | 'this_week' | 'no_due_date' | 'custom';
 
 export interface IssueFilters {
   assigneeId?: string;
@@ -83,21 +80,20 @@ function FilterDropdown({
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
-        setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
   return (
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-[4px] border text-[12px] transition-colors ${
+        className={`flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-[12px] transition-colors ${
           activeLabel
-            ? "border-accent text-accent bg-accent-subtle"
-            : "border-border-default text-text-muted hover:text-text-primary"
+            ? 'border-accent bg-accent-subtle text-accent'
+            : 'border-border-default text-text-muted hover:text-text-primary'
         }`}
       >
         {activeLabel ?? label}
@@ -114,7 +110,7 @@ function FilterDropdown({
         )}
       </button>
       {open && (
-        <div className="absolute z-10 mt-1 min-w-[140px] bg-bg-surface border border-border-default rounded-[4px] shadow-lg py-1">
+        <div className="absolute z-10 mt-1 min-w-[140px] rounded-[4px] border border-border-default bg-bg-surface py-1 shadow-lg">
           {options.map((o) => (
             <button
               key={o.value}
@@ -122,7 +118,7 @@ function FilterDropdown({
                 onSelect(o.value);
                 setOpen(false);
               }}
-              className="w-full text-left px-3 py-1.5 text-[12px] text-text-primary hover:bg-bg-surface-hover transition-colors"
+              className="hover:bg-bg-surface-hover w-full px-3 py-1.5 text-left text-[12px] text-text-primary transition-colors"
             >
               {o.label}
             </button>
@@ -134,11 +130,11 @@ function FilterDropdown({
 }
 
 const DUE_DATE_PRESETS: { label: string; value: DueDatePreset }[] = [
-  { label: "Overdue", value: "overdue" },
-  { label: "Due today", value: "today" },
-  { label: "Due this week", value: "this_week" },
-  { label: "No due date", value: "no_due_date" },
-  { label: "Custom range", value: "custom" },
+  { label: 'Overdue', value: 'overdue' },
+  { label: 'Due today', value: 'today' },
+  { label: 'Due this week', value: 'this_week' },
+  { label: 'No due date', value: 'no_due_date' },
+  { label: 'Custom range', value: 'custom' },
 ];
 
 function DueDateFilter({
@@ -150,22 +146,19 @@ function DueDateFilter({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const activeLabel = DUE_DATE_PRESETS.find(
-    (p) => p.value === filters.dueDatePreset,
-  )?.label;
+  const activeLabel = DUE_DATE_PRESETS.find((p) => p.value === filters.dueDatePreset)?.label;
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
-        setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
   const applyPreset = (preset: DueDatePreset) => {
     const now = new Date();
-    if (preset === "overdue") {
+    if (preset === 'overdue') {
       onChange({
         ...filters,
         dueDatePreset: preset,
@@ -174,7 +167,7 @@ function DueDateFilter({
         noDueDate: undefined,
       });
       setOpen(false);
-    } else if (preset === "today") {
+    } else if (preset === 'today') {
       onChange({
         ...filters,
         dueDatePreset: preset,
@@ -183,7 +176,7 @@ function DueDateFilter({
         noDueDate: undefined,
       });
       setOpen(false);
-    } else if (preset === "this_week") {
+    } else if (preset === 'this_week') {
       onChange({
         ...filters,
         dueDatePreset: preset,
@@ -192,7 +185,7 @@ function DueDateFilter({
         noDueDate: undefined,
       });
       setOpen(false);
-    } else if (preset === "no_due_date") {
+    } else if (preset === 'no_due_date') {
       onChange({
         ...filters,
         dueDatePreset: preset,
@@ -220,14 +213,14 @@ function DueDateFilter({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-[4px] border text-[12px] transition-colors ${
+        className={`flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-[12px] transition-colors ${
           activeLabel
-            ? "border-accent text-accent bg-accent-subtle"
-            : "border-border-default text-text-muted hover:text-text-primary"
+            ? 'border-accent bg-accent-subtle text-accent'
+            : 'border-border-default text-text-muted hover:text-text-primary'
         }`}
       >
         <Calendar className="h-3 w-3" />
-        {activeLabel ?? "Due date"}
+        {activeLabel ?? 'Due date'}
         {activeLabel && (
           <X
             className="h-3 w-3"
@@ -239,21 +232,21 @@ function DueDateFilter({
         )}
       </button>
       {open && (
-        <div className="absolute z-10 mt-1 min-w-[180px] bg-bg-surface border border-border-default rounded-[4px] shadow-lg py-1">
+        <div className="absolute z-10 mt-1 min-w-[180px] rounded-[4px] border border-border-default bg-bg-surface py-1 shadow-lg">
           {DUE_DATE_PRESETS.map((p) => (
             <button
               key={p.value}
               onClick={() => applyPreset(p.value)}
-              className="w-full text-left px-3 py-1.5 text-[12px] text-text-primary hover:bg-bg-surface-hover transition-colors"
+              className="hover:bg-bg-surface-hover w-full px-3 py-1.5 text-left text-[12px] text-text-primary transition-colors"
             >
               {p.label}
             </button>
           ))}
-          {filters.dueDatePreset === "custom" && (
-            <div className="flex flex-col gap-1.5 px-3 py-2 border-t border-border-default mt-1">
+          {filters.dueDatePreset === 'custom' && (
+            <div className="mt-1 flex flex-col gap-1.5 border-t border-border-default px-3 py-2">
               <input
                 type="date"
-                value={filters.dueDateFrom?.slice(0, 10) ?? ""}
+                value={filters.dueDateFrom?.slice(0, 10) ?? ''}
                 onChange={(e) =>
                   onChange({
                     ...filters,
@@ -262,11 +255,11 @@ function DueDateFilter({
                       : undefined,
                   })
                 }
-                className="bg-bg-surface border border-border-default rounded-[4px] px-2 py-1 text-[12px] text-text-primary"
+                className="rounded-[4px] border border-border-default bg-bg-surface px-2 py-1 text-[12px] text-text-primary"
               />
               <input
                 type="date"
-                value={filters.dueDateTo?.slice(0, 10) ?? ""}
+                value={filters.dueDateTo?.slice(0, 10) ?? ''}
                 onChange={(e) =>
                   onChange({
                     ...filters,
@@ -275,7 +268,7 @@ function DueDateFilter({
                       : undefined,
                   })
                 }
-                className="bg-bg-surface border border-border-default rounded-[4px] px-2 py-1 text-[12px] text-text-primary"
+                className="rounded-[4px] border border-border-default bg-bg-surface px-2 py-1 text-[12px] text-text-primary"
               />
             </div>
           )}
@@ -293,22 +286,17 @@ export function FilterBar({
   filters,
   onChange,
 }: Props) {
-  const needsLabels = fields.includes("label") && !!projectId;
-  const { data: labels } = useProjectLabels(needsLabels ? projectId! : "");
+  const needsLabels = fields.includes('label') && !!projectId;
+  const { data: labels } = useProjectLabels(needsLabels ? projectId! : '');
 
   // sprint options depend on WHICHEVER project is currently selected in
   // the filters themselves (My Issues context), not a fixed projectId prop
-  const needsSprints = fields.includes("sprint") && !!filters.projectId;
-  const { data: sprints } = useProjectSprints(
-    needsSprints ? filters.projectId! : "",
-  );
-  const sprintOptions =
-    sprints?.map((s) => ({ label: s.name, value: s.id })) ?? [];
+  const needsSprints = fields.includes('sprint') && !!filters.projectId;
+  const { data: sprints } = useProjectSprints(needsSprints ? filters.projectId! : '');
+  const sprintOptions = sprints?.map((s) => ({ label: s.name, value: s.id })) ?? [];
 
-  const memberOptions =
-    members?.map((m) => ({ label: m.name ?? m.email, value: m.id })) ?? [];
-  const labelOptions =
-    labels?.map((l: any) => ({ label: l.name, value: l.id })) ?? [];
+  const memberOptions = members?.map((m) => ({ label: m.name ?? m.email, value: m.id })) ?? [];
+  const labelOptions = labels?.map((l: any) => ({ label: l.name, value: l.id })) ?? [];
 
   const set = (key: keyof IssueFilters) => (value: string | undefined) =>
     onChange({ ...filters, [key]: value });
@@ -322,7 +310,7 @@ export function FilterBar({
 
   return (
     <div className="flex items-center gap-2">
-      {fields.includes("project") && (
+      {fields.includes('project') && (
         <FilterDropdown
           label="Project"
           active={filters.projectId}
@@ -330,55 +318,53 @@ export function FilterBar({
           onSelect={setProject}
         />
       )}
-      {fields.includes("sprint") && (
-        <div title={!filters.projectId ? "Pick a project first" : undefined}>
+      {fields.includes('sprint') && (
+        <div title={!filters.projectId ? 'Pick a project first' : undefined}>
           <FilterDropdown
             label="Sprint"
             active={filters.sprintId}
             options={filters.projectId ? sprintOptions : []}
-            onSelect={set("sprintId")}
+            onSelect={set('sprintId')}
           />
         </div>
       )}
-      {fields.includes("assignee") && (
+      {fields.includes('assignee') && (
         <FilterDropdown
           label="Assignee"
           active={filters.assigneeId}
           options={memberOptions}
-          onSelect={set("assigneeId")}
+          onSelect={set('assigneeId')}
         />
       )}
-      {fields.includes("label") && (
+      {fields.includes('label') && (
         <FilterDropdown
           label="Label"
           active={filters.labelId}
           options={labelOptions}
-          onSelect={set("labelId")}
+          onSelect={set('labelId')}
         />
       )}
-      {fields.includes("priority") && (
+      {fields.includes('priority') && (
         <FilterDropdown
           label="Priority"
           active={filters.priority}
           options={PRIORITY_OPTIONS}
-          onSelect={set("priority")}
+          onSelect={set('priority')}
         />
       )}
-      {fields.includes("type") && (
+      {fields.includes('type') && (
         <FilterDropdown
           label="Type"
           active={filters.type}
           options={TYPE_OPTIONS}
-          onSelect={set("type")}
+          onSelect={set('type')}
         />
       )}
-      {fields.includes("dueDate") && (
-        <DueDateFilter filters={filters} onChange={onChange} />
-      )}
+      {fields.includes('dueDate') && <DueDateFilter filters={filters} onChange={onChange} />}
       {hasFilters && (
         <button
           onClick={() => onChange({})}
-          className="text-[11px] text-text-muted hover:text-text-primary transition-colors"
+          className="text-[11px] text-text-muted transition-colors hover:text-text-primary"
         >
           Clear
         </button>

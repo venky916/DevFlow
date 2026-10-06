@@ -1,17 +1,14 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { useWorkspaces } from "../../hooks/use-workspaces";
-import { useProjects } from "../../hooks/use-projects";
-import PageLoading from "../shared/page-loading";
-import PageError from "../shared/page-error";
+import { useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 
-export function ProjectAccessGuard({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+import { useProjects } from '../../hooks/use-projects';
+import { useWorkspaces } from '../../hooks/use-workspaces';
+import PageError from '../shared/page-error';
+import PageLoading from '../shared/page-loading';
+
+export function ProjectAccessGuard({ children }: { children: React.ReactNode }) {
   const { workspaceSlug, projectSlug } = useParams<{
     workspaceSlug: string;
     projectSlug: string;
@@ -31,7 +28,7 @@ export function ProjectAccessGuard({
     isLoading: projLoading,
     isError: projError,
     refetch: refetchProjects,
-  } = useProjects(currentWorkspace?.id ?? "");
+  } = useProjects(currentWorkspace?.id ?? '');
   const currentProject = projects?.find((p) => p.slug === projectSlug);
 
   const hasAccess =
@@ -42,9 +39,7 @@ export function ProjectAccessGuard({
   useEffect(() => {
     if (wsLoading || projLoading) return;
     if (!hasAccess) {
-      router.replace(
-        `/no-access?reason=not-a-member&workspace=${workspaceSlug}`,
-      );
+      router.replace(`/no-access?reason=not-a-member&workspace=${workspaceSlug}`);
     }
   }, [wsLoading, projLoading, hasAccess, router, workspaceSlug]);
 
@@ -53,21 +48,11 @@ export function ProjectAccessGuard({
   }
 
   if (wsError) {
-    return (
-      <PageError
-        message="Couldn't load workspace"
-        onRetry={() => refetchWorkspaces()}
-      />
-    );
+    return <PageError message="Couldn't load workspace" onRetry={() => refetchWorkspaces()} />;
   }
 
   if (projError) {
-    return (
-      <PageError
-        message="Couldn't load projects"
-        onRetry={() => refetchProjects()}
-      />
-    );
+    return <PageError message="Couldn't load projects" onRetry={() => refetchProjects()} />;
   }
 
   if (!hasAccess) {

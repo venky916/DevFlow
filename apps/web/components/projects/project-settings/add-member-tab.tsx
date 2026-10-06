@@ -1,19 +1,18 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-import { Button } from "@devflow/ui/components/button";
-import { Select } from "@devflow/ui/components/select";
-import { Spinner } from "@devflow/ui/components/spinner";
-import { SectionHeading } from "../../shared/section-heading";
-import {
-  useProjectMembers,
-  useAddProjectMember,
-} from "../../../hooks/use-project-settings";
-import { useWorkspaceMembers } from "../../../hooks/use-workspace-settings";
-import { PROJECT_ROLE_OPTIONS, displayName } from "../../../lib/roles";
-import type { ProjectRole } from "@devflow/types";
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+import type { ProjectRole } from '@devflow/types';
+import { Button } from '@devflow/ui/components/button';
+import { Select } from '@devflow/ui/components/select';
+import { Spinner } from '@devflow/ui/components/spinner';
+
+import { useAddProjectMember, useProjectMembers } from '../../../hooks/use-project-settings';
+import { useWorkspaceMembers } from '../../../hooks/use-workspace-settings';
+import { displayName, PROJECT_ROLE_OPTIONS } from '../../../lib/roles';
+import { SectionHeading } from '../../shared/section-heading';
 
 interface Props {
   projectId: string;
@@ -21,19 +20,15 @@ interface Props {
 }
 
 export function AddMemberTab({ projectId, workspaceId }: Props) {
-  const { data: workspaceMembers, isLoading } =
-    useWorkspaceMembers(workspaceId);
+  const { data: workspaceMembers, isLoading } = useWorkspaceMembers(workspaceId);
   const { data: projectMembers } = useProjectMembers(projectId);
   const { mutate: addMember, isPending } = useAddProjectMember(projectId);
 
-  const [selectedUserId, setSelectedUserId] = useState("");
-  const [role, setRole] = useState<ProjectRole>("DEVELOPER");
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [role, setRole] = useState<ProjectRole>('DEVELOPER');
 
-  const projectMemberIds = new Set(
-    projectMembers?.map((m: any) => m.userId) ?? [],
-  );
-  const available =
-    workspaceMembers?.filter((m: any) => !projectMemberIds.has(m.userId)) ?? [];
+  const projectMemberIds = new Set(projectMembers?.map((m: any) => m.userId) ?? []);
+  const available = workspaceMembers?.filter((m: any) => !projectMemberIds.has(m.userId)) ?? [];
 
   const memberOptions = available.map((m: any) => ({
     label: displayName(m.user),
@@ -43,11 +38,11 @@ export function AddMemberTab({ projectId, workspaceId }: Props) {
   const handleMemberChange = (userId: string) => {
     setSelectedUserId(userId);
     const member = available.find((m: any) => m.userId === userId);
-    setRole(member?.role === "VIEWER" ? "VIEWER" : "DEVELOPER");
+    setRole(member?.role === 'VIEWER' ? 'VIEWER' : 'DEVELOPER');
   };
 
   const isSelectedViewer =
-    available.find((m: any) => m.userId === selectedUserId)?.role === "VIEWER";
+    available.find((m: any) => m.userId === selectedUserId)?.role === 'VIEWER';
 
   const handleAdd = () => {
     if (!selectedUserId) return;
@@ -55,12 +50,11 @@ export function AddMemberTab({ projectId, workspaceId }: Props) {
       { userId: selectedUserId, role },
       {
         onSuccess: () => {
-          toast.success("Member added to project");
-          setSelectedUserId("");
-          setRole("DEVELOPER");
+          toast.success('Member added to project');
+          setSelectedUserId('');
+          setRole('DEVELOPER');
         },
-        onError: (err: any) =>
-          toast.error(err?.response?.data?.message ?? "Failed to add member"),
+        onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to add member'),
       },
     );
   };
@@ -73,7 +67,7 @@ export function AddMemberTab({ projectId, workspaceId }: Props) {
     );
 
   return (
-    <div className="flex flex-col gap-4 max-w-[440px]">
+    <div className="flex max-w-[440px] flex-col gap-4">
       <SectionHeading
         title="Add member"
         description="Add a workspace member to this project. They must already be in the workspace."
@@ -94,24 +88,14 @@ export function AddMemberTab({ projectId, workspaceId }: Props) {
           <Select
             label="Role"
             options={
-              isSelectedViewer
-                ? [{ label: "Viewer", value: "VIEWER" }]
-                : PROJECT_ROLE_OPTIONS
+              isSelectedViewer ? [{ label: 'Viewer', value: 'VIEWER' }] : PROJECT_ROLE_OPTIONS
             }
             value={role}
             onValueChange={(v) => setRole(v as ProjectRole)}
           />
           <div>
-            <Button
-              onClick={handleAdd}
-              disabled={!selectedUserId || isPending}
-              size="sm"
-            >
-              {isPending ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                "Add to project"
-              )}
+            <Button onClick={handleAdd} disabled={!selectedUserId || isPending} size="sm">
+              {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Add to project'}
             </Button>
           </div>
         </div>

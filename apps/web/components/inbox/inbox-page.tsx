@@ -1,51 +1,53 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import { formatDistanceToNow } from "date-fns";
+import { useRouter } from 'next/navigation';
+import { formatDistanceToNow } from 'date-fns';
 import {
-  CheckCheck,
-  Trash2,
+  AtSign,
   Bell,
+  CheckCheck,
   GitBranch,
   MessageSquare,
+  Trash2,
   UserPlus,
-  Zap,
-  AtSign,
   X,
-} from "lucide-react";
-import { cn } from "@devflow/ui/lib/cn";
-import { Button } from "@devflow/ui/components/button";
+  Zap,
+} from 'lucide-react';
+
+import type { INotification, NotificationType } from '@devflow/types';
+import { Button } from '@devflow/ui/components/button';
+import { cn } from '@devflow/ui/lib/cn';
+
 import {
-  useNotifications,
-  useMarkAsRead,
-  useMarkAllAsRead,
   useClearReadNotifications,
   useDeleteNotification,
-} from "../../hooks/use-notifications";
-import type { NotificationType, INotification } from "@devflow/types";
-import PageLoading from "../shared/page-loading";
-import PageError from "../shared/page-error";
+  useMarkAllAsRead,
+  useMarkAsRead,
+  useNotifications,
+} from '../../hooks/use-notifications';
+import PageError from '../shared/page-error';
+import PageLoading from '../shared/page-loading';
 
 // ─── Notification icon by type ────────────────────────────────────
 function NotifIcon({ type }: { type: NotificationType }) {
-  const cls = "h-[15px] w-[15px] shrink-0";
+  const cls = 'h-[15px] w-[15px] shrink-0';
   switch (type) {
-    case "ISSUE_ASSIGNED":
-      return <GitBranch className={cn(cls, "text-info-text")} />;
-    case "ISSUE_COMMENTED":
-      return <MessageSquare className={cn(cls, "text-accent")} />;
-    case "MENTION":
-      return <AtSign className={cn(cls, "text-accent")} />;
-    case "SPRINT_STARTED":
-      return <Zap className={cn(cls, "text-warning-text")} />;
-    case "SPRINT_COMPLETED":
-      return <Zap className={cn(cls, "text-success-text")} />;
-    case "WORKSPACE_INVITED":
-      return <UserPlus className={cn(cls, "text-accent")} />;
-    case "PROJECT_ADDED":
-      return <UserPlus className={cn(cls, "text-info-text")} />;
+    case 'ISSUE_ASSIGNED':
+      return <GitBranch className={cn(cls, 'text-info-text')} />;
+    case 'ISSUE_COMMENTED':
+      return <MessageSquare className={cn(cls, 'text-accent')} />;
+    case 'MENTION':
+      return <AtSign className={cn(cls, 'text-accent')} />;
+    case 'SPRINT_STARTED':
+      return <Zap className={cn(cls, 'text-warning-text')} />;
+    case 'SPRINT_COMPLETED':
+      return <Zap className={cn(cls, 'text-success-text')} />;
+    case 'WORKSPACE_INVITED':
+      return <UserPlus className={cn(cls, 'text-accent')} />;
+    case 'PROJECT_ADDED':
+      return <UserPlus className={cn(cls, 'text-info-text')} />;
     default:
-      return <Bell className={cn(cls, "text-text-muted")} />;
+      return <Bell className={cn(cls, 'text-text-muted')} />;
   }
 }
 
@@ -70,30 +72,28 @@ function NotifRow({
     <div
       onClick={handleClick}
       className={cn(
-        "group flex items-start gap-3 px-5 py-3.5 border-b border-border-default transition-colors cursor-pointer",
-        notif.isRead ? "opacity-50 hover:opacity-70" : "hover:bg-bg-hover",
+        'group flex cursor-pointer items-start gap-3 border-b border-border-default px-5 py-3.5 transition-colors',
+        notif.isRead ? 'opacity-50 hover:opacity-70' : 'hover:bg-bg-hover',
       )}
     >
-      <div className="flex items-center justify-center w-[8px] pt-1 shrink-0">
-        {!notif.isRead && (
-          <div className="h-[6px] w-[6px] rounded-full bg-accent shrink-0" />
-        )}
+      <div className="flex w-[8px] shrink-0 items-center justify-center pt-1">
+        {!notif.isRead && <div className="h-[6px] w-[6px] shrink-0 rounded-full bg-accent" />}
       </div>
 
-      <div className="pt-0.5 shrink-0">
+      <div className="shrink-0 pt-0.5">
         <NotifIcon type={notif.type} />
       </div>
 
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <p
           className={cn(
-            "text-[13px] leading-snug",
-            notif.isRead ? "text-text-muted" : "text-text-primary",
+            'text-[13px] leading-snug',
+            notif.isRead ? 'text-text-muted' : 'text-text-primary',
           )}
         >
           {notif.content}
         </p>
-        <p className="text-[11px] text-text-muted mt-0.5 font-mono">
+        <p className="mt-0.5 font-mono text-[11px] text-text-muted">
           {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}
         </p>
       </div>
@@ -103,7 +103,7 @@ function NotifRow({
           e.stopPropagation();
           onDelete(notif.id);
         }}
-        className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-danger-text transition-all shrink-0 mt-0.5"
+        className="mt-0.5 shrink-0 text-text-muted opacity-0 transition-all group-hover:opacity-100 hover:text-danger-text"
       >
         <X className="h-3.5 w-3.5" />
       </button>
@@ -127,10 +127,8 @@ function NotificationGroup({
 
   return (
     <>
-      <div className="px-5 py-2 bg-bg-app border-b border-border-default">
-        <p className="text-[10px] text-text-muted uppercase tracking-[0.06em] font-mono">
-          {label}
-        </p>
+      <div className="border-b border-border-default bg-bg-app px-5 py-2">
+        <p className="font-mono text-[10px] tracking-[0.06em] text-text-muted uppercase">{label}</p>
       </div>
       {notifications.map((n) => (
         <NotifRow key={n.id} notif={n} onRead={onRead} onDelete={onDelete} />
@@ -141,8 +139,8 @@ function NotificationGroup({
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center flex-1 gap-3 pb-16">
-      <div className="h-10 w-10 rounded-full bg-bg-surface border border-border-default flex items-center justify-center">
+    <div className="flex flex-1 flex-col items-center justify-center gap-3 pb-16">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border-default bg-bg-surface">
         <Bell className="h-5 w-5 text-text-muted" />
       </div>
       <p className="text-[13px] text-text-muted">You're all caught up</p>
@@ -154,8 +152,7 @@ export function InboxPage() {
   const { data, isLoading, isError, refetch } = useNotifications();
   const { mutate: markAsRead } = useMarkAsRead();
   const { mutate: markAllAsRead, isPending: markingAll } = useMarkAllAsRead();
-  const { mutate: clearRead, isPending: clearing } =
-    useClearReadNotifications();
+  const { mutate: clearRead, isPending: clearing } = useClearReadNotifications();
   const { mutate: deleteNotif } = useDeleteNotification();
 
   const notifications = data?.notifications ?? [];
@@ -168,23 +165,16 @@ export function InboxPage() {
   }
 
   if (isError) {
-    return (
-      <PageError
-        message="Couldn't load your notifications"
-        onRetry={() => refetch()}
-      />
-    );
+    return <PageError message="Couldn't load your notifications" onRetry={() => refetch()} />;
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex items-center justify-between px-5 h-[38px] border-b border-border-default shrink-0">
+    <div className="flex h-full flex-col overflow-hidden">
+      <div className="flex h-[38px] shrink-0 items-center justify-between border-b border-border-default px-5">
         <div className="flex items-center gap-2">
-          <span className="text-[13px] font-medium text-text-primary">
-            Inbox
-          </span>
+          <span className="text-[13px] font-medium text-text-primary">Inbox</span>
           {unreadCount > 0 && (
-            <span className="text-[10px] font-mono bg-accent text-bg-app px-1.5 py-0.5 rounded-[3px]">
+            <span className="rounded-[3px] bg-accent px-1.5 py-0.5 font-mono text-[10px] text-bg-app">
               {unreadCount}
             </span>
           )}
@@ -192,24 +182,14 @@ export function InboxPage() {
 
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => markAllAsRead()}
-              disabled={markingAll}
-            >
-              <CheckCheck className="h-3.5 w-3.5 mr-1.5" />
+            <Button variant="ghost" size="sm" onClick={() => markAllAsRead()} disabled={markingAll}>
+              <CheckCheck className="mr-1.5 h-3.5 w-3.5" />
               Mark all read
             </Button>
           )}
           {read.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => clearRead()}
-              disabled={clearing}
-            >
-              <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+            <Button variant="ghost" size="sm" onClick={() => clearRead()} disabled={clearing}>
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
               Clear read
             </Button>
           )}

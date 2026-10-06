@@ -6,7 +6,7 @@ interface Props {
 export function FieldRow({ label, children }: Props) {
   return (
     <div className="flex items-center gap-3">
-      <span className="text-[11px] uppercase tracking-[0.04em] font-mono text-text-muted w-[80px] shrink-0">
+      <span className="w-[80px] shrink-0 font-mono text-[11px] tracking-[0.04em] text-text-muted uppercase">
         {label}
       </span>
       <div className="flex-1">{children}</div>

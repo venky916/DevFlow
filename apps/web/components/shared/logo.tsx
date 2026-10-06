@@ -1,7 +1,7 @@
 export function Logo() {
   return (
-    <div className="h-10 w-10 rounded-[4px] bg-accent flex items-center justify-center">
-      <span className="text-accent-text font-bold text-lg font-mono">D</span>
+    <div className="flex h-10 w-10 items-center justify-center rounded-[4px] bg-accent">
+      <span className="font-mono text-lg font-bold text-accent-text">D</span>
     </div>
   );
 }

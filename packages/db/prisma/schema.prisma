@@ -61,14 +61,14 @@ enum NotificationType {
   WORKSPACE_INVITED
   PROJECT_ADDED
   MENTION
+  PASSWORD_RESET
   OTHER
 }
 
-enum ActivityScope{
+enum ActivityScope {
   ISSUE
   PROJECT
 }
-
 
 model User {
   id          String   @id @default(cuid())
@@ -80,69 +80,70 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  workspaces   WorkspaceMember[]
-  projects     ProjectMember[]
-  comments     Comment[]
-  activities   ActivityLog[]
-  notifications Notification[]
-  attachments  Attachment[] 
-  createdIssues Issue[] @relation("createdIssues")
-  assignedIssues Issue[] @relation("assignedIssues")
-  sentInvites WorkspaceInvite[] @relation("sentInvites")
+  workspaces     WorkspaceMember[]
+  projects       ProjectMember[]
+  comments       Comment[]
+  activities     ActivityLog[]
+  notifications  Notification[]
+  attachments    Attachment[]
+  createdIssues  Issue[]           @relation("createdIssues")
+  assignedIssues Issue[]           @relation("assignedIssues")
+  sentInvites    WorkspaceInvite[] @relation("sentInvites")
 
   @@map("users")
 }
 
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  logoUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-model Workspace{
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  logoUrl     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  members     WorkspaceMember[]
-  projects     Project[]
-  invites      WorkspaceInvite[]
+  members  WorkspaceMember[]
+  projects Project[]
+  invites  WorkspaceInvite[]
 
   @@map("workspaces")
 }
 
 model WorkspaceInvite {
-  id  String     @id @default(cuid())
-  workspaceId  String
-  email        String
-  role         WorkspaceRole @default(MEMBER)
-  token        String   @unique @default(uuid())
-  expiresAt  DateTime
-  acceptedAt DateTime?
+  id          String        @id @default(cuid())
+  workspaceId String
+  email       String
+  role        WorkspaceRole @default(MEMBER)
+  token       String        @unique @default(uuid())
+  expiresAt   DateTime
+  acceptedAt  DateTime?
   invitedBy   String
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
-  inviter     User      @relation("sentInvites",fields: [invitedBy], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  inviter   User      @relation("sentInvites", fields: [invitedBy], references: [id])
 
+  @@index([workspaceId])
+  @@index([email])
   @@map("workspace_invites")
-
 }
+
 model WorkspaceMember {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   workspaceId String
   userId      String
   role        WorkspaceRole @default(MEMBER)
-  joinedAt   DateTime @default(now())
+  joinedAt    DateTime      @default(now())
 
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
-  user        User      @relation(fields: [userId], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
 
-  @@map("workspace_members")
   @@unique([workspaceId, userId])
+  @@index([userId])
+  @@map("workspace_members")
 }
 
-
-model Project{
+model Project {
   id          String   @id @default(cuid())
   name        String
   slug        String   @unique
@@ -152,54 +153,54 @@ model Project{
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
-  members     ProjectMember[]
-  sprints      Sprint[]
-  issues        Issue[]
-  activities   ActivityLog[]
+  workspace  Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  members    ProjectMember[]
+  sprints    Sprint[]
+  issues     Issue[]
+  activities ActivityLog[]
   labels     Label[]
 
+  @@index([workspaceId])
   @@map("projects")
 }
 
 model ProjectMember {
-  id          String   @id @default(cuid())
-  projectId   String
-  userId      String
-  role        ProjectRole @default(DEVELOPER)
-  joinedAt   DateTime @default(now())
+  id        String      @id @default(cuid())
+  projectId String
+  userId    String
+  role      ProjectRole @default(DEVELOPER)
+  joinedAt  DateTime    @default(now())
 
-
-  project     Project   @relation(fields: [projectId], references: [id])
-  user        User      @relation(fields: [userId], references: [id])
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
 
   @@unique([projectId, userId])
+  @@index([userId])
   @@map("project_members")
 }
 
+model Sprint {
+  id        String       @id @default(cuid())
+  name      String
+  projectId String
+  status    SprintStatus @default(PLANNED)
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
-model Sprint{
-  id          String   @id @default(cuid())
-  name        String
-  projectId   String
-  status      SprintStatus @default(PLANNED)
-  startDate   DateTime?
-  endDate     DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issues  Issue[]
 
-  project     Project   @relation(fields: [projectId], references: [id])
-  issues        Issue[]
-
+  @@index([projectId, status])
   @@map("sprints")
 }
 
-
-model Issue{
-  id          String   @id @default(cuid())
+model Issue {
+  id          String        @id @default(cuid())
   title       String
   description String?
-  status      IssueStatus @default(BACKLOG)
+  status      IssueStatus   @default(BACKLOG)
   priority    IssuePriority @default(NO_PRIORITY)
   type        IssueType     @default(TASK)
   position    String        @default("a0")
@@ -209,115 +210,126 @@ model Issue{
   projectId   String
   assigneeId  String?
   creatorId   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
-  parent Issue? @relation("SubIssues", fields: [parentId], references: [id])
+  parent   Issue?  @relation("SubIssues", fields: [parentId], references: [id], onDelete: SetNull)
   children Issue[] @relation("SubIssues")
 
   comments    Comment[]
   attachments Attachment[]
-  activities   ActivityLog[]
+  activities  ActivityLog[]
   labels      IssueLabel[]
 
-  sprint      Sprint?   @relation(fields: [sprintId], references: [id])
-  project     Project   @relation(fields: [projectId], references: [id])
-  creator     User      @relation("createdIssues",fields: [creatorId], references: [id])
-  assignee    User?     @relation("assignedIssues",fields: [assigneeId], references: [id])
+  sprint   Sprint? @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator  User    @relation("createdIssues", fields: [creatorId], references: [id])
+  assignee User?   @relation("assignedIssues", fields: [assigneeId], references: [id])
+
+  @@index([projectId, status, position])
+  @@index([projectId, sprintId])
+  @@index([assigneeId])
+  @@index([parentId])
   @@map("issues")
 }
 
-model Label{
-  id          String   @id @default(cuid())
-  name        String
-  color       String
-  projectId   String
-  createdAt   DateTime @default(now())
+model Label {
+  id        String   @id @default(cuid())
+  name      String
+  color     String
+  projectId String
+  createdAt DateTime @default(now())
 
-  project     Project   @relation(fields: [projectId], references: [id])
-  issues      IssueLabel[]
+  project Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issues  IssueLabel[]
 
   @@unique([name, projectId])
+  @@index([projectId])
   @@map("labels")
 }
 
-
 model IssueLabel {
-  issueId     String
-  labelId     String
+  issueId String
+  labelId String
 
-  issue       Issue     @relation(fields: [issueId], references: [id],onDelete: Cascade)
-  label       Label     @relation(fields: [labelId], references: [id],onDelete: Cascade)
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
 
   @@id([issueId, labelId])
+  @@index([labelId])
   @@map("issue_labels")
 }
 
 model Comment {
-  id          String   @id @default(cuid())
-  content     Json
-  issueId     String
-  userId      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  content   Json
+  issueId   String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  issue      Issue     @relation(fields: [issueId], references: [id])
-  user        User      @relation(fields: [userId], references: [id])
+  issue       Issue        @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id])
   attachments Attachment[]
 
+  @@index([issueId, createdAt])
+  @@index([userId])
   @@map("comments")
 }
 
-model ActivityLog{
-  id          String   @id @default(cuid())
-  action      String
-  scope       ActivityScope
-  meta        Json?
-  userId      String
-  issueId     String?
-  projectId   String
-  createdAt   DateTime @default(now())
+model ActivityLog {
+  id        String        @id @default(cuid())
+  action    String
+  scope     ActivityScope
+  meta      Json?
+  userId    String
+  issueId   String?
+  projectId String
+  createdAt DateTime      @default(now())
 
-  user        User      @relation(fields: [userId], references: [id])
-  project     Project   @relation(fields: [projectId], references: [id])
-  issue      Issue?   @relation(fields: [issueId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issue   Issue?  @relation(fields: [issueId], references: [id], onDelete: SetNull)
 
+  @@index([projectId, createdAt])
+  @@index([issueId])
   @@map("activity_logs")
 }
 
-
-
 model Attachment {
-  id          String   @id @default(cuid())
-  url         String
-  fileKey     String  
-  fileName    String   
-  fileSize    Int?     
-  mimeType    String?  
-  issueId     String?
-  commentId   String?
-  uploadedBy  String
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  fileKey    String   @unique
+  fileName   String
+  fileSize   Int?
+  mimeType   String?
+  issueId    String?
+  commentId  String?
+  uploadedBy String
+  createdAt  DateTime @default(now())
 
-  issue      Issue?     @relation(fields: [issueId], references: [id])
-  comment    Comment?  @relation(fields: [commentId], references: [id])
-  uploader   User      @relation(fields: [uploadedBy], references: [id])
+  issue    Issue?   @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  comment  Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  uploader User     @relation(fields: [uploadedBy], references: [id])
 
+  @@index([issueId])
+  @@index([commentId])
+  @@index([uploadedBy])
   @@map("attachments")
 }
 
 model Notification {
-  id          String   @id @default(cuid())
+  id          String           @id @default(cuid())
   content     String
-  type       NotificationType
-  link       String?
-  isRead    Boolean  @default(false)
+  type        NotificationType
+  link        String?
+  isRead      Boolean          @default(false)
   triggeredBy String?
   userId      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
-  user        User      @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
+  @@index([userId, isRead, createdAt])
   @@map("notifications")
 }

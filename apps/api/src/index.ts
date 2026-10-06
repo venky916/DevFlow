@@ -1,8 +1,10 @@
 import 'dotenv/config';
-import express from 'express';
+
 import cors from 'cors';
-import { requestLogger } from './middlewares/requestLogger.middleware';
+import express from 'express';
+
 import { errorMiddleware } from './middlewares/error.middleware';
+import { requestLogger } from './middlewares/requestLogger.middleware';
 import v1Routes from './routes/v1';
 
 const app = express();
@@ -14,7 +16,7 @@ app.use(express.json());
 app.use(requestLogger);
 
 app.get('/health', (_req, res) => {
-    res.json({ status: 'ok' });
+  res.json({ status: 'ok' });
 });
 
 app.use('/api/v1', v1Routes);
@@ -23,5 +25,5 @@ app.use('/api/v1', v1Routes);
 app.use(errorMiddleware);
 
 app.listen(PORT, () => {
-    console.log(`🚀 API running on http://localhost:${PORT}`);
+  console.log(`🚀 API running on http://localhost:${PORT}`);
 });

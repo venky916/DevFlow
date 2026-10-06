@@ -1,20 +1,22 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
-import { Badge } from "@devflow/ui/components/badge";
-import { useIssueById } from "../../../hooks/use-issues";
-import { useIssueForm } from "../../../hooks/use-issue-form";
-import { useCanMoveIssue } from "../../../hooks/use-can-move-issue";
-import { usePermissions } from "../../../hooks/use-permissions";
-import { STATUS_LABELS, getStatusVariant } from "../../../lib/issue-constants";
-import { IssueMainInfo } from "./issue-main-info";
-import { IssuePropertiesPanel } from "./issue-properties-panel";
-import { CommentsSection } from "./comments-section";
-import { ActivityPanel } from "../activity-panel";
-import type { IIssueWithRelations, IssueStatus } from "@devflow/types";
-import { IssueActionsMenu } from "../../shared/issue-actions-menu";
+import { useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
+
+import type { IIssueWithRelations, IssueStatus } from '@devflow/types';
+import { Badge } from '@devflow/ui/components/badge';
+
+import { useCanMoveIssue } from '../../../hooks/use-can-move-issue';
+import { useIssueForm } from '../../../hooks/use-issue-form';
+import { useIssueById } from '../../../hooks/use-issues';
+import { usePermissions } from '../../../hooks/use-permissions';
+import { getStatusVariant, STATUS_LABELS } from '../../../lib/issue-constants';
+import { IssueActionsMenu } from '../../shared/issue-actions-menu';
+import { ActivityPanel } from '../activity-panel';
+import { CommentsSection } from './comments-section';
+import { IssueMainInfo } from './issue-main-info';
+import { IssuePropertiesPanel } from './issue-properties-panel';
 
 export function IssueDetailPage({ issueId }: { issueId: string }) {
   const router = useRouter();
@@ -45,9 +47,7 @@ export function IssueDetailPage({ issueId }: { issueId: string }) {
     <IssueDetailContent
       issue={issue}
       onBack={() => router.back()}
-      onNavigate={(id: string) =>
-        router.push(`/${workspaceSlug}/${projectSlug}/issues/${id}`)
-      }
+      onNavigate={(id: string) => router.push(`/${workspaceSlug}/${projectSlug}/issues/${id}`)}
       saving={saving}
       onSaving={setSaving}
     />
@@ -71,10 +71,10 @@ function IssueDetailContent({
   const { canDeleteIssue } = useCanMoveIssue();
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex items-center justify-between gap-3 px-6 h-[38px] border-b border-border-default shrink-0">
+    <div className="flex h-full flex-col overflow-hidden">
+      <div className="flex h-[38px] shrink-0 items-center justify-between gap-3 border-b border-border-default px-6">
         <div className="flex items-center gap-3">
-          <span className="text-[11px] font-mono text-accent">
+          <span className="font-mono text-[11px] text-accent">
             #{issue.id.slice(-6).toUpperCase()}
           </span>
           <Badge variant={getStatusVariant(issue.status as IssueStatus)}>
@@ -93,7 +93,7 @@ function IssueDetailContent({
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-y-auto px-8 py-6 flex flex-col gap-6">
+        <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-8 py-6">
           <IssueMainInfo
             issue={issue}
             projectId={issue.projectId}
@@ -108,12 +108,8 @@ function IssueDetailContent({
           <div className="h-px bg-border-default" />
           <CommentsSection projectId={issue.projectId} issueId={issue.id} />
         </div>
-        <div className="w-[400px] shrink-0 border-l border-border-default overflow-y-auto px-4 py-6 flex flex-col gap-6">
-          <IssuePropertiesPanel
-            issue={issue}
-            projectId={issue.projectId}
-            form={form}
-          />
+        <div className="flex w-[400px] shrink-0 flex-col gap-6 overflow-y-auto border-l border-border-default px-4 py-6">
+          <IssuePropertiesPanel issue={issue} projectId={issue.projectId} form={form} />
           <div className="h-px bg-border-default" />
           <ActivityPanel issueId={issue.id} />
         </div>

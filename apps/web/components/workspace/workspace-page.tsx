@@ -1,10 +1,12 @@
-"use client";
-import { useParams } from "next/navigation";
-import { WorkspaceHome } from "./workspace-home";
-import { useWorkspaces } from "../../hooks/use-workspaces";
-import { useProjects } from "../../hooks/use-projects";
-import PageLoading from "../shared/page-loading";
-import PageError from "../shared/page-error";
+'use client';
+
+import { useParams } from 'next/navigation';
+
+import { useProjects } from '../../hooks/use-projects';
+import { useWorkspaces } from '../../hooks/use-workspaces';
+import PageError from '../shared/page-error';
+import PageLoading from '../shared/page-loading';
+import { WorkspaceHome } from './workspace-home';
 
 export function WorkspacePage() {
   const { workspaceSlug } = useParams<{ workspaceSlug: string }>();
@@ -20,29 +22,19 @@ export function WorkspacePage() {
     isLoading: projLoading,
     isError: projError,
     refetch: refetchProjects,
-  } = useProjects(currentWorkspace?.id ?? "");
+  } = useProjects(currentWorkspace?.id ?? '');
 
   if (wsLoading || projLoading) {
     return <PageLoading />;
   }
   if (wsError) {
-    return (
-      <PageError
-        message="Couldn't load your workspace"
-        onRetry={() => refetchWorkspaces()}
-      />
-    );
+    return <PageError message="Couldn't load your workspace" onRetry={() => refetchWorkspaces()} />;
   }
   if (projError) {
-    return (
-      <PageError
-        message="Couldn't load projects"
-        onRetry={() => refetchProjects()}
-      />
-    );
+    return <PageError message="Couldn't load projects" onRetry={() => refetchProjects()} />;
   }
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden">
       <main className="flex-1 overflow-auto bg-bg-app">
         <WorkspaceHome
           workspace={currentWorkspace}

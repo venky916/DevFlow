@@ -5,7 +5,6 @@ export const saveAttachmentSchema = z.object({
     fileName: z.string().min(1),
     fileSize: z.number().optional(),
     mimeType: z.string().optional(),
-    url: z.string().min(1)
 }) 
 
 

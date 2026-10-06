@@ -1,21 +1,23 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { toast } from "sonner";
-import { X, ShieldCheck } from "lucide-react";
-import { Avatar } from "@devflow/ui/components/avatar";
-import { Select } from "@devflow/ui/components/select";
-import { Spinner } from "@devflow/ui/components/spinner";
-import { SectionHeading } from "../../shared/section-heading";
+import { useState } from 'react';
+import { ShieldCheck, X } from 'lucide-react';
+import { toast } from 'sonner';
+
+import type { ProjectRole } from '@devflow/types';
+import { Avatar } from '@devflow/ui/components/avatar';
+import { Select } from '@devflow/ui/components/select';
+import { Spinner } from '@devflow/ui/components/spinner';
+
 import {
   useProjectMembers,
-  useUpdateProjectMemberRole,
   useRemoveProjectMember,
-} from "../../../hooks/use-project-settings";
-import { useAuthStore } from "../../../stores/auth.store";
-import { PROJECT_ROLE_OPTIONS, displayName } from "../../../lib/roles";
-import type { ProjectRole } from "@devflow/types";
-import { RoleBadge } from "../../shared/role-badge";
+  useUpdateProjectMemberRole,
+} from '../../../hooks/use-project-settings';
+import { displayName, PROJECT_ROLE_OPTIONS } from '../../../lib/roles';
+import { useAuthStore } from '../../../stores/auth.store';
+import { RoleBadge } from '../../shared/role-badge';
+import { SectionHeading } from '../../shared/section-heading';
 
 interface Props {
   projectId: string;
@@ -26,8 +28,7 @@ interface Props {
 export function MembersTab({ projectId, isLead, workspaceAdminIds }: Props) {
   const user = useAuthStore((s) => s.user);
   const { data: members, isLoading } = useProjectMembers(projectId);
-  const { mutate: updateRole, isPending: updatingRole } =
-    useUpdateProjectMemberRole(projectId);
+  const { mutate: updateRole, isPending: updatingRole } = useUpdateProjectMemberRole(projectId);
   const { mutate: removeMember } = useRemoveProjectMember(projectId);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -55,30 +56,26 @@ export function MembersTab({ projectId, isLead, workspaceAdminIds }: Props) {
           return (
             <div
               key={member.id}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-[4px] border border-border-default hover:border-border-emphasis transition-colors"
+              className="flex items-center gap-3 rounded-[4px] border border-border-default px-3 py-2.5 transition-colors hover:border-border-emphasis"
             >
               <Avatar
                 name={displayName(member.user)}
                 src={member.user?.avatarUrl ?? undefined}
                 size="sm"
               />
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <p className="text-[13px] text-text-primary truncate">
+                  <p className="truncate text-[13px] text-text-primary">
                     {displayName(member.user)}
                   </p>
                   {isMe && (
-                    <span className="text-[10px] text-text-muted font-mono shrink-0">
-                      you
-                    </span>
+                    <span className="shrink-0 font-mono text-[10px] text-text-muted">you</span>
                   )}
-                  {(member.role === "LEAD" || isTargetWorkspaceAdmin) && (
-                    <ShieldCheck className="h-3 w-3 text-success-text shrink-0" />
+                  {(member.role === 'LEAD' || isTargetWorkspaceAdmin) && (
+                    <ShieldCheck className="h-3 w-3 shrink-0 text-success-text" />
                   )}
                 </div>
-                <p className="text-[11px] text-text-muted truncate">
-                  {member.user?.email}
-                </p>
+                <p className="truncate text-[11px] text-text-muted">{member.user?.email}</p>
               </div>
 
               <div className="shrink-0">
@@ -98,7 +95,7 @@ export function MembersTab({ projectId, isLead, workspaceAdminIds }: Props) {
                               setUpdatingId(null);
                             },
                             onError: () => {
-                              toast.error("Failed to update role");
+                              toast.error('Failed to update role');
                               setUpdatingId(null);
                             },
                           },
@@ -107,9 +104,7 @@ export function MembersTab({ projectId, isLead, workspaceAdminIds }: Props) {
                     />
                   </div>
                 ) : (
-                  <RoleBadge
-                    role={isTargetWorkspaceAdmin ? "ADMIN" : member?.role}
-                  />
+                  <RoleBadge role={isTargetWorkspaceAdmin ? 'ADMIN' : member?.role} />
                 )}
               </div>
 
@@ -117,11 +112,11 @@ export function MembersTab({ projectId, isLead, workspaceAdminIds }: Props) {
                 <button
                   onClick={() =>
                     removeMember(member.userId, {
-                      onSuccess: () => toast.success("Member removed"),
-                      onError: () => toast.error("Failed to remove member"),
+                      onSuccess: () => toast.success('Member removed'),
+                      onError: () => toast.error('Failed to remove member'),
                     })
                   }
-                  className="text-text-muted hover:text-danger-text transition-colors shrink-0"
+                  className="shrink-0 text-text-muted transition-colors hover:text-danger-text"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>

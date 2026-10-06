@@ -1,2 +1,2 @@
-export * from "./b2.helpers"
-export * from "./b2.client"
+export * from "./storage.helpers"
+export * from "./client"

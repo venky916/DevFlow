@@ -1,26 +1,28 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
+  closestCorners,
   DndContext,
   DragEndEvent,
   DragOverEvent,
+  DragOverlay,
   DragStartEvent,
   PointerSensor,
   useSensor,
   useSensors,
-  closestCorners,
-  DragOverlay,
-} from "@dnd-kit/core";
-import { arrayMove } from "@dnd-kit/sortable";
-import { KanbanColumn } from "./kanban-column";
-import { IssueCard } from "./issue-card";
-import { useBoardStore } from "../../stores/board.store";
-import { useMoveIssue } from "../../hooks/use-board";
-import { getFractionalPosition } from "../../lib/fractional-position";
-import type { IIssueWithRelations, IssueStatus } from "@devflow/types";
+} from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 
-const STATUSES: IssueStatus[] = ["TODO", "IN_PROGRESS", "IN_REVIEW", "DONE"];
+import type { IIssueWithRelations, IssueStatus } from '@devflow/types';
+
+import { useMoveIssue } from '../../hooks/use-board';
+import { getFractionalPosition } from '../../lib/fractional-position';
+import { useBoardStore } from '../../stores/board.store';
+import { IssueCard } from './issue-card';
+import { KanbanColumn } from './kanban-column';
+
+const STATUSES: IssueStatus[] = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'];
 
 interface Props {
   projectId: string;
@@ -32,18 +34,12 @@ export function KanbanBoard({ projectId, onIssueClick }: Props) {
   const setColumns = useBoardStore((s) => s.setColumns);
   const { mutate: moveIssue } = useMoveIssue();
 
-  const [activeIssue, setActiveIssue] = useState<IIssueWithRelations | null>(
-    null,
-  );
+  const [activeIssue, setActiveIssue] = useState<IIssueWithRelations | null>(null);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-  );
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   function findColumnOfIssue(issueId: string): IssueStatus | null {
-    return (
-      STATUSES.find((s) => columns[s]?.some((i) => i.id === issueId)) ?? null
-    );
+    return STATUSES.find((s) => columns[s]?.some((i) => i.id === issueId)) ?? null;
   }
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -133,7 +129,7 @@ export function KanbanBoard({ projectId, onIssueClick }: Props) {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-4 h-full overflow-x-auto pb-4">
+      <div className="flex h-full gap-4 overflow-x-auto pb-4">
         {STATUSES.map((status) => (
           <KanbanColumn
             key={status}

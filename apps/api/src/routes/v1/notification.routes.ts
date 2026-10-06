@@ -1,15 +1,22 @@
-import { Router } from "express"
-import { authenticate } from "../../middlewares/auth.middleware"
-import { getNotifications, markAsRead, markAllAsRead, deleteNotification, clearReadNotifications } from "../../controllers/notification.controller"
+import { Router } from 'express';
 
-const router = Router()
+import {
+  clearReadNotifications,
+  deleteNotification,
+  getNotifications,
+  markAllAsRead,
+  markAsRead,
+} from '../../controllers/notification.controller';
+import { authenticate } from '../../middlewares/auth.middleware';
 
-router.use(authenticate)
+const router = Router();
 
-router.get("/", getNotifications)
-router.patch("/read-all", markAllAsRead)
-router.patch("/:id/read", markAsRead)
-router.delete("/:id", deleteNotification)
-router.delete("/", clearReadNotifications)
+router.use(authenticate);
 
-export default router
+router.get('/', getNotifications);
+router.patch('/read-all', markAllAsRead);
+router.patch('/:id/read', markAsRead);
+router.delete('/:id', deleteNotification);
+router.delete('/', clearReadNotifications);
+
+export default router;

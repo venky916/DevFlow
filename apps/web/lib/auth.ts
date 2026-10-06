@@ -1,58 +1,62 @@
 import {
-    signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut as firebaseSignOut, signInWithPopup, updateProfile, sendPasswordResetEmail,
-    verifyPasswordResetCode,
-    confirmPasswordReset
-} from "firebase/auth"
-import { auth, googleProvider, githubProvider } from "./firebase";
-import { api } from "./axios"
-import { useAuthStore } from "../stores/auth.store";
+  confirmPasswordReset,
+  createUserWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  updateProfile,
+  verifyPasswordResetCode,
+} from 'firebase/auth';
+
+import { useAuthStore } from '../stores/auth.store';
+import { api } from './axios';
+import { auth, githubProvider, googleProvider } from './firebase';
 
 // after firebase signin → get user from our backend
 async function syncWithBackend() {
-    // api.ts interceptor auto attaches firebase token
-    const res = await api.get("/auth/me");
-    const user = res.data.user;
-    useAuthStore.getState().setUser(user);
-    return user;
+  // api.ts interceptor auto attaches firebase token
+  const res = await api.get('/auth/me');
+  const user = res.data.user;
+  useAuthStore.getState().setUser(user);
+  return user;
 }
 
 export async function signInWithEmail(email: string, password: string) {
-    await signInWithEmailAndPassword(auth, email, password);
-    return syncWithBackend();
+  await signInWithEmailAndPassword(auth, email, password);
+  return syncWithBackend();
 }
-
 
 export async function signUpWithEmail(email: string, password: string, name: string) {
-    const { user } = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(user, { displayName: name });
-    return syncWithBackend();
+  const { user } = await createUserWithEmailAndPassword(auth, email, password);
+  await updateProfile(user, { displayName: name });
+  return syncWithBackend();
 }
 
-
 export async function signInWithGoogle() {
-    await signInWithPopup(auth, googleProvider);
-    return syncWithBackend();
+  await signInWithPopup(auth, googleProvider);
+  return syncWithBackend();
 }
 
 export async function signInWithGithub() {
-    await signInWithPopup(auth, githubProvider);
-    return syncWithBackend();
+  await signInWithPopup(auth, githubProvider);
+  return syncWithBackend();
 }
 
 export async function signOut() {
-    await firebaseSignOut(auth);
-    useAuthStore.getState().clearAuth();
+  await firebaseSignOut(auth);
+  useAuthStore.getState().clearAuth();
 }
 
 export async function sendResetEmail(email: string) {
-    await api.post("/auth/forgot-password", { email });
+  await api.post('/auth/forgot-password', { email });
 }
 
 export async function verifyResetCode(oobCode: string) {
-    // returns the email tied to this code — throws if expired/invalid/used
-    return verifyPasswordResetCode(auth, oobCode);
+  // returns the email tied to this code — throws if expired/invalid/used
+  return verifyPasswordResetCode(auth, oobCode);
 }
 
 export async function confirmReset(oobCode: string, newPassword: string) {
-    await confirmPasswordReset(auth, oobCode, newPassword);
+  await confirmPasswordReset(auth, oobCode, newPassword);
 }

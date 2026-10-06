@@ -1,20 +1,22 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { toast } from "sonner";
-import { Plus, X, Pencil, Trash2, Check } from "lucide-react";
-import { Button } from "@devflow/ui/components/button";
-import { Spinner } from "@devflow/ui/components/spinner";
-import { ColorDot } from "@devflow/ui/components/color-dot";
-import { DEFAULT_PROJECT_COLOR } from "@devflow/ui/components/color-picker";
-import { SectionHeading } from "../../shared/section-heading";
+import { useState } from 'react';
+import { Check, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { Button } from '@devflow/ui/components/button';
+import { ColorDot } from '@devflow/ui/components/color-dot';
+import { DEFAULT_PROJECT_COLOR } from '@devflow/ui/components/color-picker';
+import { ConfirmModal } from '@devflow/ui/components/confirm-modal';
+import { Spinner } from '@devflow/ui/components/spinner';
+
 import {
-  useProjectLabels,
   useCreateLabel,
-  useUpdateLabel,
   useDeleteLabel,
-} from "../../../hooks/use-project-settings";
-import { ConfirmModal } from "@devflow/ui/components/confirm-modal";
+  useProjectLabels,
+  useUpdateLabel,
+} from '../../../hooks/use-project-settings';
+import { SectionHeading } from '../../shared/section-heading';
 
 interface Props {
   projectId: string;
@@ -27,19 +29,18 @@ interface EditState {
 
 export function LabelsTab({ projectId }: Props) {
   const { data: labels, isLoading } = useProjectLabels(projectId);
-  const { mutate: createLabel, isPending: isCreating } =
-    useCreateLabel(projectId);
+  const { mutate: createLabel, isPending: isCreating } = useCreateLabel(projectId);
   const { mutate: updateLabel } = useUpdateLabel(projectId);
   const { mutate: deleteLabel } = useDeleteLabel(projectId);
 
   const [showCreate, setShowCreate] = useState(false);
-  const [newName, setNewName] = useState("");
+  const [newName, setNewName] = useState('');
   const [newColor, setNewColor] = useState(DEFAULT_PROJECT_COLOR);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editState, setEditState] = useState<EditState>({
-    name: "",
-    color: "",
+    name: '',
+    color: '',
   });
 
   const [deletingLabel, setDeletingLabel] = useState<{
@@ -54,13 +55,13 @@ export function LabelsTab({ projectId }: Props) {
       { name: trimmed, color: newColor },
       {
         onSuccess: () => {
-          toast.success("Label created");
-          setNewName("");
+          toast.success('Label created');
+          setNewName('');
           setNewColor(DEFAULT_PROJECT_COLOR);
           setShowCreate(false);
         },
         onError: (err: any) =>
-          toast.error(err?.response?.data?.message ?? "Failed to create label"),
+          toast.error(err?.response?.data?.message ?? 'Failed to create label'),
       },
     );
   };
@@ -77,11 +78,11 @@ export function LabelsTab({ projectId }: Props) {
       { labelId, data: { name: trimmed, color: editState.color } },
       {
         onSuccess: () => {
-          toast.success("Label updated");
+          toast.success('Label updated');
           setEditingId(null);
         },
         onError: (err: any) =>
-          toast.error(err?.response?.data?.message ?? "Failed to update label"),
+          toast.error(err?.response?.data?.message ?? 'Failed to update label'),
       },
     );
   };
@@ -90,11 +91,11 @@ export function LabelsTab({ projectId }: Props) {
     if (!deletingLabel) return;
     deleteLabel(deletingLabel.id, {
       onSuccess: () => {
-        toast.success("Label deleted");
+        toast.success('Label deleted');
         setDeletingLabel(null);
       },
       onError: () => {
-        toast.error("Failed to delete label");
+        toast.error('Failed to delete label');
         setDeletingLabel(null);
       },
     });
@@ -111,53 +112,46 @@ export function LabelsTab({ projectId }: Props) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-start justify-between">
-        <SectionHeading
-          title="Labels"
-          description="Used to categorize issues."
-        />
+        <SectionHeading title="Labels" description="Used to categorize issues." />
         {!showCreate && (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setShowCreate(true)}
-          >
-            <Plus className="h-3.5 w-3.5 mr-1.5" />
+          <Button variant="secondary" size="sm" onClick={() => setShowCreate(true)}>
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
             New label
           </Button>
         )}
       </div>
 
       {!labels?.length && !showCreate ? (
-        <p className="text-[13px] text-text-muted py-4">
+        <p className="py-4 text-[13px] text-text-muted">
           No labels yet. Create one to categorize issues.
         </p>
       ) : (
-        <div className="rounded-[4px] border border-border-default overflow-hidden">
+        <div className="overflow-hidden rounded-[4px] border border-border-default">
           {showCreate && (
-            <div className="flex items-center gap-3 px-3 py-2 bg-bg-surface">
+            <div className="flex items-center gap-3 bg-bg-surface px-3 py-2">
               <ColorDot color={newColor} onChange={setNewColor} />
               <input
                 autoFocus
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleCreate();
-                  if (e.key === "Escape") setShowCreate(false);
+                  if (e.key === 'Enter') handleCreate();
+                  if (e.key === 'Escape') setShowCreate(false);
                 }}
                 placeholder="Label name..."
-                className="flex-1 h-7 bg-transparent text-[13px] text-text-primary placeholder:text-text-muted outline-none px-1.5"
+                className="h-7 flex-1 bg-transparent px-1.5 text-[13px] text-text-primary outline-none placeholder:text-text-muted"
               />
               <button
                 onClick={handleCreate}
                 disabled={isCreating || !newName.trim()}
-                className="text-success-text hover:text-success-text/80 disabled:opacity-40 transition-colors shrink-0"
+                className="shrink-0 text-success-text transition-colors hover:text-success-text/80 disabled:opacity-40"
                 aria-label="Create label"
               >
                 <Check className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setShowCreate(false)}
-                className="text-text-muted hover:text-text-primary transition-colors shrink-0"
+                className="shrink-0 text-text-muted transition-colors hover:text-text-primary"
                 aria-label="Cancel"
               >
                 <X className="h-4 w-4" />
@@ -169,7 +163,7 @@ export function LabelsTab({ projectId }: Props) {
             <div
               key={label.id}
               className={`group flex items-center gap-3 px-3 py-2 ${
-                i > 0 || showCreate ? "border-t border-border-default" : ""
+                i > 0 || showCreate ? 'border-t border-border-default' : ''
               }`}
             >
               {editingId === label.id ? (
@@ -181,25 +175,23 @@ export function LabelsTab({ projectId }: Props) {
                   <input
                     autoFocus
                     value={editState.name}
-                    onChange={(e) =>
-                      setEditState((s) => ({ ...s, name: e.target.value }))
-                    }
+                    onChange={(e) => setEditState((s) => ({ ...s, name: e.target.value }))}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") handleUpdate(label.id);
-                      if (e.key === "Escape") setEditingId(null);
+                      if (e.key === 'Enter') handleUpdate(label.id);
+                      if (e.key === 'Escape') setEditingId(null);
                     }}
-                    className="flex-1 h-7 bg-transparent text-[13px] text-text-primary outline-none px-1.5"
+                    className="h-7 flex-1 bg-transparent px-1.5 text-[13px] text-text-primary outline-none"
                   />
                   <button
                     onClick={() => handleUpdate(label.id)}
-                    className="text-success-text hover:text-success-text/80 transition-colors shrink-0"
+                    className="shrink-0 text-success-text transition-colors hover:text-success-text/80"
                     aria-label="Save"
                   >
                     <Check className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => setEditingId(null)}
-                    className="text-text-muted hover:text-text-primary transition-colors shrink-0"
+                    className="shrink-0 text-text-muted transition-colors hover:text-text-primary"
                     aria-label="Cancel"
                   >
                     <X className="h-4 w-4" />
@@ -208,25 +200,21 @@ export function LabelsTab({ projectId }: Props) {
               ) : (
                 <>
                   <span
-                    className="h-2 w-2 rounded-full shrink-0"
+                    className="h-2 w-2 shrink-0 rounded-full"
                     style={{ backgroundColor: label.color }}
                   />
-                  <span className="flex-1 text-[13px] text-text-primary">
-                    {label.name}
-                  </span>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="flex-1 text-[13px] text-text-primary">{label.name}</span>
+                  <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                     <button
                       onClick={() => startEdit(label)}
-                      className="h-6 w-6 flex items-center justify-center rounded-[3px] text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors"
+                      className="flex h-6 w-6 items-center justify-center rounded-[3px] text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary"
                       aria-label="Edit label"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
-                      onClick={() =>
-                        setDeletingLabel({ id: label.id, name: label.name })
-                      }
-                      className="h-6 w-6 flex items-center justify-center rounded-[3px] text-text-muted hover:text-danger-text hover:bg-danger-bg transition-colors"
+                      onClick={() => setDeletingLabel({ id: label.id, name: label.name })}
+                      className="flex h-6 w-6 items-center justify-center rounded-[3px] text-text-muted transition-colors hover:bg-danger-bg hover:text-danger-text"
                       aria-label="Delete label"
                     >
                       <Trash2 className="h-3.5 w-3.5" />

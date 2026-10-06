@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
 export default function Error({
   error,
@@ -15,24 +15,19 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center gap-3 bg-bg-app text-center px-4">
-      <h1 className="text-2xl font-semibold text-text-primary">
-        Something went wrong
-      </h1>
-      <p className="text-sm text-text-muted max-w-sm">
+    <div className="flex h-screen w-full flex-col items-center justify-center gap-3 bg-bg-app px-4 text-center">
+      <h1 className="text-2xl font-semibold text-text-primary">Something went wrong</h1>
+      <p className="max-w-sm text-sm text-text-muted">
         An unexpected error occurred. You can try again, or head back home.
       </p>
-      <div className="flex gap-3 mt-2">
+      <div className="mt-2 flex gap-3">
         <button
           onClick={reset}
-          className="text-sm text-accent hover:text-accent-hover transition-colors"
+          className="text-sm text-accent transition-colors hover:text-accent-hover"
         >
           Try again
         </button>
-        <a
-          href="/"
-          className="text-sm text-text-muted hover:text-text-primary transition-colors"
-        >
+        <a href="/" className="text-sm text-text-muted transition-colors hover:text-text-primary">
           Go home
         </a>
       </div>

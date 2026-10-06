@@ -1,9 +1,10 @@
 // services/comment-events.service.ts
-import { publishToIssue } from '../lib/redis.publisher';
 import { IssueEvents } from '@devflow/types';
 
+import { publishToIssue } from '../lib/redis.publisher';
+
 export const commentEventsService = {
-    publishAdded(issueId: string, comment: any) {
-        return publishToIssue(issueId, { type: IssueEvents.COMMENT_ADDED, payload: { comment } });
-    },
+  publishAdded(issueId: string, comment: any) {
+    return publishToIssue(issueId, { type: IssueEvents.COMMENT_ADDED, payload: { comment } });
+  },
 };

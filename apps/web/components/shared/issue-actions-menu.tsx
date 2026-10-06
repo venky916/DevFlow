@@ -1,15 +1,17 @@
-import { useState } from "react";
-import { useDeleteIssue, useDuplicateIssue } from "../../hooks/use-issues";
-import { toast } from "sonner";
-import { CircleEllipsis, Copy, Link2, Trash2 } from "lucide-react";
+import { useState } from 'react';
+import { CircleEllipsis, Copy, Link2, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { IIssueWithRelations } from '@devflow/types';
+import { ConfirmModal } from '@devflow/ui/components/confirm-modal';
 import {
   DropdownDivider,
   DropdownItem,
   DropdownMenu,
   IssueActionsDropdown,
-} from "@devflow/ui/components/dropdown";
-import { ConfirmModal } from "@devflow/ui/components/confirm-modal";
-import { IIssueWithRelations } from "@devflow/types";
+} from '@devflow/ui/components/dropdown';
+
+import { useDeleteIssue, useDuplicateIssue } from '../../hooks/use-issues';
 
 interface IssueActionsMenuProps {
   issue: IIssueWithRelations;
@@ -28,14 +30,12 @@ export function IssueActionsMenu({
 }: IssueActionsMenuProps) {
   const [open, setOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const { mutate: deleteIssue, isPending: deleting } =
-    useDeleteIssue(projectId);
-  const { mutate: duplicateIssue, isPending: duplicating } =
-    useDuplicateIssue(projectId);
+  const { mutate: deleteIssue, isPending: deleting } = useDeleteIssue(projectId);
+  const { mutate: duplicateIssue, isPending: duplicating } = useDuplicateIssue(projectId);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
-    toast.success("Link copied");
+    toast.success('Link copied');
     setOpen(false);
   };
 
@@ -50,10 +50,10 @@ export function IssueActionsMenu({
       },
       {
         onSuccess: (newIssue) => {
-          toast.success("Issue duplicated");
+          toast.success('Issue duplicated');
           onDuplicated(newIssue.id);
         },
-        onError: () => toast.error("Failed to duplicate issue"),
+        onError: () => toast.error('Failed to duplicate issue'),
       },
     );
     setOpen(false);
@@ -64,18 +64,14 @@ export function IssueActionsMenu({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex h-8 w-8 items-center justify-center cursor-pointer text-text-muted transition-colors hover:text-text-primary"
+        className="flex h-8 w-8 cursor-pointer items-center justify-center text-text-muted transition-colors hover:text-text-primary"
         aria-label="Issue actions"
       >
         <CircleEllipsis className="h-4 w-4" />
       </button>
       <IssueActionsDropdown open={open} onClose={() => setOpen(false)}>
         <DropdownItem icon={Link2} label="Copy link" onClick={handleCopyLink} />
-        <DropdownItem
-          icon={Copy}
-          label="Duplicate issue"
-          onClick={handleDuplicate}
-        />
+        <DropdownItem icon={Copy} label="Duplicate issue" onClick={handleDuplicate} />
         {canDelete && (
           <>
             <DropdownDivider />

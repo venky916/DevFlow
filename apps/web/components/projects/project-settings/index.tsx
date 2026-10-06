@@ -1,19 +1,21 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { useQueryState } from "nuqs";
-import { Tabs } from "@devflow/ui/components/tabs";
-import { useWorkspaces } from "../../../hooks/use-workspaces";
-import { useProjects } from "../../../hooks/use-projects";
-import { usePermissions } from "../../../hooks/use-permissions";
-import { canProject } from "../../../lib/permissions";
-import PageLoading from "../../shared/page-loading";
-import PageError from "../../shared/page-error";
-import { GeneralTab } from "./general-tab";
-import { MembersTab } from "./members-tab";
-import { AddMemberTab } from "./add-member-tab";
-import { LabelsTab } from "./labels-tab";
+import { useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useQueryState } from 'nuqs';
+
+import { Tabs } from '@devflow/ui/components/tabs';
+
+import { usePermissions } from '../../../hooks/use-permissions';
+import { useProjects } from '../../../hooks/use-projects';
+import { useWorkspaces } from '../../../hooks/use-workspaces';
+import { canProject } from '../../../lib/permissions';
+import PageError from '../../shared/page-error';
+import PageLoading from '../../shared/page-loading';
+import { AddMemberTab } from './add-member-tab';
+import { GeneralTab } from './general-tab';
+import { LabelsTab } from './labels-tab';
+import { MembersTab } from './members-tab';
 
 export function ProjectSettings() {
   const { workspaceSlug, projectSlug } = useParams<{
@@ -35,61 +37,39 @@ export function ProjectSettings() {
     isLoading: projLoading,
     isError: projError,
     refetch: refetchProjects,
-  } = useProjects(workspace?.id ?? "");
+  } = useProjects(workspace?.id ?? '');
   const project = projects?.find((p) => p.slug === projectSlug);
 
   const { access, isWorkspaceAdmin, isLoading: permLoading } = usePermissions();
-  const canAccessSettings = canProject(access, "UPDATE_PROJECT");
-  const isLead = access.projectRole === "LEAD";
+  const canAccessSettings = canProject(access, 'UPDATE_PROJECT');
+  const isLead = access.projectRole === 'LEAD';
 
   // Set of userIds who are workspace ADMINs — used so a project Lead can't
   // change/remove a workspace admin's role even if that admin happens to
   // also have a real ProjectMember row (e.g. the project's creator).
   const workspaceAdminIds = new Set(
-    workspace?.members
-      ?.filter((m: any) => m.role === "ADMIN")
-      .map((m: any) => m.userId) ?? [],
+    workspace?.members?.filter((m: any) => m.role === 'ADMIN').map((m: any) => m.userId) ?? [],
   );
 
-  const [tab, setTab] = useQueryState("tab", { defaultValue: "general" });
+  const [tab, setTab] = useQueryState('tab', { defaultValue: 'general' });
 
   useEffect(() => {
     if (wsLoading || projLoading || permLoading || !project) return;
     if (!canAccessSettings) {
-      router.replace(
-        `/no-access?reason=insufficient-role&workspace=${workspaceSlug}`,
-      );
+      router.replace(`/no-access?reason=insufficient-role&workspace=${workspaceSlug}`);
     }
-  }, [
-    wsLoading,
-    projLoading,
-    permLoading,
-    canAccessSettings,
-    project,
-    router,
-    workspaceSlug,
-  ]);
+  }, [wsLoading, projLoading, permLoading, canAccessSettings, project, router, workspaceSlug]);
 
   if (wsLoading || projLoading || permLoading) {
     return <PageLoading />;
   }
 
   if (wsError) {
-    return (
-      <PageError
-        message="Couldn't load workspace"
-        onRetry={() => refetchWorkspaces()}
-      />
-    );
+    return <PageError message="Couldn't load workspace" onRetry={() => refetchWorkspaces()} />;
   }
 
   if (projError) {
-    return (
-      <PageError
-        message="Couldn't load project"
-        onRetry={() => refetchProjects()}
-      />
-    );
+    return <PageError message="Couldn't load project" onRetry={() => refetchProjects()} />;
   }
 
   if (!project || !workspace || !canAccessSettings) {
@@ -97,19 +77,17 @@ export function ProjectSettings() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-[680px] px-8 py-6">
-          <h1 className="text-[16px] font-medium text-text-primary mb-6">
-            Project Settings
-          </h1>
+          <h1 className="mb-6 text-[16px] font-medium text-text-primary">Project Settings</h1>
           <Tabs
             value={tab}
             onValueChange={setTab}
             tabs={[
               {
-                label: "General",
-                value: "general",
+                label: 'General',
+                value: 'general',
                 content: (
                   <GeneralTab
                     projectId={project.id}
@@ -122,8 +100,8 @@ export function ProjectSettings() {
                 ),
               },
               {
-                label: "Members",
-                value: "members",
+                label: 'Members',
+                value: 'members',
                 content: (
                   <MembersTab
                     projectId={project.id}
@@ -133,18 +111,13 @@ export function ProjectSettings() {
                 ),
               },
               {
-                label: "Add Member",
-                value: "add-member",
-                content: (
-                  <AddMemberTab
-                    projectId={project.id}
-                    workspaceId={workspace.id}
-                  />
-                ),
+                label: 'Add Member',
+                value: 'add-member',
+                content: <AddMemberTab projectId={project.id} workspaceId={workspace.id} />,
               },
               {
-                label: "Labels",
-                value: "labels",
+                label: 'Labels',
+                value: 'labels',
                 content: <LabelsTab projectId={project.id} />,
               },
             ]}

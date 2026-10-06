@@ -5,8 +5,11 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc -b",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
+  "prettier": "@devflow/config/prettier",
   "keywords": [],
   "author": "",
   "license": "ISC",

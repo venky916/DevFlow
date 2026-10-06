@@ -1,15 +1,17 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { LabelChip } from "@devflow/ui/components/label-chip";
-import { PRIORITY_COLORS } from "../../lib/issue-constants";
-import { useCanMoveIssue } from "../../hooks/use-can-move-issue";
-import { cn } from "@devflow/ui/lib/cn";
-import type { IIssueWithRelations } from "@devflow/types";
-import { Circle, Layers, Lock } from "lucide-react";
-import { Avatar } from "@devflow/ui/components/avatar";
+import { useState } from 'react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Circle, Layers, Lock } from 'lucide-react';
+
+import type { IIssueWithRelations } from '@devflow/types';
+import { Avatar } from '@devflow/ui/components/avatar';
+import { LabelChip } from '@devflow/ui/components/label-chip';
+import { cn } from '@devflow/ui/lib/cn';
+
+import { useCanMoveIssue } from '../../hooks/use-can-move-issue';
+import { PRIORITY_COLORS } from '../../lib/issue-constants';
 
 // widened type — on the Board page this extra field simply isn't there,
 // and that's fine: override then falls through to undefined → usePermissions
@@ -33,14 +35,7 @@ export function IssueCard({ issue, onClick }: Props) {
   const { canMove } = useCanMoveIssue(override);
   const draggable = canMove({ assigneeId: issue.assigneeId ?? null });
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: issue.id,
     disabled: !draggable,
   });
@@ -64,23 +59,23 @@ export function IssueCard({ issue, onClick }: Props) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={cn(
-        "flex flex-col p-[10px_12px] rounded-[4px] border border-border-default bg-bg-surface hover:border-border-emphasis transition-colors",
-        draggable ? "cursor-pointer" : "cursor-default",
+        'flex flex-col rounded-[4px] border border-border-default bg-bg-surface p-[10px_12px] transition-colors hover:border-border-emphasis',
+        draggable ? 'cursor-pointer' : 'cursor-default',
       )}
     >
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-1.5">
           {childCount > 0 ? (
-            <Layers className="h-3 w-3 text-text-muted shrink-0" />
+            <Layers className="h-3 w-3 shrink-0 text-text-muted" />
           ) : (
-            <Circle className="h-3 w-3 text-text-muted shrink-0" />
+            <Circle className="h-3 w-3 shrink-0 text-text-muted" />
           )}
-          <p className="text-[13px] font-medium text-text-primary leading-snug flex-1">
+          <p className="flex-1 text-[13px] leading-snug font-medium text-text-primary">
             {issue.title}
           </p>
           {!draggable && (
             <Lock
-              className="h-3 w-3 text-text-muted shrink-0"
+              className="h-3 w-3 shrink-0 text-text-muted"
               // title="You can't move this issue"
             />
           )}
@@ -89,12 +84,7 @@ export function IssueCard({ issue, onClick }: Props) {
         {labels.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {labels.map((label: any) => (
-              <LabelChip
-                key={label.id}
-                name={label.name}
-                color={label.color}
-                size="sm"
-              />
+              <LabelChip key={label.id} name={label.name} color={label.color} size="sm" />
             ))}
           </div>
         )}
@@ -102,16 +92,14 @@ export function IssueCard({ issue, onClick }: Props) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div
-              className="h-[5px] w-[5px] rounded-full shrink-0"
+              className="h-[5px] w-[5px] shrink-0 rounded-full"
               style={{ backgroundColor: PRIORITY_COLORS[issue.priority] }}
             />
-            <span className="text-[10px] font-mono text-accent">
+            <span className="font-mono text-[10px] text-accent">
               #{issue.id.slice(-6).toUpperCase()}
             </span>
             {childCount > 0 && (
-              <span className="text-[10px] font-mono text-text-muted">
-                {childCount} sub
-              </span>
+              <span className="font-mono text-[10px] text-text-muted">{childCount} sub</span>
             )}
           </div>
 
@@ -127,10 +115,10 @@ export function IssueCard({ issue, onClick }: Props) {
 
       <div
         className="grid transition-[grid-template-rows] duration-200 ease-out"
-        style={{ gridTemplateRows: hovered && childCount > 0 ? "1fr" : "0fr" }}
+        style={{ gridTemplateRows: hovered && childCount > 0 ? '1fr' : '0fr' }}
       >
         <div className="overflow-hidden">
-          <div className="border-t border-border-default mt-2 pt-2 flex flex-col gap-1">
+          <div className="mt-2 flex flex-col gap-1 border-t border-border-default pt-2">
             {children.map((child: any) => (
               <div
                 key={child.id}
@@ -138,11 +126,9 @@ export function IssueCard({ issue, onClick }: Props) {
                   e.stopPropagation();
                   onClick(child.id);
                 }}
-                className="flex items-center justify-between gap-2 px-1.5 py-1 rounded-[4px] hover:bg-bg-hover transition-colors"
+                className="flex items-center justify-between gap-2 rounded-[4px] px-1.5 py-1 transition-colors hover:bg-bg-hover"
               >
-                <span className="text-[11px] text-text-secondary truncate">
-                  {child.title}
-                </span>
+                <span className="truncate text-[11px] text-text-secondary">{child.title}</span>
                 {child.assignee && (
                   <Avatar
                     name={child.assignee.name}

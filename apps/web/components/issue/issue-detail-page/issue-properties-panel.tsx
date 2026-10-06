@@ -1,16 +1,18 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Controller } from "react-hook-form";
-import { ChevronDown } from "lucide-react";
-import { Avatar } from "@devflow/ui/components/avatar";
-import { Select } from "@devflow/ui/components/select";
-import { DatePicker } from "@devflow/ui/components/date-picker";
-import { STATUS_OPTIONS, PRIORITY_OPTIONS } from "../../../lib/issue-constants";
-import { FieldRow } from "../../shared/field-row";
-import { IssueTypeSelect } from "../../shared/issue-type-select";
-import { ProjectLabelSelect } from "../../shared/project-label-select";
-import type { IIssueWithRelations, IssueType } from "@devflow/types";
+import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { Controller } from 'react-hook-form';
+
+import type { IIssueWithRelations, IssueType } from '@devflow/types';
+import { Avatar } from '@devflow/ui/components/avatar';
+import { DatePicker } from '@devflow/ui/components/date-picker';
+import { Select } from '@devflow/ui/components/select';
+
+import { PRIORITY_OPTIONS, STATUS_OPTIONS } from '../../../lib/issue-constants';
+import { FieldRow } from '../../shared/field-row';
+import { IssueTypeSelect } from '../../shared/issue-type-select';
+import { ProjectLabelSelect } from '../../shared/project-label-select';
 
 interface Props {
   issue: IIssueWithRelations;
@@ -36,46 +38,44 @@ export function IssuePropertiesPanel({ issue, projectId, form }: Props) {
   } = form;
 
   return (
-    <div className="flex flex-col border border-border-default rounded-md">
+    <div className="flex flex-col rounded-md border border-border-default">
       <button
         type="button"
         onClick={() => setIsOpen((v: boolean) => !v)}
-        className={`flex items-center justify-between px-4 py-3 text-[11px] uppercase tracking-[0.04em] font-mono text-text-muted cursor-pointer ${
-          isOpen ? " border-b border-border-default" : ""
+        className={`flex cursor-pointer items-center justify-between px-4 py-3 font-mono text-[11px] tracking-[0.04em] text-text-muted uppercase ${
+          isOpen ? 'border-b border-border-default' : ''
         }`}
       >
         Properties
         <ChevronDown
-          className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-0" : "-rotate-90"}`}
+          className={`h-3.5 w-3.5 transition-transform ${isOpen ? 'rotate-0' : '-rotate-90'}`}
         />
       </button>
 
       {isOpen && (
-        <div className="flex flex-col gap-3 px-4 pb-4 pt-4">
+        <div className="flex flex-col gap-3 px-4 pt-4 pb-4">
           <FieldRow label="Status">
             <Select
               options={STATUS_OPTIONS}
-              value={watch("status")}
+              value={watch('status')}
               disabled={hasChildren || !canEditIssue}
               onValueChange={(v: string) => {
-                setValue("status", v);
+                setValue('status', v);
                 handleSubmit(save)();
               }}
             />
             {hasChildren && (
-              <p className="text-[11px] text-text-muted mt-1">
-                Set automatically from sub-issues
-              </p>
+              <p className="mt-1 text-[11px] text-text-muted">Set automatically from sub-issues</p>
             )}
           </FieldRow>
 
           <FieldRow label="Priority">
             <Select
               options={PRIORITY_OPTIONS}
-              value={watch("priority")}
+              value={watch('priority')}
               disabled={!canEditIssue}
               onValueChange={(v: string) => {
-                setValue("priority", v);
+                setValue('priority', v);
                 handleSubmit(save)();
               }}
             />
@@ -83,10 +83,10 @@ export function IssuePropertiesPanel({ issue, projectId, form }: Props) {
 
           <FieldRow label="Type">
             <IssueTypeSelect
-              value={watch("type") as IssueType}
+              value={watch('type') as IssueType}
               disabled={!canEditIssue}
               onValueChange={(v: IssueType) => {
-                setValue("type", v);
+                setValue('type', v);
                 handleSubmit(save)();
               }}
             />
@@ -96,10 +96,10 @@ export function IssuePropertiesPanel({ issue, projectId, form }: Props) {
             <Select
               placeholder="Unassigned"
               options={memberOptions}
-              value={watch("assigneeId") ?? undefined}
+              value={watch('assigneeId') ?? undefined}
               disabled={!canEditIssue}
               onValueChange={(v: string) => {
-                setValue("assigneeId", v || null);
+                setValue('assigneeId', v || null);
                 handleSubmit(save)();
               }}
             />
@@ -109,10 +109,10 @@ export function IssuePropertiesPanel({ issue, projectId, form }: Props) {
             <Select
               placeholder="No sprint"
               options={sprintOptions}
-              value={watch("sprintId") ?? undefined}
+              value={watch('sprintId') ?? undefined}
               disabled={!canEditIssue || !canMoveToSprint}
               onValueChange={(v: string) => {
-                setValue("sprintId", v || null);
+                setValue('sprintId', v || null);
                 handleSubmit(save)();
               }}
             />
@@ -138,10 +138,10 @@ export function IssuePropertiesPanel({ issue, projectId, form }: Props) {
           <FieldRow label="Labels">
             <ProjectLabelSelect
               projectId={projectId}
-              selectedIds={watch("labelIds") ?? []}
+              selectedIds={watch('labelIds') ?? []}
               disabled={!canEditIssue}
               onChange={(ids: string[]) => {
-                setValue("labelIds", ids);
+                setValue('labelIds', ids);
                 handleSubmit(save)();
               }}
             />
@@ -150,10 +150,7 @@ export function IssuePropertiesPanel({ issue, projectId, form }: Props) {
           {issue.creator && (
             <FieldRow label="Created by">
               <div className="flex items-center gap-2">
-                <Avatar
-                  name={issue.creator.name ?? issue.creator.email}
-                  size="sm"
-                />
+                <Avatar name={issue.creator.name ?? issue.creator.email} size="sm" />
                 <span className="text-[12px] text-text-secondary">
                   {issue.creator.name ?? issue.creator.email}
                 </span>

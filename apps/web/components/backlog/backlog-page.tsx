@@ -1,46 +1,44 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
-import { useQueryStates, parseAsString, parseAsBoolean } from "nuqs";
-import { Plus, ChevronDown, ChevronRight, RotateCw, Play } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@devflow/ui/components/button";
-import { Badge } from "@devflow/ui/components/badge";
-import { SearchBox } from "@devflow/ui/components/search-box";
-import { cn } from "@devflow/ui/lib/cn";
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import {
+  closestCorners,
   DndContext,
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
   PointerSensor,
+  useDroppable,
   useSensor,
   useSensors,
-  closestCorners,
-  useDroppable,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  arrayMove,
-} from "@dnd-kit/sortable";
-import { useWorkspaces } from "../../hooks/use-workspaces";
-import { useProjects } from "../../hooks/use-projects";
-import { useBacklogGrouped, useMoveToSprint } from "../../hooks/use-backlog";
-import { useMoveIssue } from "../../hooks/use-board";
-import { useStartSprint } from "../../hooks/use-sprints";
-import { useProjectMembers, useProjectSprints } from "../../hooks/use-issues";
-import { useCanMoveIssue } from "../../hooks/use-can-move-issue";
-import { CreateIssueModal } from "../issue/create-issue-modal";
-import { IssueSlideOver } from "../issue/issue-slide-over";
-import { IssueRow } from "./issue-row";
-import { FilterBar, type IssueFilters } from "../shared/filter-bar";
-import { getFractionalPosition } from "../../lib/fractional-position";
-import { PRIORITY_COLORS } from "../../lib/issue-constants";
-import PageLoading from "../shared/page-loading";
-import PageError from "../shared/page-error";
-import type { IIssueWithRelations, ISprint } from "@devflow/types";
+} from '@dnd-kit/core';
+import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { ChevronDown, ChevronRight, Play, Plus, RotateCw } from 'lucide-react';
+import { parseAsBoolean, parseAsString, useQueryStates } from 'nuqs';
+import { toast } from 'sonner';
+
+import type { IIssueWithRelations, ISprint } from '@devflow/types';
+import { Badge } from '@devflow/ui/components/badge';
+import { Button } from '@devflow/ui/components/button';
+import { SearchBox } from '@devflow/ui/components/search-box';
+import { cn } from '@devflow/ui/lib/cn';
+
+import { useBacklogGrouped, useMoveToSprint } from '../../hooks/use-backlog';
+import { useMoveIssue } from '../../hooks/use-board';
+import { useCanMoveIssue } from '../../hooks/use-can-move-issue';
+import { useProjectMembers, useProjectSprints } from '../../hooks/use-issues';
+import { useProjects } from '../../hooks/use-projects';
+import { useStartSprint } from '../../hooks/use-sprints';
+import { useWorkspaces } from '../../hooks/use-workspaces';
+import { getFractionalPosition } from '../../lib/fractional-position';
+import { PRIORITY_COLORS } from '../../lib/issue-constants';
+import { CreateIssueModal } from '../issue/create-issue-modal';
+import { IssueSlideOver } from '../issue/issue-slide-over';
+import { FilterBar, type IssueFilters } from '../shared/filter-bar';
+import PageError from '../shared/page-error';
+import PageLoading from '../shared/page-loading';
+import { IssueRow } from './issue-row';
 
 function SprintSection({
   sprint,
@@ -62,38 +60,31 @@ function SprintSection({
 
   return (
     <div className="flex flex-col">
-      <div className="flex items-center gap-2 px-2 py-2 hover:bg-bg-hover rounded-[4px] transition-colors">
-        <button
-          onClick={() => setCollapsed((v) => !v)}
-          className="flex items-center gap-2 flex-1"
-        >
+      <div className="flex items-center gap-2 rounded-[4px] px-2 py-2 transition-colors hover:bg-bg-hover">
+        <button onClick={() => setCollapsed((v) => !v)} className="flex flex-1 items-center gap-2">
           {collapsed ? (
-            <ChevronRight className="h-3.5 w-3.5 text-text-muted shrink-0" />
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-text-muted" />
           ) : (
-            <ChevronDown className="h-3.5 w-3.5 text-text-muted shrink-0" />
+            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-text-muted" />
           )}
-          <span className="text-[13px] font-medium text-text-primary">
-            {sprint.name}
-          </span>
-          <Badge variant={sprint.status === "ACTIVE" ? "success" : "warning"}>
-            {sprint.status === "ACTIVE" ? "Active" : "Planned"}
+          <span className="text-[13px] font-medium text-text-primary">{sprint.name}</span>
+          <Badge variant={sprint.status === 'ACTIVE' ? 'success' : 'warning'}>
+            {sprint.status === 'ACTIVE' ? 'Active' : 'Planned'}
           </Badge>
-          <span className="text-[11px] font-mono text-text-muted ml-1">
+          <span className="ml-1 font-mono text-[11px] text-text-muted">
             {sprint.issues.length} issues
           </span>
         </button>
 
-        {canStart && sprint.status === "PLANNED" && (
+        {canStart && sprint.status === 'PLANNED' && (
           <Button
             size="sm"
             variant="secondary"
             onClick={() => onStart(sprint.id)}
             disabled={starting || hasActiveSprint}
-            title={
-              hasActiveSprint ? "Complete the active sprint first" : undefined
-            }
+            title={hasActiveSprint ? 'Complete the active sprint first' : undefined}
           >
-            <Play className="h-3 w-3 mr-1" />
+            <Play className="mr-1 h-3 w-3" />
             Start
           </Button>
         )}
@@ -102,18 +93,18 @@ function SprintSection({
       <div
         ref={setNodeRef}
         className={cn(
-          "flex flex-col ml-5 rounded-[4px] transition-colors",
-          isOver && "bg-bg-hover",
-          collapsed ? "min-h-0" : "min-h-[32px]",
+          'ml-5 flex flex-col rounded-[4px] transition-colors',
+          isOver && 'bg-bg-hover',
+          collapsed ? 'min-h-0' : 'min-h-[32px]',
         )}
       >
-        <div className={collapsed ? "hidden" : "flex flex-col"}>
+        <div className={collapsed ? 'hidden' : 'flex flex-col'}>
           <SortableContext
             items={sprint.issues.map((i) => i.id)}
             strategy={verticalListSortingStrategy}
           >
             {sprint.issues.length === 0 ? (
-              <p className="text-[12px] text-text-disabled px-3 py-2">
+              <p className="px-3 py-2 text-[12px] text-text-disabled">
                 No issues — drag here to add
               </p>
             ) : (
@@ -136,48 +127,37 @@ function BacklogSection({
   onOpen: (issueId: string) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const { setNodeRef, isOver } = useDroppable({ id: "BACKLOG" });
+  const { setNodeRef, isOver } = useDroppable({ id: 'BACKLOG' });
 
   return (
     <div className="flex flex-col">
       <button
         onClick={() => setCollapsed((v) => !v)}
-        className="flex items-center gap-2 px-2 py-2 hover:bg-bg-hover rounded-[4px] transition-colors"
+        className="flex items-center gap-2 rounded-[4px] px-2 py-2 transition-colors hover:bg-bg-hover"
       >
         {collapsed ? (
-          <ChevronRight className="h-3.5 w-3.5 text-text-muted shrink-0" />
+          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-text-muted" />
         ) : (
-          <ChevronDown className="h-3.5 w-3.5 text-text-muted shrink-0" />
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-text-muted" />
         )}
-        <span className="text-[13px] font-medium text-text-primary">
-          Backlog
-        </span>
-        <span className="text-[11px] font-mono text-text-muted ml-1">
-          {issues.length} issues
-        </span>
+        <span className="text-[13px] font-medium text-text-primary">Backlog</span>
+        <span className="ml-1 font-mono text-[11px] text-text-muted">{issues.length} issues</span>
       </button>
 
       <div
         ref={setNodeRef}
         className={cn(
-          "flex flex-col ml-5 rounded-[4px] transition-colors",
-          isOver && "bg-bg-hover",
-          collapsed ? "min-h-0" : "min-h-[32px]",
+          'ml-5 flex flex-col rounded-[4px] transition-colors',
+          isOver && 'bg-bg-hover',
+          collapsed ? 'min-h-0' : 'min-h-[32px]',
         )}
       >
-        <div className={collapsed ? "hidden" : "flex flex-col"}>
-          <SortableContext
-            items={issues.map((i) => i.id)}
-            strategy={verticalListSortingStrategy}
-          >
+        <div className={collapsed ? 'hidden' : 'flex flex-col'}>
+          <SortableContext items={issues.map((i) => i.id)} strategy={verticalListSortingStrategy}>
             {issues.length === 0 ? (
-              <p className="text-[12px] text-text-disabled px-3 py-2">
-                No issues in backlog
-              </p>
+              <p className="px-3 py-2 text-[12px] text-text-disabled">No issues in backlog</p>
             ) : (
-              issues.map((issue) => (
-                <IssueRow key={issue.id} issue={issue} onOpen={onOpen} />
-              ))
+              issues.map((issue) => <IssueRow key={issue.id} issue={issue} onOpen={onOpen} />)
             )}
           </SortableContext>
         </div>
@@ -206,9 +186,7 @@ export function BacklogPage() {
 
   const [showCreate, setShowCreate] = useState(false);
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
-  const [activeIssue, setActiveIssue] = useState<IIssueWithRelations | null>(
-    null,
-  );
+  const [activeIssue, setActiveIssue] = useState<IIssueWithRelations | null>(null);
   const [rawFilters, setRawFilters] = useQueryStates(filterParsers);
 
   const filters = Object.fromEntries(
@@ -235,7 +213,7 @@ export function BacklogPage() {
     isLoading: projLoading,
     isError: projError,
     refetch: refetchProjects,
-  } = useProjects(workspace?.id ?? "");
+  } = useProjects(workspace?.id ?? '');
   const project = projects?.find((p) => p.slug === projectSlug);
 
   const {
@@ -244,26 +222,21 @@ export function BacklogPage() {
     isFetching,
     isError: backlogError,
     refetch,
-  } = useBacklogGrouped(project?.id ?? "", filters);
-  const { data: sprints } = useProjectSprints(project?.id ?? "");
-  const { data: members } = useProjectMembers(project?.id ?? "");
-  const { mutate: moveToSprint } = useMoveToSprint(project?.id ?? "");
+  } = useBacklogGrouped(project?.id ?? '', filters);
+  const { data: sprints } = useProjectSprints(project?.id ?? '');
+  const { data: members } = useProjectMembers(project?.id ?? '');
+  const { mutate: moveToSprint } = useMoveToSprint(project?.id ?? '');
   const { mutate: moveIssue } = useMoveIssue();
-  const { mutate: startSprint, isPending: starting } = useStartSprint(
-    project?.id ?? "",
+  const { mutate: startSprint, isPending: starting } = useStartSprint(project?.id ?? '');
+
+  const { canCreateIssue, canMove, canMoveToSprint, canStartSprint } = useCanMoveIssue();
+
+  const [localSprints, setLocalSprints] = useState<(ISprint & { issues: IIssueWithRelations[] })[]>(
+    [],
   );
-
-  const { canCreateIssue, canMove, canMoveToSprint, canStartSprint } =
-    useCanMoveIssue();
-
-  const [localSprints, setLocalSprints] = useState<
-    (ISprint & { issues: IIssueWithRelations[] })[]
-  >([]);
   const [localBacklog, setLocalBacklog] = useState<IIssueWithRelations[]>([]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-  );
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   function findIssue(issueId: string): IIssueWithRelations | null {
     for (const sprint of localSprints) {
@@ -277,12 +250,12 @@ export function BacklogPage() {
     for (const sprint of localSprints) {
       if (sprint.issues.some((i) => i.id === issueId)) return sprint.id;
     }
-    if (localBacklog.some((i) => i.id === issueId)) return "BACKLOG";
+    if (localBacklog.some((i) => i.id === issueId)) return 'BACKLOG';
     return null;
   }
 
   function getListFor(containerId: string): IIssueWithRelations[] {
-    if (containerId === "BACKLOG") return localBacklog;
+    if (containerId === 'BACKLOG') return localBacklog;
     return localSprints.find((s) => s.id === containerId)?.issues ?? [];
   }
 
@@ -303,10 +276,10 @@ export function BacklogPage() {
     const allSprintIds = localSprints.map((s) => s.id);
 
     let toContainer: string;
-    if (overId === "BACKLOG" || allSprintIds.includes(overId)) {
+    if (overId === 'BACKLOG' || allSprintIds.includes(overId)) {
       toContainer = overId;
     } else {
-      toContainer = findContainer(overId) ?? "BACKLOG";
+      toContainer = findContainer(overId) ?? 'BACKLOG';
     }
     if (!fromContainer) return;
 
@@ -318,7 +291,7 @@ export function BacklogPage() {
     // ─── permission gate — checked BEFORE any local state mutation ──
     if (isCrossSection) {
       if (!canMoveToSprint) {
-        toast.error("Only leads can move issues between sprints and backlog");
+        toast.error('Only leads can move issues between sprints and backlog');
         return;
       }
     } else {
@@ -341,17 +314,13 @@ export function BacklogPage() {
       const newPosition = getFractionalPosition(listWithoutDragged, dropIndex);
 
       const updatedIssue = { ...movedIssue, position: newPosition };
-      const finalList = reordered.map((i) =>
-        i.id === issueId ? updatedIssue : i,
-      );
+      const finalList = reordered.map((i) => (i.id === issueId ? updatedIssue : i));
 
-      if (fromContainer === "BACKLOG") {
+      if (fromContainer === 'BACKLOG') {
         setLocalBacklog(finalList);
       } else {
         setLocalSprints((prev) =>
-          prev.map((s) =>
-            s.id === fromContainer ? { ...s, issues: finalList } : s,
-          ),
+          prev.map((s) => (s.id === fromContainer ? { ...s, issues: finalList } : s)),
         );
       }
 
@@ -363,7 +332,7 @@ export function BacklogPage() {
               setLocalSprints(data.sprints);
               setLocalBacklog(data.backlogIssues);
             }
-            toast.error("Failed to reorder issue");
+            toast.error('Failed to reorder issue');
           },
         },
       );
@@ -377,19 +346,17 @@ export function BacklogPage() {
     const newPosition = getFractionalPosition(destList, dropIndex);
     const updatedIssue = { ...movedIssue, position: newPosition };
 
-    if (fromContainer === "BACKLOG") {
+    if (fromContainer === 'BACKLOG') {
       setLocalBacklog((prev) => prev.filter((i) => i.id !== issueId));
     } else {
       setLocalSprints((prev) =>
         prev.map((s) =>
-          s.id === fromContainer
-            ? { ...s, issues: s.issues.filter((i) => i.id !== issueId) }
-            : s,
+          s.id === fromContainer ? { ...s, issues: s.issues.filter((i) => i.id !== issueId) } : s,
         ),
       );
     }
 
-    if (toContainer === "BACKLOG") {
+    if (toContainer === 'BACKLOG') {
       setLocalBacklog((prev) => {
         const next = [...prev];
         next.splice(dropIndex, 0, updatedIssue);
@@ -406,7 +373,7 @@ export function BacklogPage() {
       );
     }
 
-    const sprintId = toContainer === "BACKLOG" ? null : toContainer;
+    const sprintId = toContainer === 'BACKLOG' ? null : toContainer;
     moveToSprint(
       { issueId, data: { sprintId, position: newPosition } },
       {
@@ -415,21 +382,21 @@ export function BacklogPage() {
             setLocalSprints(data.sprints);
             setLocalBacklog(data.backlogIssues);
           }
-          toast.error("Failed to move issue");
+          toast.error('Failed to move issue');
         },
       },
     );
   };
 
   const handleStart = (sprintId: string) => {
-    const hasActive = localSprints.some((s) => s.status === "ACTIVE");
+    const hasActive = localSprints.some((s) => s.status === 'ACTIVE');
     if (hasActive) {
-      toast.error("Complete the active sprint first");
+      toast.error('Complete the active sprint first');
       return;
     }
     startSprint(sprintId, {
-      onSuccess: () => toast.success("Sprint started!"),
-      onError: () => toast.error("Failed to start sprint"),
+      onSuccess: () => toast.success('Sprint started!'),
+      onError: () => toast.error('Failed to start sprint'),
     });
   };
 
@@ -444,21 +411,11 @@ export function BacklogPage() {
   }
 
   if (wsError) {
-    return (
-      <PageError
-        message="Couldn't load workspace"
-        onRetry={() => refetchWorkspaces()}
-      />
-    );
+    return <PageError message="Couldn't load workspace" onRetry={() => refetchWorkspaces()} />;
   }
 
   if (projError) {
-    return (
-      <PageError
-        message="Couldn't load project"
-        onRetry={() => refetchProjects()}
-      />
-    );
+    return <PageError message="Couldn't load project" onRetry={() => refetchProjects()} />;
   }
 
   if (!project) {
@@ -469,51 +426,36 @@ export function BacklogPage() {
     (data?.sprints.reduce((acc, s) => acc + s.issues.length, 0) ?? 0) +
     (data?.backlogIssues.length ?? 0);
   const memberUsers = members?.map((m) => m.user!).filter(Boolean) ?? [];
-  const hasActiveSprint = localSprints.some((s) => s.status === "ACTIVE");
+  const hasActiveSprint = localSprints.some((s) => s.status === 'ACTIVE');
 
   return (
-    <div className="flex flex-col w-full h-full overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-3 border-b border-border-default shrink-0">
+    <div className="flex h-full w-full flex-col overflow-hidden">
+      <div className="flex shrink-0 items-center justify-between border-b border-border-default px-6 py-3">
         <div className="flex items-center gap-3">
           <h1 className="text-[13px] font-medium text-text-primary">
             Backlog
-            <span className="ml-2 text-text-muted font-normal">
-              {totalIssues} issues
-            </span>
+            <span className="ml-2 font-normal text-text-muted">{totalIssues} issues</span>
           </h1>
           <div className="h-4 w-px bg-border-default" />
           <SearchBox
-            value={filters.q ?? ""}
-            onChange={(q) =>
-              handleFiltersChange({ ...filters, q: q || undefined })
-            }
+            value={filters.q ?? ''}
+            onChange={(q) => handleFiltersChange({ ...filters, q: q || undefined })}
           />
           <FilterBar
-            fields={["assignee", "label", "priority", "type", "dueDate"]}
+            fields={['assignee', 'label', 'priority', 'type', 'dueDate']}
             projectId={project.id}
             members={memberUsers}
             filters={filters}
             onChange={handleFiltersChange}
           />
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => refetch()}
-            disabled={isFetching}
-          >
-            <RotateCw
-              className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`}
-            />
+        <div className="flex shrink-0 items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching}>
+            <RotateCw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
           </Button>
           {canCreateIssue && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setShowCreate(true)}
-            >
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
+            <Button variant="primary" size="sm" onClick={() => setShowCreate(true)}>
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
               Issue
             </Button>
           )}
@@ -524,19 +466,12 @@ export function BacklogPage() {
         {backlogLoading ? (
           <PageLoading />
         ) : backlogError ? (
-          <PageError
-            message="Couldn't load backlog"
-            onRetry={() => refetch()}
-          />
+          <PageError message="Couldn't load backlog" onRetry={() => refetch()} />
         ) : !data || totalIssues === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3 border border-border-default rounded-[4px]">
+          <div className="flex flex-col items-center justify-center gap-3 rounded-[4px] border border-border-default py-20">
             <p className="text-[13px] text-text-muted">No issues yet</p>
             {canCreateIssue && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setShowCreate(true)}
-              >
+              <Button variant="secondary" size="sm" onClick={() => setShowCreate(true)}>
                 Create an issue
               </Button>
             )}
@@ -560,25 +495,22 @@ export function BacklogPage() {
                   starting={starting}
                 />
               ))}
-              <BacklogSection
-                issues={localBacklog}
-                onOpen={setSelectedIssueId}
-              />
+              <BacklogSection issues={localBacklog} onOpen={setSelectedIssueId} />
             </div>
 
             <DragOverlay>
               {activeIssue && (
-                <div className="flex items-center gap-3 px-3 py-2 rounded-[4px] border border-border-emphasis bg-bg-surface shadow-lg opacity-95">
+                <div className="flex items-center gap-3 rounded-[4px] border border-border-emphasis bg-bg-surface px-3 py-2 opacity-95 shadow-lg">
                   <div
-                    className="h-[5px] w-[5px] rounded-full shrink-0"
+                    className="h-[5px] w-[5px] shrink-0 rounded-full"
                     style={{
                       backgroundColor: PRIORITY_COLORS[activeIssue.priority],
                     }}
                   />
-                  <span className="flex-1 text-[13px] text-text-primary truncate">
+                  <span className="flex-1 truncate text-[13px] text-text-primary">
                     {activeIssue.title}
                   </span>
-                  <span className="text-[11px] font-mono text-accent shrink-0">
+                  <span className="shrink-0 font-mono text-[11px] text-accent">
                     #{activeIssue.id.slice(-6).toUpperCase()}
                   </span>
                 </div>

@@ -1,73 +1,60 @@
 import { Response } from 'express';
 
-export const sendSuccess = (
-    res: Response,
-    data: any,
-    message = 'Success',
-    statusCode = 200
-) => {
-    return res.status(statusCode).json({
-        success: true,
-        message,
-        data,
-    });
+export const sendSuccess = (res: Response, data: any, message = 'Success', statusCode = 200) => {
+  return res.status(statusCode).json({
+    success: true,
+    message,
+    data,
+  });
 };
 
-export const sendCreated = (
-    res: Response,
-    data: any,
-    message = 'Created successfully'
-) => {
-    return sendSuccess(res, data, message, 201);
+export const sendCreated = (res: Response, data: any, message = 'Created successfully') => {
+  return sendSuccess(res, data, message, 201);
 };
 
 export const sendPaginated = (res: Response, data: any, meta: any) => {
-    return res.status(200).json({
-        success: true,
-        message: 'Success',
-        data: {
-            items: data,
-            meta: {
-                total: meta.total,
-                page: meta.page,
-                limit: meta.limit,
-                hasMore: meta.hasMore
-            }
-        }
-    })
-}
+  return res.status(200).json({
+    success: true,
+    message: 'Success',
+    data: {
+      items: data,
+      meta: {
+        total: meta.total,
+        page: meta.page,
+        limit: meta.limit,
+        hasMore: meta.hasMore,
+      },
+    },
+  });
+};
 // when you add pagination to GET /issues (could be 100s of issues)
 
 export const sendCursorPaginated = (
-    res: Response,
-    items: any[],
-    meta: { nextCursor: string | null; hasMore: boolean }
+  res: Response,
+  items: any[],
+  meta: { nextCursor: string | null; hasMore: boolean },
 ) => {
-    return res.status(200).json({
-        success: true,
-        message: 'Success',
-        data: {
-            items,
-            meta: {
-                nextCursor: meta.nextCursor,
-                hasMore: meta.hasMore,
-            },
-        },
-    });
+  return res.status(200).json({
+    success: true,
+    message: 'Success',
+    data: {
+      items,
+      meta: {
+        nextCursor: meta.nextCursor,
+        hasMore: meta.hasMore,
+      },
+    },
+  });
 };
 
 export const sendNoContent = (res: Response) => {
-    return res.status(204).send();
+  return res.status(204).send();
 };
 
-export const sendError = (
-    res: Response,
-    message = 'Something went wrong',
-    statusCode = 500
-) => {
-    return res.status(statusCode).json({
-        success: false,
-        message,
-        data: null,
-    });
+export const sendError = (res: Response, message = 'Something went wrong', statusCode = 500) => {
+  return res.status(statusCode).json({
+    success: false,
+    message,
+    data: null,
+  });
 };

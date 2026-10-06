@@ -1,10 +1,6 @@
-import { ProjectSettings } from "../../../../../components/projects/project-settings";
+import { ProjectSettings } from '../../../../../components/projects/project-settings';
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ projectSlug: string }>;
-}) {
+export async function generateMetadata({ params }: { params: Promise<{ projectSlug: string }> }) {
   const { projectSlug } = await params;
   return {
     title: `${projectSlug} — Settings`,

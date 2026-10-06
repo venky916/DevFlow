@@ -1,12 +1,13 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Loader2, Play, CheckCheck, Pencil, Trash2 } from "lucide-react";
-import { Button } from "@devflow/ui/components/button";
-import { Badge } from "@devflow/ui/components/badge";
-import { ConfirmModal } from "@devflow/ui/components/confirm-modal";
-import { cn } from "@devflow/ui/lib/cn";
-import type { ISprintWithCount } from "@devflow/types";
+import { useState } from 'react';
+import { CheckCheck, Loader2, Pencil, Play, Trash2 } from 'lucide-react';
+
+import type { ISprintWithCount } from '@devflow/types';
+import { Badge } from '@devflow/ui/components/badge';
+import { Button } from '@devflow/ui/components/button';
+import { ConfirmModal } from '@devflow/ui/components/confirm-modal';
+import { cn } from '@devflow/ui/lib/cn';
 
 interface Props {
   sprint: ISprintWithCount;
@@ -36,24 +37,22 @@ export function SprintCard({
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const issueCount = sprint._count?.issues ?? 0;
-  const isCompleted = sprint.status === "COMPLETED";
+  const isCompleted = sprint.status === 'COMPLETED';
 
   const formatDate = (date: Date | null) => {
-    if (!date) return "—";
-    return new Date(date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
+    if (!date) return '—';
+    return new Date(date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
     });
   };
 
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 p-4 rounded-[4px] border bg-bg-surface",
-        active
-          ? "border-[3px]  border-border-default border-l-accent"
-          : "border-border-default",
+        'flex flex-col gap-3 rounded-[4px] border bg-bg-surface p-4',
+        active ? 'border-[3px] border-border-default border-l-accent' : 'border-border-default',
       )}
     >
       {/* Top row */}
@@ -61,16 +60,14 @@ export function SprintCard({
         {/* Left */}
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
-            <span className="text-[13px] font-medium text-text-primary">
-              {sprint.name}
-            </span>
+            <span className="text-[13px] font-medium text-text-primary">{sprint.name}</span>
             <Badge
               variant={
-                sprint.status === "ACTIVE"
-                  ? "success"
-                  : sprint.status === "PLANNED"
-                    ? "warning"
-                    : "neutral"
+                sprint.status === 'ACTIVE'
+                  ? 'success'
+                  : sprint.status === 'PLANNED'
+                    ? 'warning'
+                    : 'neutral'
               }
             >
               {sprint.status.charAt(0) + sprint.status.slice(1).toLowerCase()}
@@ -90,7 +87,7 @@ export function SprintCard({
             <button
               onClick={onEdit}
               title="Edit sprint"
-              className="flex h-7 w-7 items-center justify-center rounded-[4px] text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors"
+              className="flex h-7 w-7 items-center justify-center rounded-[4px] text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary"
             >
               <Pencil className="h-3.5 w-3.5" />
             </button>
@@ -100,29 +97,24 @@ export function SprintCard({
             <button
               onClick={() => setConfirmOpen(true)}
               title="Delete sprint"
-              className="flex h-7 w-7 items-center justify-center rounded-[4px] text-text-muted hover:text-danger-text hover:bg-bg-hover transition-colors"
+              className="flex h-7 w-7 items-center justify-center rounded-[4px] text-text-muted transition-colors hover:bg-bg-hover hover:text-danger-text"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           )}
 
           {active && onComplete && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onComplete}
-              disabled={completing}
-            >
+            <Button variant="secondary" size="sm" onClick={onComplete} disabled={completing}>
               {completing ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
                 <>
-                  <CheckCheck className="h-3.5 w-3.5 mr-1.5" /> Complete
+                  <CheckCheck className="mr-1.5 h-3.5 w-3.5" /> Complete
                 </>
               )}
             </Button>
           )}
-          {!active && sprint.status === "PLANNED" && onStart && (
+          {!active && sprint.status === 'PLANNED' && onStart && (
             <Button
               variant="secondary"
               size="sm"
@@ -133,7 +125,7 @@ export function SprintCard({
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
                 <>
-                  <Play className="h-3.5 w-3.5 mr-1.5" /> Start
+                  <Play className="mr-1.5 h-3.5 w-3.5" /> Start
                 </>
               )}
             </Button>
@@ -144,18 +136,16 @@ export function SprintCard({
       {/* Progress bar — active sprint only */}
       {active && (
         <div className="flex items-center gap-2">
-          <div className="flex-1 h-[3px] bg-bg-hover rounded-full overflow-hidden">
+          <div className="h-[3px] flex-1 overflow-hidden rounded-full bg-bg-hover">
             <div
-              className="h-full bg-accent rounded-full transition-all"
+              className="h-full rounded-full bg-accent transition-all"
               style={{
                 width:
-                  issueCount > 0
-                    ? `${Math.round((sprint.doneCount / issueCount) * 100)}%`
-                    : "0%",
+                  issueCount > 0 ? `${Math.round((sprint.doneCount / issueCount) * 100)}%` : '0%',
               }}
             />
           </div>
-          <span className="text-[11px] font-mono text-text-muted shrink-0">
+          <span className="shrink-0 font-mono text-[11px] text-text-muted">
             {sprint.doneCount}/{issueCount}
           </span>
         </div>

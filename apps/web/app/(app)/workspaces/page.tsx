@@ -1,7 +1,7 @@
-import { WorkspacesList } from "../../../components/workspace/workspace-list";
+import { WorkspacesList } from '../../../components/workspace/workspace-list';
 
 export const metadata = {
-  title: "Workspaces — DevFlow",
+  title: 'Workspaces — DevFlow',
 };
 
 export default function WorkspacesPage() {

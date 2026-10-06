@@ -242,7 +242,6 @@ export type ActivityLogScalarFieldEnum = (typeof ActivityLogScalarFieldEnum)[key
 
 export const AttachmentScalarFieldEnum = {
   id: 'id',
-  url: 'url',
   fileKey: 'fileKey',
   fileName: 'fileName',
   fileSize: 'fileSize',

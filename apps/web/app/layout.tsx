@@ -1,14 +1,16 @@
-import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans";
-import { GeistMono } from "geist/font/mono";
-import { Toaster } from "sonner";
-import { QueryProvider } from "../components/providers/query-provider";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { GeistMono } from 'geist/font/mono';
+import { GeistSans } from 'geist/font/sans';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
+import { Toaster } from 'sonner';
+
+import { QueryProvider } from '../components/providers/query-provider';
+
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "DevFlow",
-  description: "Project management for developers",
+  title: 'DevFlow',
+  description: 'Project management for developers',
 };
 
 export default function RootLayout({

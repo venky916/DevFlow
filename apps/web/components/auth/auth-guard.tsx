@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "../../hooks/use-auth";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+import { useAuth } from '../../hooks/use-auth';
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -11,14 +12,14 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoading) return;
     if (!user) {
-      router.replace("/sign-in");
+      router.replace('/sign-in');
     }
   }, [user, isLoading, router]);
 
   if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-bg-app">
-        <div className="h-5 w-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
       </div>
     );
   }

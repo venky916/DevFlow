@@ -1,10 +1,12 @@
-"use client";
+'use client';
 
-import { formatDistanceToNow } from "date-fns";
-import { Loader2 } from "lucide-react";
-import { Avatar } from "@devflow/ui/components/avatar";
-import { useIssueActivities } from "../../hooks/use-issues";
-import { activityText } from "../../lib/issue-constants";
+import { formatDistanceToNow } from 'date-fns';
+import { Loader2 } from 'lucide-react';
+
+import { Avatar } from '@devflow/ui/components/avatar';
+
+import { useIssueActivities } from '../../hooks/use-issues';
+import { activityText } from '../../lib/issue-constants';
 
 interface Props {
   issueId: string;
@@ -26,9 +28,7 @@ export function ActivityPanel({ issueId }: Props) {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-[11px] uppercase tracking-[0.04em] font-mono text-text-muted">
-        Activity
-      </p>
+      <p className="font-mono text-[11px] tracking-[0.04em] text-text-muted uppercase">Activity</p>
       {!activities.length ? (
         <p className="text-[11px] text-text-disabled">No activity yet</p>
       ) : (
@@ -37,22 +37,19 @@ export function ActivityPanel({ issueId }: Props) {
             const lines = activityText(activity.action, activity.meta);
             return (
               <div key={activity.id} className="flex items-start gap-2">
-                <Avatar name={activity.user?.name ?? "?"} size="sm" />
+                <Avatar name={activity.user?.name ?? '?'} size="sm" />
                 <div className="flex flex-col gap-0.5">
                   {lines.map((line, i) => (
-                    <p
-                      key={i}
-                      className="text-[12px] text-text-secondary leading-snug"
-                    >
+                    <p key={i} className="text-[12px] leading-snug text-text-secondary">
                       {i === 0 && (
-                        <span className="text-text-primary font-medium">
-                          {activity.user?.name ?? "Someone"}{" "}
+                        <span className="font-medium text-text-primary">
+                          {activity.user?.name ?? 'Someone'}{' '}
                         </span>
                       )}
                       {line}
                     </p>
                   ))}
-                  <span className="text-[10px] text-text-muted font-mono">
+                  <span className="font-mono text-[10px] text-text-muted">
                     {formatDistanceToNow(new Date(activity.createdAt), {
                       addSuffix: true,
                     })}
@@ -67,9 +64,9 @@ export function ActivityPanel({ issueId }: Props) {
               type="button"
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
-              className="text-[11px] text-accent hover:underline self-start disabled:opacity-50"
+              className="self-start text-[11px] text-accent hover:underline disabled:opacity-50"
             >
-              {isFetchingNextPage ? "Loading..." : "Show more"}
+              {isFetchingNextPage ? 'Loading...' : 'Show more'}
             </button>
           )}
         </div>

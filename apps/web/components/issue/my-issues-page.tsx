@@ -1,38 +1,34 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
+import { useMemo, useState } from 'react';
+import type { SortingState } from '@tanstack/react-table';
+import { RotateCw } from 'lucide-react';
 import {
+  parseAsBoolean,
+  parseAsString,
+  parseAsStringEnum,
   useQueryState,
   useQueryStates,
-  parseAsString,
-  parseAsBoolean,
-  parseAsStringEnum,
-} from "nuqs";
-import type { SortingState } from "@tanstack/react-table";
-import { RotateCw } from "lucide-react";
-import { Button } from "@devflow/ui/components/button";
-import { SearchBox } from "@devflow/ui/components/search-box";
-import { KanbanColumn } from "../board/kanban-column";
-import { ListView } from "../shared/list-view";
-import { IssueSlideOver } from "../issue/issue-slide-over";
-import { FilterBar } from "../shared/filter-bar";
-import PageLoading from "../shared/page-loading";
-import PageError from "../shared/page-error";
+} from 'nuqs';
+
+import type { IssueStatus } from '@devflow/types';
+import { Button } from '@devflow/ui/components/button';
+import { SearchBox } from '@devflow/ui/components/search-box';
+
 import {
   useMyIssuesBoard,
   useMyIssuesList,
   type MyIssuesFilters,
   type MyIssuesListParams,
-} from "../../hooks/use-my-issues";
-import type { IssueStatus } from "@devflow/types";
+} from '../../hooks/use-my-issues';
+import { KanbanColumn } from '../board/kanban-column';
+import { IssueSlideOver } from '../issue/issue-slide-over';
+import { FilterBar } from '../shared/filter-bar';
+import { ListView } from '../shared/list-view';
+import PageError from '../shared/page-error';
+import PageLoading from '../shared/page-loading';
 
-const STATUSES: IssueStatus[] = [
-  "BACKLOG",
-  "TODO",
-  "IN_PROGRESS",
-  "IN_REVIEW",
-  "DONE",
-];
+const STATUSES: IssueStatus[] = ['BACKLOG', 'TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'];
 
 const filterParsers = {
   projectId: parseAsString,
@@ -48,19 +44,14 @@ const filterParsers = {
 
 export function MyIssuesPage() {
   const [view, setView] = useQueryState(
-    "view",
-    parseAsStringEnum(["board", "list"]).withDefault("board"),
+    'view',
+    parseAsStringEnum(['board', 'list']).withDefault('board'),
   );
   const [rawFilters, setRawFilters] = useQueryStates(filterParsers);
-  const [selectedIssueId, setSelectedIssueId] = useQueryState(
-    "issue",
-    parseAsString,
-  );
+  const [selectedIssueId, setSelectedIssueId] = useQueryState('issue', parseAsString);
 
   const [listPage, setListPage] = useState(1);
-  const [listSorting, setListSorting] = useState<SortingState>([
-    { id: "updatedAt", desc: true },
-  ]);
+  const [listSorting, setListSorting] = useState<SortingState>([{ id: 'updatedAt', desc: true }]);
 
   const filters = Object.fromEntries(
     Object.entries(rawFilters).filter(([, v]) => v !== null),
@@ -84,9 +75,8 @@ export function MyIssuesPage() {
   } = useMyIssuesBoard(filters);
 
   // List view's data
-  const listSortBy = (listSorting[0]?.id ??
-    "updatedAt") as MyIssuesListParams["sortBy"];
-  const listSortOrder: "asc" | "desc" = listSorting[0]?.desc ? "desc" : "asc";
+  const listSortBy = (listSorting[0]?.id ?? 'updatedAt') as MyIssuesListParams['sortBy'];
+  const listSortOrder: 'asc' | 'desc' = listSorting[0]?.desc ? 'desc' : 'asc';
 
   const {
     data: listData,
@@ -116,56 +106,50 @@ export function MyIssuesPage() {
   // selected issue lookup — board data has full project info attached;
   // list data (IMyIssue) also carries it, so check both depending on active view
   const selectedIssue = selectedIssueId
-    ? view === "board"
-      ? STATUSES.flatMap((s) => boardData?.columns[s] ?? []).find(
-          (i) => i.id === selectedIssueId,
-        )
+    ? view === 'board'
+      ? STATUSES.flatMap((s) => boardData?.columns[s] ?? []).find((i) => i.id === selectedIssueId)
       : listData?.items.find((i) => i.id === selectedIssueId)
     : null;
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-3 border-b border-border-default shrink-0">
+    <div className="flex h-full flex-col overflow-hidden">
+      <div className="flex shrink-0 items-center justify-between border-b border-border-default px-6 py-3">
         <div className="flex items-center gap-3">
           <h1 className="text-[13px] font-medium text-text-primary">
             My Issues
-            <span className="ml-2 text-text-muted font-normal">
-              {totalIssues} issues
-            </span>
+            <span className="ml-2 font-normal text-text-muted">{totalIssues} issues</span>
           </h1>
           <div className="h-4 w-px bg-border-default" />
           <SearchBox
-            value={filters.q ?? ""}
-            onChange={(q) =>
-              handleFiltersChange({ ...filters, q: q || undefined })
-            }
+            value={filters.q ?? ''}
+            onChange={(q) => handleFiltersChange({ ...filters, q: q || undefined })}
           />
           <FilterBar
-            fields={["project", "sprint", "priority", "type", "dueDate"]}
+            fields={['project', 'sprint', 'priority', 'type', 'dueDate']}
             projectOptions={projectOptions}
             filters={filters}
             onChange={handleFiltersChange}
           />
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center rounded-[4px] border border-border-default overflow-hidden">
+        <div className="flex shrink-0 items-center gap-2">
+          <div className="flex items-center overflow-hidden rounded-[4px] border border-border-default">
             <button
-              onClick={() => setView("board")}
-              className={`px-2.5 h-7 text-[12px] transition-colors ${
-                view === "board"
-                  ? "bg-bg-active text-text-primary"
-                  : "text-text-muted hover:text-text-primary"
+              onClick={() => setView('board')}
+              className={`h-7 px-2.5 text-[12px] transition-colors ${
+                view === 'board'
+                  ? 'bg-bg-active text-text-primary'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
             >
               Board
             </button>
             <button
-              onClick={() => setView("list")}
-              className={`px-2.5 h-7 text-[12px] transition-colors ${
-                view === "list"
-                  ? "bg-bg-active text-text-primary"
-                  : "text-text-muted hover:text-text-primary"
+              onClick={() => setView('list')}
+              className={`h-7 px-2.5 text-[12px] transition-colors ${
+                view === 'list'
+                  ? 'bg-bg-active text-text-primary'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
             >
               List
@@ -175,34 +159,29 @@ export function MyIssuesPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => (view === "board" ? refetchBoard() : refetchList())}
-            disabled={view === "board" ? boardFetching : listFetching}
+            onClick={() => (view === 'board' ? refetchBoard() : refetchList())}
+            disabled={view === 'board' ? boardFetching : listFetching}
           >
             <RotateCw
-              className={`h-3.5 w-3.5 ${(view === "board" ? boardFetching : listFetching) ? "animate-spin" : ""}`}
+              className={`h-3.5 w-3.5 ${(view === 'board' ? boardFetching : listFetching) ? 'animate-spin' : ''}`}
             />
           </Button>
         </div>
       </div>
 
       <div className="flex-1 overflow-hidden">
-        {view === "board" ? (
+        {view === 'board' ? (
           boardLoading ? (
             <PageLoading />
           ) : boardError ? (
-            <PageError
-              message="Couldn't load your issues"
-              onRetry={() => refetchBoard()}
-            />
+            <PageError message="Couldn't load your issues" onRetry={() => refetchBoard()} />
           ) : totalIssues === 0 ? (
             <div className="flex h-full items-center justify-center">
-              <p className="text-[13px] text-text-muted">
-                No issues match these filters
-              </p>
+              <p className="text-[13px] text-text-muted">No issues match these filters</p>
             </div>
           ) : (
             <div className="h-full px-6 py-4">
-              <div className="flex gap-4 h-full overflow-x-auto pb-4">
+              <div className="flex h-full gap-4 overflow-x-auto pb-4">
                 {STATUSES.map((status) => (
                   <KanbanColumn
                     key={status}
@@ -234,9 +213,9 @@ export function MyIssuesPage() {
       <IssueSlideOver
         issueId={selectedIssueId}
         onClose={() => setSelectedIssueId(null)}
-        projectId={selectedIssue?.project.id ?? ""}
-        workspaceSlug={selectedIssue?.project.workspace.slug ?? ""}
-        projectSlug={selectedIssue?.project.slug ?? ""}
+        projectId={selectedIssue?.project.id ?? ''}
+        workspaceSlug={selectedIssue?.project.workspace.slug ?? ''}
+        projectSlug={selectedIssue?.project.slug ?? ''}
       />
     </div>
   );

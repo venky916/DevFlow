@@ -1,7 +1,7 @@
-import { ForgotPasswordForm } from "../../../components/auth/forgot-password-form";
+import { ForgotPasswordForm } from '../../../components/auth/forgot-password-form';
 
 export const metadata = {
-  title: "Forgot Password — DevFlow",
+  title: 'Forgot Password — DevFlow',
 };
 
 export default function ForgotPasswordPage() {

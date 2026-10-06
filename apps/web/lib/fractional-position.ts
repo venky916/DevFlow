@@ -1,8 +1,8 @@
-import { generateKeyBetween } from "fractional-indexing";
+import { generateKeyBetween } from 'fractional-indexing';
 
 interface HasPosition {
-    id: string;
-    position: string;
+  id: string;
+  position: string;
 }
 
 // Computes the fractional key for an item landing at `dropIndex` inside
@@ -11,7 +11,7 @@ interface HasPosition {
 // and the backlog section — same-column reorder, cross-column moves,
 // and cross-section moves all reduce to this one calculation.
 export function getFractionalPosition(list: HasPosition[], dropIndex: number): string {
-    const before = list[dropIndex - 1]?.position ?? null;
-    const after = list[dropIndex]?.position ?? null;
-    return generateKeyBetween(before, after);
+  const before = list[dropIndex - 1]?.position ?? null;
+  const after = list[dropIndex]?.position ?? null;
+  return generateKeyBetween(before, after);
 }

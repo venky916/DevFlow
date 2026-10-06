@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { ArrowUp } from "lucide-react";
-import type { IIssueWithRelations } from "@devflow/types";
+import { ArrowUp } from 'lucide-react';
+
+import type { IIssueWithRelations } from '@devflow/types';
 
 interface Props {
   issue: IIssueWithRelations;
@@ -14,12 +15,10 @@ export function ParentLink({ issue, onNavigate }: Props) {
   return (
     <button
       onClick={() => onNavigate(issue.parent!.id)}
-      className="flex items-center gap-1.5 text-[12px] text-text-muted hover:text-text-primary transition-colors w-fit"
+      className="flex w-fit items-center gap-1.5 text-[12px] text-text-muted transition-colors hover:text-text-primary"
     >
       <ArrowUp className="h-3 w-3" />
-      <span className="font-mono text-accent">
-        #{issue.parent.id.slice(-6).toUpperCase()}
-      </span>
+      <span className="font-mono text-accent">#{issue.parent.id.slice(-6).toUpperCase()}</span>
       <span>{issue.parent.title}</span>
     </button>
   );

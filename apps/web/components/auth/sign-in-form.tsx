@@ -1,25 +1,29 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import { Button } from "@devflow/ui/components/button";
-import { Input } from "@devflow/ui/components/input";
-import { signInWithEmail } from "../../lib/auth";
-import { signInSchema, type SignInForm } from "@devflow/validators";
-import { GoogleIcon, GithubIcon } from "../../icons";
-import { Logo } from "../shared/logo";
-import { useAuthRedirect } from "../../hooks/auth/use-auth-redirect";
-import { useOAuthSignIn } from "../../hooks/auth/use-oauth-sign-in";
-import { Loader2 } from "lucide-react";
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+
+import { Button } from '@devflow/ui/components/button';
+import { Input } from '@devflow/ui/components/input';
+import { signInSchema, type SignInForm } from '@devflow/validators';
+
+import { useAuthRedirect } from '../../hooks/auth/use-auth-redirect';
+import { useOAuthSignIn } from '../../hooks/auth/use-oauth-sign-in';
+import { GithubIcon, GoogleIcon } from '../../icons';
+import { signInWithEmail } from '../../lib/auth';
+import { Logo } from '../shared/logo';
 
 export function SignInForm() {
   const router = useRouter();
   const { redirectTo, redirectQuery } = useAuthRedirect();
-  const { googleLoading, githubLoading, signInWithGoogle, signInWithGithub } =
-    useOAuthSignIn(redirectTo, "Welcome back!");
+  const { googleLoading, githubLoading, signInWithGoogle, signInWithGithub } = useOAuthSignIn(
+    redirectTo,
+    'Welcome back!',
+  );
 
   const {
     register,
@@ -30,10 +34,10 @@ export function SignInForm() {
   const onSubmit = async (data: SignInForm) => {
     try {
       await signInWithEmail(data.email, data.password);
-      toast.success("Welcome back!");
+      toast.success('Welcome back!');
       router.push(redirectTo);
     } catch (err: any) {
-      toast.error(err.message ?? "Sign in failed");
+      toast.error(err.message ?? 'Sign in failed');
     }
   };
 
@@ -41,57 +45,39 @@ export function SignInForm() {
     <div className="flex flex-col gap-8">
       <div className="flex flex-col items-center gap-2">
         <Logo />
-        <h1 className="text-xl font-semibold text-text-primary">
-          Sign in to DevFlow
-        </h1>
-        <p className="text-sm text-text-muted">
-          Welcome back. Let's get you moving.
-        </p>
+        <h1 className="text-xl font-semibold text-text-primary">Sign in to DevFlow</h1>
+        <p className="text-sm text-text-muted">Welcome back. Let's get you moving.</p>
       </div>
 
       <div className="flex flex-col gap-2">
         <Button
           variant="secondary"
-          className="w-full h-10"
+          className="h-10 w-full"
           onClick={signInWithGoogle}
           disabled={googleLoading}
         >
           <span className="mr-3">
-            {googleLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <GoogleIcon />
-            )}
+            {googleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
           </span>
-          <span className={googleLoading ? "opacity-70" : ""}>
-            Continue with Google
-          </span>
+          <span className={googleLoading ? 'opacity-70' : ''}>Continue with Google</span>
         </Button>
         <Button
           variant="secondary"
-          className="w-full h-10"
+          className="h-10 w-full"
           onClick={signInWithGithub}
           disabled={githubLoading}
         >
           <span className="mr-3">
-            {githubLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <GithubIcon />
-            )}
+            {githubLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <GithubIcon />}
           </span>
-          <span className={githubLoading ? "opacity-70" : ""}>
-            Continue with GitHub
-          </span>
+          <span className={githubLoading ? 'opacity-70' : ''}>Continue with GitHub</span>
         </Button>
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-border-default" />
-        <span className="text-xs text-text-disabled uppercase tracking-wider">
-          or
-        </span>
-        <div className="flex-1 h-px bg-border-default" />
+        <div className="h-px flex-1 bg-border-default" />
+        <span className="text-xs tracking-wider text-text-disabled uppercase">or</span>
+        <div className="h-px flex-1 bg-border-default" />
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
@@ -100,40 +86,31 @@ export function SignInForm() {
           type="email"
           placeholder="you@example.com"
           error={errors.email?.message}
-          {...register("email")}
+          {...register('email')}
         />
         <Input
           label="Password"
           type="password"
           placeholder="••••••••"
           error={errors.password?.message}
-          {...register("password")}
+          {...register('password')}
         />
         <Link
           href="/forgot-password"
-          className="text-xs text-accent hover:text-accent-hover transition-colors self-end -mt-2"
+          className="-mt-2 self-end text-xs text-accent transition-colors hover:text-accent-hover"
         >
           Forgot password?
         </Link>
-        <Button
-          type="submit"
-          variant="primary"
-          className="w-full"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            "Sign in"
-          )}
+        <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign in'}
         </Button>
       </form>
 
       <p className="text-center text-sm text-text-muted">
-        Don't have an account?{" "}
+        Don't have an account?{' '}
         <Link
           href={`/sign-up${redirectQuery}`}
-          className="text-accent hover:text-accent-hover transition-colors"
+          className="text-accent transition-colors hover:text-accent-hover"
         >
           Sign up
         </Link>

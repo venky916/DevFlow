@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import { Select } from "@devflow/ui/components/select";
-import { TYPE_OPTIONS } from "../../lib/issue-constants";
-import type { IssueType } from "@devflow/types";
+import type { IssueType } from '@devflow/types';
+import { Select } from '@devflow/ui/components/select';
+
+import { TYPE_OPTIONS } from '../../lib/issue-constants';
 
 interface Props {
   value: IssueType | undefined;
@@ -11,12 +12,7 @@ interface Props {
   disabled?: boolean;
 }
 
-export function IssueTypeSelect({
-  value,
-  onValueChange,
-  label,
-  disabled,
-}: Props) {
+export function IssueTypeSelect({ value, onValueChange, label, disabled }: Props) {
   return (
     <Select
       label={label}

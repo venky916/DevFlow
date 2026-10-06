@@ -1,19 +1,17 @@
-"use client";
+'use client';
 
-import { AlertCircle } from "lucide-react";
-import { Button } from "@devflow/ui/components/button";
+import { AlertCircle } from 'lucide-react';
+
+import { Button } from '@devflow/ui/components/button';
 
 interface PageErrorProps {
   message?: string;
   onRetry?: () => void;
 }
 
-export default function PageError({
-  message = "Something went wrong",
-  onRetry,
-}: PageErrorProps) {
+export default function PageError({ message = 'Something went wrong', onRetry }: PageErrorProps) {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 text-center px-4">
+    <div className="flex h-full flex-col items-center justify-center gap-3 px-4 text-center">
       <AlertCircle className="h-6 w-6 text-danger-text" />
       <p className="text-[13px] text-text-muted">{message}</p>
       {onRetry && (

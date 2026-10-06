@@ -1,10 +1,6 @@
-import { SprintsPage } from "../../../../../components/sprints/sprints-page";
+import { SprintsPage } from '../../../../../components/sprints/sprints-page';
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ projectSlug: string }>;
-}) {
+export async function generateMetadata({ params }: { params: Promise<{ projectSlug: string }> }) {
   const { projectSlug } = await params;
   return {
     title: `${projectSlug} — Sprints`,

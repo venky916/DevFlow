@@ -1,18 +1,19 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
-import { X, ExternalLink, Loader2 } from "lucide-react";
-import { cn } from "@devflow/ui/lib/cn";
-import { Badge } from "@devflow/ui/components/badge";
-import { useRouter } from "next/navigation";
-import { useIssueById } from "../../hooks/use-issues";
-import { IssueFields } from "./issue-fields";
-import { ActivityPanel } from "./activity-panel";
-import { STATUS_LABELS, getStatusVariant } from "../../lib/issue-constants";
-import { useCanMoveIssue } from "../../hooks/use-can-move-issue";
-import type { IssueStatus } from "@devflow/types";
-import { IssueActionsMenu } from "../shared/issue-actions-menu";
+import { useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ExternalLink, Loader2, X } from 'lucide-react';
+
+import type { IssueStatus } from '@devflow/types';
+import { Badge } from '@devflow/ui/components/badge';
+import { cn } from '@devflow/ui/lib/cn';
+
+import { useCanMoveIssue } from '../../hooks/use-can-move-issue';
+import { useIssueById } from '../../hooks/use-issues';
+import { getStatusVariant, STATUS_LABELS } from '../../lib/issue-constants';
+import { IssueActionsMenu } from '../shared/issue-actions-menu';
+import { ActivityPanel } from './activity-panel';
+import { IssueFields } from './issue-fields';
 
 interface Props {
   issueId: string | null;
@@ -22,52 +23,44 @@ interface Props {
   projectSlug: string;
 }
 
-export function IssueSlideOver({
-  issueId,
-  onClose,
-  projectId,
-  workspaceSlug,
-  projectSlug,
-}: Props) {
+export function IssueSlideOver({ issueId, onClose, projectId, workspaceSlug, projectSlug }: Props) {
   const isOpen = !!issueId;
   const router = useRouter();
   const pathname = usePathname();
 
-  const from = pathname.includes("/backlog")
-    ? "backlog"
-    : pathname.includes("/board")
-      ? "board"
-      : pathname.includes("/my-issues")
-        ? "my-issues"
+  const from = pathname.includes('/backlog')
+    ? 'backlog'
+    : pathname.includes('/board')
+      ? 'board'
+      : pathname.includes('/my-issues')
+        ? 'my-issues'
         : undefined;
   const [saving, setSaving] = useState(false);
-  const { data: issue, isLoading } = useIssueById(issueId ?? "");
+  const { data: issue, isLoading } = useIssueById(issueId ?? '');
   const { canDeleteIssue } = useCanMoveIssue({ workspaceSlug, projectSlug });
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === 'Escape') onClose();
     };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
 
   return (
     <>
       <div
         className={cn(
-          "fixed inset-0 z-30 transition-opacity duration-200",
-          isOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none",
+          'fixed inset-0 z-30 transition-opacity duration-200',
+          isOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0',
         )}
         onClick={onClose}
       />
 
       <div
         className={cn(
-          "fixed top-[38px] right-0 bottom-0 z-40 w-1/2 bg-bg-surface border-l border-border-default flex flex-col transition-transform duration-200 ease-out",
-          isOpen ? "translate-x-0" : "translate-x-full",
+          'fixed top-[38px] right-0 bottom-0 z-40 flex w-1/2 flex-col border-l border-border-default bg-bg-surface transition-transform duration-200 ease-out',
+          isOpen ? 'translate-x-0' : 'translate-x-full',
         )}
       >
         {isLoading ? (
@@ -76,9 +69,9 @@ export function IssueSlideOver({
           </div>
         ) : issue ? (
           <>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border-default shrink-0">
+            <div className="flex shrink-0 items-center justify-between border-b border-border-default px-4 py-3">
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-mono text-accent">
+                <span className="font-mono text-[11px] text-accent">
                   #{issue.id.slice(-6).toUpperCase()}
                 </span>
                 <Badge variant={getStatusVariant(issue.status as IssueStatus)}>
@@ -95,10 +88,10 @@ export function IssueSlideOver({
                 <button
                   onClick={() =>
                     router.push(
-                      `/${workspaceSlug}/${projectSlug}/issues/${issue.id}${from ? `?from=${from}` : ""}`,
+                      `/${workspaceSlug}/${projectSlug}/issues/${issue.id}${from ? `?from=${from}` : ''}`,
                     )
                   }
-                  className="text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                  className="cursor-pointer text-text-muted transition-colors hover:text-text-primary"
                 >
                   <ExternalLink className="h-4 w-4" />
                 </button>
@@ -109,14 +102,12 @@ export function IssueSlideOver({
                   onDeleted={onClose}
                   onDuplicated={(id: string) => {
                     onClose();
-                    router.push(
-                      `/${workspaceSlug}/${projectSlug}/issues/${id}`,
-                    );
+                    router.push(`/${workspaceSlug}/${projectSlug}/issues/${id}`);
                   }}
                 />
                 <button
                   onClick={onClose}
-                  className="text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                  className="cursor-pointer text-text-muted transition-colors hover:text-text-primary"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -129,14 +120,12 @@ export function IssueSlideOver({
                   issue={issue}
                   projectId={projectId}
                   onSaving={setSaving}
-                  onNavigate={(id) =>
-                    router.push(`/${workspaceSlug}/${projectSlug}/issues/${id}`)
-                  }
+                  onNavigate={(id) => router.push(`/${workspaceSlug}/${projectSlug}/issues/${id}`)}
                   workspaceSlug={workspaceSlug} // NEW
                   projectSlug={projectSlug} // NEW
                 />
               </div>
-              <div className="w-[250px] border-l border-border-default overflow-y-auto p-3 shrink-0">
+              <div className="w-[250px] shrink-0 overflow-y-auto border-l border-border-default p-3">
                 <ActivityPanel issueId={issue.id} />
               </div>
             </div>

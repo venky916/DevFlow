@@ -1,44 +1,46 @@
-import { Worker, Job } from "bullmq";
-import { prisma } from "@devflow/db";
-import { logger } from "@devflow/backend-common";
-import { ActivityJobData, createRedisConnection } from "@devflow/queues";
+import { Job, Worker } from 'bullmq';
+
+import { logger } from '@devflow/backend-common';
+import { prisma } from '@devflow/db';
+import { ActivityJobData, createRedisConnection } from '@devflow/queues';
 
 async function activityFunction(job: Job<ActivityJobData>) {
-    const { action, userId, projectId, issueId, meta, scope } = job.data;
+  const { action, userId, projectId, issueId, meta, scope } = job.data;
 
-    logger.info({ jobId: job.id, action }, "Processing activity job")
+  logger.info({ jobId: job.id, action }, 'Processing activity job');
 
-    await prisma.activityLog.create({
-        data: {
-            action,
-            scope: scope ?? "PROJECT",
-            userId,
-            projectId,
-            issueId: issueId ?? null,
-            meta
-        }
-    })
+  await prisma.activityLog.create({
+    data: {
+      action,
+      scope: scope ?? 'PROJECT',
+      userId,
+      projectId,
+      issueId: issueId ?? null,
+      meta,
+    },
+  });
 
-    logger.info({ jobId: job.id, action }, "Activity log written")
-
+  logger.info({ jobId: job.id, action }, 'Activity log written');
 }
-export const activityWorker = new Worker<ActivityJobData>("activity-queue", activityFunction, { connection: createRedisConnection(), concurrency: 2 });
+export const activityWorker = new Worker<ActivityJobData>('activity-queue', activityFunction, {
+  connection: createRedisConnection(),
+  concurrency: 2,
+});
 
 (async () => {
-    try {
-        await activityWorker.waitUntilReady()
-        logger.info("✅ Activity worker connected to Redis")
-    } catch (error) {
-        logger.error({ error }, "❌ Activity worker FAILED to connect to Redis")
-        process.exit(1)
-    }
-})()
+  try {
+    await activityWorker.waitUntilReady();
+    logger.info('✅ Activity worker connected to Redis');
+  } catch (error) {
+    logger.error({ error }, '❌ Activity worker FAILED to connect to Redis');
+    process.exit(1);
+  }
+})();
 
+activityWorker.on('completed', (job) => {
+  logger.info({ jobId: job.id }, 'Activity job completed');
+});
 
-activityWorker.on("completed", (job) => {
-    logger.info({ jobId: job.id }, "Activity job completed")
-})
-
-activityWorker.on("failed", (job, error) => {
-    logger.error({ jobId: job?.id, error }, "Activity job failed")
-})
+activityWorker.on('failed', (job, error) => {
+  logger.error({ jobId: job?.id, error }, 'Activity job failed');
+});

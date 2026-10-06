@@ -1,12 +1,13 @@
-import {Router} from "express";
-import {authenticate} from "../../middlewares/auth.middleware";
-import { requireProjectMember,attachIssueProject } from "../../middlewares/permission.middleware";
-import { getIssueActivities,getProjectActivities } from "../../controllers/activity.controller";
+import { Router } from 'express';
 
-const router = Router({mergeParams:true});
+import { getIssueActivities, getProjectActivities } from '../../controllers/activity.controller';
+import { authenticate } from '../../middlewares/auth.middleware';
+import { attachIssueProject, requireProjectMember } from '../../middlewares/permission.middleware';
 
-router.use(authenticate)
+const router = Router({ mergeParams: true });
 
-router.get("/",attachIssueProject,requireProjectMember,getIssueActivities)
+router.use(authenticate);
 
-export default router
+router.get('/', attachIssueProject, requireProjectMember, getIssueActivities);
+
+export default router;

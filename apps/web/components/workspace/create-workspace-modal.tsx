@@ -1,21 +1,20 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-import { Modal } from "@devflow/ui/components/modal";
-import { Button } from "@devflow/ui/components/button";
-import { Input } from "@devflow/ui/components/input";
-import { ImageUploadButton } from "@devflow/ui/components/image-upload-button";
-import { useCreateWorkspace } from "../../hooks/use-workspaces";
-import { useImageUpload } from "../../hooks/use-image-upload";
-import {
-  createWorkspaceSchema,
-  type CreateWorkspaceInput,
-} from "@devflow/validators";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+
+import { Button } from '@devflow/ui/components/button';
+import { ImageUploadButton } from '@devflow/ui/components/image-upload-button';
+import { Input } from '@devflow/ui/components/input';
+import { Modal } from '@devflow/ui/components/modal';
+import { createWorkspaceSchema, type CreateWorkspaceInput } from '@devflow/validators';
+
+import { useImageUpload } from '../../hooks/use-image-upload';
+import { useCreateWorkspace } from '../../hooks/use-workspaces';
 
 interface Props {
   open: boolean;
@@ -25,7 +24,7 @@ interface Props {
 export function CreateWorkspaceModal({ open, onClose }: Props) {
   const router = useRouter();
   const { mutateAsync, isPending } = useCreateWorkspace();
-  const { upload, isUploading } = useImageUpload("logos");
+  const { upload, isUploading } = useImageUpload('logos');
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -40,15 +39,15 @@ export function CreateWorkspaceModal({ open, onClose }: Props) {
     resolver: zodResolver(createWorkspaceSchema),
   });
 
-  const name = watch("name");
+  const name = watch('name');
   useEffect(() => {
     if (name) {
       setValue(
-        "slug",
+        'slug',
         name
           .toLowerCase()
-          .replace(/\s+/g, "-")
-          .replace(/[^a-z0-9-]/g, ""),
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9-]/g, ''),
       );
     }
   }, [name]);
@@ -60,7 +59,7 @@ export function CreateWorkspaceModal({ open, onClose }: Props) {
       const url = await upload(file);
       setLogoUrl(url);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to upload logo");
+      toast.error(err instanceof Error ? err.message : 'Failed to upload logo');
       setPreviewUrl(null);
     }
   };
@@ -71,14 +70,14 @@ export function CreateWorkspaceModal({ open, onClose }: Props) {
         ...data,
         logoUrl: logoUrl ?? undefined,
       });
-      toast.success("Workspace created!");
+      toast.success('Workspace created!');
       reset();
       setLogoUrl(null);
       setPreviewUrl(null);
       onClose();
       router.push(`/${workspace.slug}`);
     } catch (err: any) {
-      toast.error(err.response?.data?.message ?? "Failed to create workspace");
+      toast.error(err.response?.data?.message ?? 'Failed to create workspace');
     }
   };
 
@@ -92,7 +91,7 @@ export function CreateWorkspaceModal({ open, onClose }: Props) {
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <ImageUploadButton
           src={previewUrl ?? logoUrl}
-          fallbackLabel={name?.charAt(0)?.toUpperCase() ?? "?"}
+          fallbackLabel={name?.charAt(0)?.toUpperCase() ?? '?'}
           shape="square"
           size={56}
           isUploading={isUploading}
@@ -103,24 +102,20 @@ export function CreateWorkspaceModal({ open, onClose }: Props) {
           label="Workspace name"
           placeholder="Acme Inc"
           error={errors.name?.message}
-          {...register("name")}
+          {...register('name')}
         />
         <Input
           label="Slug"
           placeholder="acme-inc"
           error={errors.slug?.message}
-          {...register("slug")}
+          {...register('slug')}
         />
-        <div className="flex justify-end gap-2 mt-2">
+        <div className="mt-2 flex justify-end gap-2">
           <Button variant="ghost" type="button" onClick={onClose}>
             Cancel
           </Button>
           <Button variant="primary" type="submit" disabled={isPending}>
-            {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              "Create workspace"
-            )}
+            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create workspace'}
           </Button>
         </div>
       </form>

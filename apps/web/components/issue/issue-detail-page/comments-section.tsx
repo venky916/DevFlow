@@ -1,22 +1,24 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useMe } from "../../../hooks/use-auth";
+import { useState } from 'react';
+import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { Avatar } from '@devflow/ui/components/avatar';
+import { CommentBox } from '@devflow/ui/components/comment-box';
+import { CommentContent } from '@devflow/ui/components/comment-content';
+
+import { useMe } from '../../../hooks/use-auth';
 import {
   useComments,
   useCreateComment,
   useDeleteComment,
   useUpdateComment,
-} from "../../../hooks/use-comments";
-import { useMentionSuggestion } from "../../../hooks/use-mention-suggestion";
-import { usePermissions } from "../../../hooks/use-permissions";
-import { canDeleteComment, canEditComment } from "../../../lib/permissions";
-import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-import { Avatar } from "@devflow/ui/components/avatar";
-import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
-import { CommentBox } from "@devflow/ui/components/comment-box";
-import { CommentContent } from "@devflow/ui/components/comment-content";
+} from '../../../hooks/use-comments';
+import { useMentionSuggestion } from '../../../hooks/use-mention-suggestion';
+import { usePermissions } from '../../../hooks/use-permissions';
+import { canDeleteComment, canEditComment } from '../../../lib/permissions';
 
 interface CommentsSectionProps {
   issueId: string;
@@ -38,7 +40,7 @@ export function CommentsSection({ issueId, projectId }: CommentsSectionProps) {
     try {
       await createComment({ content: json });
     } catch {
-      toast.error("Failed to post comment");
+      toast.error('Failed to post comment');
     }
   };
 
@@ -47,7 +49,7 @@ export function CommentsSection({ issueId, projectId }: CommentsSectionProps) {
       await updateComment({ commentId, content: json });
       setEditingId(null);
     } catch {
-      toast.error("Failed to update comment");
+      toast.error('Failed to update comment');
     }
   };
 
@@ -55,7 +57,7 @@ export function CommentsSection({ issueId, projectId }: CommentsSectionProps) {
     try {
       await deleteComment(commentId);
     } catch {
-      toast.error("Failed to delete comment");
+      toast.error('Failed to delete comment');
     }
   };
 
@@ -64,9 +66,7 @@ export function CommentsSection({ issueId, projectId }: CommentsSectionProps) {
       <p className="text-[13px] font-medium text-text-primary">
         Comments
         {!!comments?.length && (
-          <span className="ml-2 text-text-muted font-normal text-[12px]">
-            {comments.length}
-          </span>
+          <span className="ml-2 text-[12px] font-normal text-text-muted">{comments.length}</span>
         )}
       </p>
 
@@ -76,17 +76,15 @@ export function CommentsSection({ issueId, projectId }: CommentsSectionProps) {
         <div className="flex flex-col gap-5">
           {comments?.map((comment: any) => {
             const canEdit = me ? canEditComment(comment, me.id) : false;
-            const canDelete = me
-              ? canDeleteComment(access, comment, me.id)
-              : false;
+            const canDelete = me ? canDeleteComment(access, comment, me.id) : false;
 
             return (
               <div key={comment.id} className="flex items-start gap-3">
-                <Avatar name={comment.user?.name ?? "?"} size="sm" />
-                <div className="flex-1 flex flex-col gap-1">
+                <Avatar name={comment.user?.name ?? '?'} size="sm" />
+                <div className="flex flex-1 flex-col gap-1">
                   <div className="flex items-center justify-between">
                     <span className="text-[12px] font-medium text-text-primary">
-                      {comment.user?.name ?? "Unknown"}
+                      {comment.user?.name ?? 'Unknown'}
                     </span>
                     <span className="text-[11px] text-text-muted">
                       {formatDistanceToNow(new Date(comment.createdAt), {
@@ -109,11 +107,11 @@ export function CommentsSection({ issueId, projectId }: CommentsSectionProps) {
                   )}
 
                   {editingId !== comment.id && (canEdit || canDelete) && (
-                    <div className="flex gap-3 mt-0.5">
+                    <div className="mt-0.5 flex gap-3">
                       {canEdit && (
                         <button
                           onClick={() => setEditingId(comment.id)}
-                          className="text-[11px] text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                          className="cursor-pointer text-[11px] text-text-muted transition-colors hover:text-text-primary"
                         >
                           Edit
                         </button>
@@ -121,7 +119,7 @@ export function CommentsSection({ issueId, projectId }: CommentsSectionProps) {
                       {canDelete && (
                         <button
                           onClick={() => handleDelete(comment.id)}
-                          className="text-[11px] text-text-muted hover:text-danger-text transition-colors cursor-pointer"
+                          className="cursor-pointer text-[11px] text-text-muted transition-colors hover:text-danger-text"
                         >
                           Delete
                         </button>
@@ -135,7 +133,7 @@ export function CommentsSection({ issueId, projectId }: CommentsSectionProps) {
         </div>
       )}
 
-      <div className="pt-2 border-t border-border-default">
+      <div className="border-t border-border-default pt-2">
         <CommentBox
           onSubmit={handleCreate}
           placeholder="Add a comment..."

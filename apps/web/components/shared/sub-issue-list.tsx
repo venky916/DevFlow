@@ -1,20 +1,22 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect } from "react";
-import { Plus, Search, X, Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { Avatar } from "@devflow/ui/components/avatar";
-import { Badge } from "@devflow/ui/components/badge";
+import { useEffect, useRef, useState } from 'react';
+import { Loader2, Plus, Search, X } from 'lucide-react';
+import { toast } from 'sonner';
+
+import type { IIssueWithRelations, IssueStatus } from '@devflow/types';
+import { Avatar } from '@devflow/ui/components/avatar';
+import { Badge } from '@devflow/ui/components/badge';
+
 import {
-  useCreateSubIssue,
   useAttachChildIssue,
+  useCreateSubIssue,
   useDetachChildIssue,
   useSearchProjectIssues,
-} from "../../hooks/use-issues";
-import { usePermissions } from "../../hooks/use-permissions";
-import { canProject } from "../../lib/permissions";
-import { STATUS_LABELS, getStatusVariant } from "../../lib/issue-constants";
-import type { IIssueWithRelations, IssueStatus } from "@devflow/types";
+} from '../../hooks/use-issues';
+import { usePermissions } from '../../hooks/use-permissions';
+import { getStatusVariant, STATUS_LABELS } from '../../lib/issue-constants';
+import { canProject } from '../../lib/permissions';
 
 interface Props {
   issue: IIssueWithRelations;
@@ -24,20 +26,18 @@ interface Props {
 
 export function SubIssueList({ issue, projectId, onNavigate }: Props) {
   const { access } = usePermissions();
-  const canCreateSubIssue = canProject(access, "CREATE_SUB_ISSUE");
-  const canAttachChild = canProject(access, "ATTACH_CHILD_ISSUE");
-  const canDetachChild = canProject(access, "DETACH_CHILD_ISSUE");
+  const canCreateSubIssue = canProject(access, 'CREATE_SUB_ISSUE');
+  const canAttachChild = canProject(access, 'ATTACH_CHILD_ISSUE');
+  const canDetachChild = canProject(access, 'DETACH_CHILD_ISSUE');
 
-  const { mutateAsync: createSubIssue, isPending: creating } =
-    useCreateSubIssue(issue.id);
-  const { mutateAsync: attachChild, isPending: attaching } =
-    useAttachChildIssue(issue.id);
+  const { mutateAsync: createSubIssue, isPending: creating } = useCreateSubIssue(issue.id);
+  const { mutateAsync: attachChild, isPending: attaching } = useAttachChildIssue(issue.id);
   const { mutateAsync: detachChild } = useDetachChildIssue(issue.id);
 
-  const [addTitle, setAddTitle] = useState("");
+  const [addTitle, setAddTitle] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const searchRef = useRef<HTMLDivElement>(null);
 
   const isEligibleParent = !issue.parentId;
@@ -53,8 +53,8 @@ export function SubIssueList({ issue, projectId, onNavigate }: Props) {
         setSearchOpen(false);
       }
     };
-    document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
   }, []);
 
   const { data: results, isLoading: searching } = useSearchProjectIssues(
@@ -62,7 +62,7 @@ export function SubIssueList({ issue, projectId, onNavigate }: Props) {
     debouncedQuery,
     {
       excludeId: issue.id,
-      mode: "child",
+      mode: 'child',
       enabled: isEligibleParent && searchOpen && canAttachChild,
     },
   );
@@ -73,19 +73,19 @@ export function SubIssueList({ issue, projectId, onNavigate }: Props) {
     if (!addTitle.trim()) return;
     try {
       await createSubIssue({ title: addTitle.trim() });
-      setAddTitle("");
+      setAddTitle('');
     } catch {
-      toast.error("Failed to create sub-issue");
+      toast.error('Failed to create sub-issue');
     }
   };
 
   const handleAttach = async (issueId: string) => {
     try {
       await attachChild(issueId);
-      setQuery("");
+      setQuery('');
       setSearchOpen(false);
     } catch {
-      toast.error("Failed to attach issue");
+      toast.error('Failed to attach issue');
     }
   };
 
@@ -93,30 +93,30 @@ export function SubIssueList({ issue, projectId, onNavigate }: Props) {
     try {
       await detachChild(childId);
     } catch {
-      toast.error("Failed to detach sub-issue");
+      toast.error('Failed to detach sub-issue');
     }
   };
 
   const children = issue.children ?? [];
   const total = children.length;
-  const doneCount = children.filter((c: any) => c.status === "DONE").length;
+  const doneCount = children.filter((c: any) => c.status === 'DONE').length;
   const progress = total > 0 ? (doneCount / total) * 100 : 0;
 
-  console.log("SubIssueList render", { total, doneCount, progress, children });
+  console.log('SubIssueList render', { total, doneCount, progress, children });
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] uppercase tracking-[0.04em] font-mono text-text-muted">
-          Sub-issues{total > 0 ? ` (${total})` : ""}
+        <p className="font-mono text-[11px] tracking-[0.04em] text-text-muted uppercase">
+          Sub-issues{total > 0 ? ` (${total})` : ''}
         </p>
 
         {total > 0 && (
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-mono text-text-muted">
+            <span className="font-mono text-[11px] text-text-muted">
               {doneCount}/{total}
             </span>
-            <div className="w-16 h-[3px] rounded-full bg-bg-surface-hover overflow-hidden">
+            <div className="bg-bg-surface-hover h-[3px] w-16 overflow-hidden rounded-full">
               <div
                 className="h-full rounded-full bg-success-text transition-all"
                 style={{ width: `${progress}%` }}
@@ -127,30 +127,26 @@ export function SubIssueList({ issue, projectId, onNavigate }: Props) {
       </div>
 
       {children.length > 0 && (
-        <div className="flex flex-col gap-1 rounded-[6px] border border-border-default overflow-hidden">
+        <div className="flex flex-col gap-1 overflow-hidden rounded-[6px] border border-border-default">
           {children.map((child: any) => (
             <div
               key={child.id}
-              className="flex items-center gap-2 px-3 py-2 hover:bg-bg-surface-hover transition-colors group"
+              className="hover:bg-bg-surface-hover group flex items-center gap-2 px-3 py-2 transition-colors"
             >
               <button
                 onClick={() => onNavigate(child.id)}
-                className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                className="flex min-w-0 flex-1 items-center gap-2 text-left"
               >
                 <Badge variant={getStatusVariant(child.status as IssueStatus)}>
                   {STATUS_LABELS[child.status as IssueStatus]}
                 </Badge>
-                <span className="text-[13px] text-text-primary truncate">
-                  {child.title}
-                </span>
+                <span className="truncate text-[13px] text-text-primary">{child.title}</span>
               </button>
-              {child.assignee && (
-                <Avatar name={child.assignee.name ?? "?"} size="sm" />
-              )}
+              {child.assignee && <Avatar name={child.assignee.name ?? '?'} size="sm" />}
               {canDetachChild && (
                 <button
                   onClick={() => handleDetach(child.id)}
-                  className="text-text-muted hover:text-status-danger-text transition-colors opacity-0 group-hover:opacity-100"
+                  className="hover:text-status-danger-text text-text-muted opacity-0 transition-colors group-hover:opacity-100"
                   aria-label="Remove sub-issue"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -165,8 +161,8 @@ export function SubIssueList({ issue, projectId, onNavigate }: Props) {
         <div className="flex flex-col gap-2">
           {canAttachChild && (
             <div ref={searchRef} className="relative">
-              <div className="flex items-center gap-2 border border-border-default rounded-[4px] px-3 py-2">
-                <Search className="h-3.5 w-3.5 text-text-muted shrink-0" />
+              <div className="flex items-center gap-2 rounded-[4px] border border-border-default px-3 py-2">
+                <Search className="h-3.5 w-3.5 shrink-0 text-text-muted" />
                 <input
                   className="flex-1 bg-transparent text-[13px] text-text-primary placeholder:text-text-disabled focus:outline-none"
                   placeholder="Search issues to attach..."
@@ -178,22 +174,22 @@ export function SubIssueList({ issue, projectId, onNavigate }: Props) {
                   }}
                 />
                 {(searching || attaching) && (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-text-muted shrink-0" />
+                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-text-muted" />
                 )}
               </div>
 
               {searchOpen && (
-                <div className="absolute z-10 mt-1 w-full max-h-[220px] overflow-y-auto bg-bg-surface border border-border-default rounded-[4px] shadow-lg">
+                <div className="absolute z-10 mt-1 max-h-[220px] w-full overflow-y-auto rounded-[4px] border border-border-default bg-bg-surface shadow-lg">
                   {!results?.length ? (
                     <p className="px-3 py-2 text-[12px] text-text-disabled">
-                      {searching ? "Searching..." : "No eligible issues found"}
+                      {searching ? 'Searching...' : 'No eligible issues found'}
                     </p>
                   ) : (
                     results.map((r) => (
                       <button
                         key={r.id}
                         onClick={() => handleAttach(r.id)}
-                        className="w-full text-left px-3 py-2 text-[13px] text-text-primary hover:bg-bg-surface-hover transition-colors"
+                        className="hover:bg-bg-surface-hover w-full px-3 py-2 text-left text-[13px] text-text-primary transition-colors"
                       >
                         {r.title}
                       </button>
@@ -205,15 +201,15 @@ export function SubIssueList({ issue, projectId, onNavigate }: Props) {
           )}
 
           {canCreateSubIssue && (
-            <div className="flex items-center gap-2 border border-border-default rounded-[4px] px-3 py-2">
-              <Plus className="h-3.5 w-3.5 text-text-muted shrink-0" />
+            <div className="flex items-center gap-2 rounded-[4px] border border-border-default px-3 py-2">
+              <Plus className="h-3.5 w-3.5 shrink-0 text-text-muted" />
               <input
                 className="flex-1 bg-transparent text-[13px] text-text-primary placeholder:text-text-disabled focus:outline-none"
                 placeholder="Add sub-issue..."
                 value={addTitle}
                 onChange={(e) => setAddTitle(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+                  if (e.key === 'Enter') {
                     e.preventDefault();
                     handleAdd();
                   }

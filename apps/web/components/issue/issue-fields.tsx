@@ -1,17 +1,19 @@
-"use client";
+'use client';
 
-import { Controller } from "react-hook-form";
-import { Select } from "@devflow/ui/components/select";
-import { Avatar } from "@devflow/ui/components/avatar";
-import { DatePicker } from "@devflow/ui/components/date-picker";
-import { useIssueForm } from "../../hooks/use-issue-form";
-import { STATUS_OPTIONS, PRIORITY_OPTIONS } from "../../lib/issue-constants";
-import { FieldRow } from "../shared/field-row";
-import { IssueTypeSelect } from "../shared/issue-type-select";
-import { ProjectLabelSelect } from "../shared/project-label-select";
-import { ParentLink } from "../shared/parent-link";
-import { SubIssueList } from "../shared/sub-issue-list";
-import type { IIssueWithRelations, IssueType } from "@devflow/types";
+import { Controller } from 'react-hook-form';
+
+import type { IIssueWithRelations, IssueType } from '@devflow/types';
+import { Avatar } from '@devflow/ui/components/avatar';
+import { DatePicker } from '@devflow/ui/components/date-picker';
+import { Select } from '@devflow/ui/components/select';
+
+import { useIssueForm } from '../../hooks/use-issue-form';
+import { PRIORITY_OPTIONS, STATUS_OPTIONS } from '../../lib/issue-constants';
+import { FieldRow } from '../shared/field-row';
+import { IssueTypeSelect } from '../shared/issue-type-select';
+import { ParentLink } from '../shared/parent-link';
+import { ProjectLabelSelect } from '../shared/project-label-select';
+import { SubIssueList } from '../shared/sub-issue-list';
 
 interface Props {
   issue: IIssueWithRelations;
@@ -50,18 +52,18 @@ export function IssueFields({
       <ParentLink issue={issue} onNavigate={onNavigate} />
 
       <input
-        className="w-full bg-transparent text-[15px] font-medium text-text-primary placeholder:text-text-disabled focus:outline-none border-b border-transparent focus:border-border-emphasis pb-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full border-b border-transparent bg-transparent pb-1 text-[15px] font-medium text-text-primary transition-colors placeholder:text-text-disabled focus:border-border-emphasis focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
         placeholder="Issue title"
         disabled={!canEditIssue}
-        {...register("title")}
+        {...register('title')}
         onBlur={handleSubmit(save)}
       />
 
       <textarea
-        className="w-full bg-transparent text-[13px] text-text-secondary placeholder:text-text-disabled focus:outline-none resize-none min-h-[80px] disabled:opacity-50 disabled:cursor-not-allowed"
+        className="min-h-[80px] w-full resize-none bg-transparent text-[13px] text-text-secondary placeholder:text-text-disabled focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
         placeholder="Add description..."
         disabled={!canEditIssue}
-        {...register("description")}
+        {...register('description')}
         onBlur={handleSubmit(save)}
       />
 
@@ -71,10 +73,10 @@ export function IssueFields({
         <FieldRow label="Status">
           <Select
             options={STATUS_OPTIONS}
-            value={watch("status")}
+            value={watch('status')}
             disabled={hasChildren || !canEditIssue}
             onValueChange={(v) => {
-              setValue("status", v as any);
+              setValue('status', v as any);
               handleSubmit(save)();
             }}
           />
@@ -83,10 +85,10 @@ export function IssueFields({
         <FieldRow label="Priority">
           <Select
             options={PRIORITY_OPTIONS}
-            value={watch("priority")}
+            value={watch('priority')}
             disabled={!canEditIssue}
             onValueChange={(v) => {
-              setValue("priority", v as any);
+              setValue('priority', v as any);
               handleSubmit(save)();
             }}
           />
@@ -94,10 +96,10 @@ export function IssueFields({
 
         <FieldRow label="Type">
           <IssueTypeSelect
-            value={watch("type") as IssueType}
+            value={watch('type') as IssueType}
             disabled={!canEditIssue}
             onValueChange={(v) => {
-              setValue("type", v);
+              setValue('type', v);
               handleSubmit(save)();
             }}
           />
@@ -107,10 +109,10 @@ export function IssueFields({
           <Select
             placeholder="Unassigned"
             options={memberOptions}
-            value={watch("assigneeId") ?? undefined}
+            value={watch('assigneeId') ?? undefined}
             disabled={!canEditIssue}
             onValueChange={(v) => {
-              setValue("assigneeId", v || null);
+              setValue('assigneeId', v || null);
               handleSubmit(save)();
             }}
           />
@@ -120,10 +122,10 @@ export function IssueFields({
           <Select
             placeholder="No sprint"
             options={sprintOptions}
-            value={watch("sprintId") ?? undefined}
+            value={watch('sprintId') ?? undefined}
             disabled={!canEditIssue || !canMoveToSprint}
             onValueChange={(v) => {
-              setValue("sprintId" as any, v || null);
+              setValue('sprintId' as any, v || null);
               handleSubmit(save)();
             }}
           />
@@ -149,32 +151,25 @@ export function IssueFields({
         <FieldRow label="Labels">
           <ProjectLabelSelect
             projectId={projectId}
-            selectedIds={watch("labelIds") ?? []}
+            selectedIds={watch('labelIds') ?? []}
             disabled={!canEditIssue}
             onChange={(ids) => {
-              setValue("labelIds", ids);
+              setValue('labelIds', ids);
               handleSubmit(save)();
             }}
           />
         </FieldRow>
       </div>
 
-      <SubIssueList
-        issue={issue}
-        projectId={projectId}
-        onNavigate={onNavigate}
-      />
+      <SubIssueList issue={issue} projectId={projectId} onNavigate={onNavigate} />
 
       {issue.creator && (
         <div className="flex flex-col gap-1.5">
-          <span className="text-[11px] uppercase tracking-[0.04em] font-mono text-text-muted">
+          <span className="font-mono text-[11px] tracking-[0.04em] text-text-muted uppercase">
             Created by
           </span>
           <div className="flex items-center gap-2">
-            <Avatar
-              name={issue.creator.name ?? issue.creator.email}
-              size="sm"
-            />
+            <Avatar name={issue.creator.name ?? issue.creator.email} size="sm" />
             <span className="text-[12px] text-text-secondary">
               {issue.creator.name ?? issue.creator.email}
             </span>
