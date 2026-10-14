@@ -5,12 +5,13 @@ import { prisma } from '@devflow/db';
 import { ApiError } from '../lib/ApiError';
 import { sendCursorPaginated, sendSuccess } from '../lib/apiResponse';
 import { asyncHandler } from '../lib/asyncHandler';
+import { parseLimit } from '../lib/pagination';
 
 // ─── GET /issues/:id/activities ──────────────────────────────────
 export const getIssueActivities = asyncHandler(async (req: Request, res: Response) => {
   const { id: issueId } = req.params;
   const cursor = req.query.cursor as string | undefined;
-  const take = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+  const take = parseLimit(req.query.limit);
 
   const issue = await prisma.issue.findUnique({
     where: { id: issueId as string },
@@ -37,34 +38,27 @@ export const getIssueActivities = asyncHandler(async (req: Request, res: Respons
 // ─── GET /projects/:id/activities ────────────────────────────────
 export const getProjectActivities = asyncHandler(async (req: Request, res: Response) => {
   const { id: projectId } = req.params;
+  const cursor = req.query.cursor as string | undefined;
+  const take = parseLimit(req.query.limit);
 
   const activities = await prisma.activityLog.findMany({
-    where: {
-      projectId: projectId as string,
-      scope: 'PROJECT',
-    },
-
+    where: { projectId: projectId as string, scope: 'PROJECT' },
     include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          avatarUrl: true,
-        },
-      },
-      issue: {
-        select: {
-          id: true,
-          title: true,
-        },
-      },
+      user: { select: { id: true, name: true, avatarUrl: true } },
+      issue: { select: { id: true, title: true } },
     },
-    orderBy: {
-      createdAt: 'desc',
-    },
-    take: 50, // last 50 activities
+    // id breaks ties, so two rows with the same createdAt can't skip or repeat across pages
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    take: take + 1, // one extra row tells us whether there is more
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });
-  sendSuccess(res, activities, 'Activities fetched successfully');
+
+  const hasMore = activities.length > take;
+  const items = hasMore ? activities.slice(0, take) : activities;
+  const lastItem = items[items.length - 1];
+  const nextCursor = hasMore && lastItem ? lastItem.id : null;
+
+  sendCursorPaginated(res, items, { nextCursor, hasMore });
 });
 
 // ─── GET /projects/:id/activities/all ────────────────────────────────

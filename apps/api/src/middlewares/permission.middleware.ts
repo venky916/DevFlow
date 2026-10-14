@@ -207,6 +207,21 @@ export const requireProjectRole = (...roles: ProjectRole[]) => {
   });
 };
 
+// permission.middleware.ts: workspace admin of the project's OWN workspace (from the DB, not the URL)
+export const requireProjectWorkspaceAdmin = asyncHandler(
+  async (req: Request, _res: Response, next: NextFunction) => {
+    const projectId = (req.params.projectId ?? req.params.id) as string;
+
+    const access = await resolveProjectAccess(req.user!.id, projectId);
+    if (!access.isWorkspaceAdmin) {
+      throw ApiError.forbidden('Only a workspace admin can do this');
+    }
+
+    req.projectAccess = access;
+    next();
+  },
+);
+
 // ─── Issue move ownership check ────────────────────────────────────
 export const requireIssueMoveAccess = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {

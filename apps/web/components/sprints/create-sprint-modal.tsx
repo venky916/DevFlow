@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
-import { Controller, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 
-import { Button } from '@devflow/ui/components/button';
-import { DatePicker } from '@devflow/ui/components/date-picker';
-import { Input } from '@devflow/ui/components/input';
-import { Modal } from '@devflow/ui/components/modal';
+import { Button } from "@devflow/ui/components/button";
+import { DatePicker } from "@devflow/ui/components/date-picker";
+import { Input } from "@devflow/ui/components/input";
+import { Modal } from "@devflow/ui/components/modal";
 import {
   createSprintSchema,
   type CreateSprintInput,
   type CreateSprintOutput,
-} from '@devflow/validators';
+} from "@devflow/validators";
 
-import { useCreateSprint } from '../../hooks/use-sprints';
+import { useCreateSprint } from "../../hooks/use-sprints";
 
 interface Props {
   open: boolean;
@@ -39,11 +39,11 @@ export function CreateSprintModal({ open, onClose, projectId }: Props) {
   const onSubmit = async (data: CreateSprintOutput) => {
     try {
       await mutateAsync(data);
-      toast.success('Sprint created!');
+      toast.success("Sprint created!");
       reset();
       onClose();
     } catch (err: any) {
-      toast.error(err.response?.data?.message ?? 'Failed to create sprint');
+      toast.error(err.response?.data?.message ?? "Failed to create sprint");
     }
   };
 
@@ -59,7 +59,7 @@ export function CreateSprintModal({ open, onClose, projectId }: Props) {
           label="Sprint name"
           placeholder="Sprint 1"
           error={errors.name?.message}
-          {...register('name')}
+          {...register("name")}
         />
         <div className="grid grid-cols-2 gap-3">
           <Controller
@@ -88,11 +88,15 @@ export function CreateSprintModal({ open, onClose, projectId }: Props) {
           />
         </div>
         <div className="mt-2 flex justify-end gap-2">
-          <Button variant="ghost" type="button" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
           <Button variant="primary" type="submit" disabled={isPending}>
-            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create sprint'}
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Create sprint"
+            )}
           </Button>
         </div>
       </form>

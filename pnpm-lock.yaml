@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      eslint:
+        specifier: 9.39.1
+        version: 9.39.1(jiti@2.6.1)
       prettier:
         specifier: ^3.7.4
         version: 3.7.4
@@ -75,6 +78,9 @@ importers:
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
+      eslint:
+        specifier: 9.39.1
+        version: 9.39.1(jiti@2.6.1)
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -577,6 +583,12 @@ importers:
         specifier: ^4.3.0
         version: 4.3.0
     devDependencies:
+      '@devflow/config':
+        specifier: workspace:^
+        version: link:../config
+      '@ianvs/prettier-plugin-sort-imports':
+        specifier: ^4.7.1
+        version: 4.7.1(prettier@3.7.4)
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
@@ -595,6 +607,9 @@ importers:
       eslint:
         specifier: ^9.39.1
         version: 9.39.1(jiti@2.6.1)
+      prettier-plugin-tailwindcss:
+        specifier: ^0.8.1
+        version: 0.8.1(@ianvs/prettier-plugin-sort-imports@4.7.1(prettier@3.7.4))(prettier@3.7.4)
       typescript:
         specifier: 5.9.2
         version: 5.9.2

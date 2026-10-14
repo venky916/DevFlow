@@ -47,11 +47,11 @@ export function ImageUploadButton({
         onChange={handleChange}
       />
       <button
-        type="button"
         onClick={() => !disabled && inputRef.current?.click()}
         className="relative shrink-0"
         disabled={disabled || isUploading}
         style={{ width: size, height: size }}
+        type="button"
       >
         {src ? (
           <img

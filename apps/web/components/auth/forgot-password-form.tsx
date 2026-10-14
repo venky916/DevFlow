@@ -1,86 +1,70 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 
-import { Button } from '@devflow/ui/components/button';
-import { Input } from '@devflow/ui/components/input';
-import { forgotPasswordSchema, type ForgotPasswordForm } from '@devflow/validators';
+import { Button } from "@devflow/ui/components/button";
+import { Input } from "@devflow/ui/components/input";
+import {
+  forgotPasswordSchema,
+  type ForgotPasswordInput,
+} from "@devflow/validators";
 
-import { sendResetEmail } from '../../lib/auth';
-import { Logo } from '../shared/logo';
+import { ROUTES } from "../../constants/routes";
+import { useForgotPassword } from "../../hooks/use-auth";
+import { AuthFooterLink } from "./auth-footer-link";
+import { AuthHeader } from "./auth-header";
+import { AuthStatus } from "./auth-status";
 
 export function ForgotPasswordForm() {
-  const [sent, setSent] = useState(false);
+  const { mutate: sendLink, isPending, isSuccess } = useForgotPassword();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<ForgotPasswordForm>({
+    formState: { errors },
+  } = useForm<ForgotPasswordInput>({
     resolver: zodResolver(forgotPasswordSchema),
   });
 
-  const onSubmit = async (data: ForgotPasswordForm) => {
-    try {
-      await sendResetEmail(data.email);
-    } catch (err: any) {
-      // swallow the specific error — don't reveal whether the email exists
-      console.error(err);
-    } finally {
-      // always show success, regardless of outcome
-      setSent(true);
-    }
-  };
-
-  if (sent) {
+  if (isSuccess) {
     return (
-      <div className="flex flex-col items-center gap-4 text-center">
-        <h1 className="text-xl font-semibold text-text-primary">Check your email</h1>
-        <p className="text-sm text-text-muted">
-          If an account exists for that email, we've sent a link to reset your password.
-        </p>
-        <Link
-          href="/sign-in"
-          className="text-sm text-accent transition-colors hover:text-accent-hover"
-        >
-          Back to sign in
-        </Link>
-      </div>
+      <AuthStatus
+        title="Check your email"
+        description="If an account exists for that email, we've sent a link to reset your password."
+        action={{ label: "Back to sign in", href: ROUTES.signIn }}
+      />
     );
   }
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col items-center gap-2">
-        <Logo />
-        <h1 className="text-xl font-semibold text-text-primary">Reset your password</h1>
-        <p className="text-sm text-text-muted">Enter your email and we'll send you a reset link.</p>
-      </div>
+      <AuthHeader
+        title="Reset your password"
+        description="Enter your email and we'll send you a reset link."
+      />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      <form
+        onSubmit={handleSubmit((data) => sendLink(data))}
+        className="flex flex-col gap-4"
+      >
         <Input
           label="Email"
           type="email"
           placeholder="you@example.com"
           error={errors.email?.message}
-          {...register('email')}
+          {...register("email")}
         />
-        <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send reset link'}
+        <Button type="submit" size="xl" loading={isPending} className="w-full">
+          Send reset link
         </Button>
       </form>
 
-      <p className="text-center text-sm text-text-muted">
-        Remember your password?{' '}
-        <Link href="/sign-in" className="text-accent transition-colors hover:text-accent-hover">
-          Sign in
-        </Link>
-      </p>
+      <AuthFooterLink
+        text="Remember your password?"
+        label="Sign in"
+        href={ROUTES.signIn}
+      />
     </div>
   );
 }

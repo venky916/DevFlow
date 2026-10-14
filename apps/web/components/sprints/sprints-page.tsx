@@ -18,8 +18,8 @@ import {
 } from '../../hooks/use-sprints';
 import { useWorkspaces } from '../../hooks/use-workspaces';
 import { canProject } from '../../lib/permissions';
-import PageError from '../shared/page-error';
-import PageLoading from '../shared/page-loading';
+import {PageError} from '../shared/page-error';
+import {PageLoading} from '../shared/page-loading';
 import { CreateSprintModal } from './create-sprint-modal';
 import { EditSprintModal } from './edit-sprint-modal';
 import { SprintCard } from './sprint-card';

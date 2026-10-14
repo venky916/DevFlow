@@ -1,76 +1,61 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
-import { Controller, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Controller, useForm } from "react-hook-form";
 
-import { Button } from '@devflow/ui/components/button';
-import { ColorPicker, DEFAULT_PROJECT_COLOR } from '@devflow/ui/components/color-picker';
-import { ConfirmModal } from '@devflow/ui/components/confirm-modal';
-import { Input } from '@devflow/ui/components/input';
-import type { UpdateProjectInput } from '@devflow/validators';
+import type { IProjectSummary } from "@devflow/types";
+import { Button } from "@devflow/ui/components/button";
+import {
+  ColorPicker,
+  DEFAULT_PROJECT_COLOR,
+} from "@devflow/ui/components/color-picker";
+import { ConfirmModal } from "@devflow/ui/components/confirm-modal";
+import { Input } from "@devflow/ui/components/input";
+import {
+  updateProjectSchema,
+  type UpdateProjectInput,
+} from "@devflow/validators";
 
-import { useDeleteProject, useUpdateProject } from '../../../hooks/use-projects';
-import { SectionHeading } from '../../shared/section-heading';
+import {
+  useDeleteProject,
+  useUpdateProject,
+} from "../../../hooks/use-projects";
+import { canDeleteProject } from "../../../lib/permissions";
+import { SectionHeading } from "../../shared/section-heading";
 
-interface Props {
-  projectId: string;
-  workspaceId: string;
-  projectName: string;
-  projectDescription: string | null;
-  projectColor: string | null;
-  canDelete: boolean;
+interface GeneralTabProps {
+  project: IProjectSummary;
+  workspaceSlug: string;
 }
 
-export function GeneralTab({
-  projectId,
-  workspaceId,
-  projectName,
-  projectDescription,
-  projectColor,
-  canDelete,
-}: Props) {
-  const router = useRouter();
-  const { workspaceSlug } = useParams<{ workspaceSlug: string }>();
+export function GeneralTab({ project, workspaceSlug }: GeneralTabProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const { mutate: updateProject, isPending: isUpdating } = useUpdateProject(projectId, workspaceId);
-  const { mutate: deleteProject, isPending: isDeleting } = useDeleteProject(projectId, workspaceId);
+  // workspace admins only. A project LEAD can edit the project but not delete it
+  const canDelete = canDeleteProject(project.currentUserAccess);
+
+  const { mutate: updateProject, isPending: isUpdating } = useUpdateProject(
+    project.id,
+  );
+  const { mutate: deleteProject, isPending: isDeleting } = useDeleteProject(
+    project.id,
+    workspaceSlug,
+  );
 
   const {
     register,
     handleSubmit,
     control,
-    formState: { isDirty },
+    formState: { isDirty, errors },
   } = useForm<UpdateProjectInput>({
+    resolver: zodResolver(updateProjectSchema),
     values: {
-      name: projectName,
-      description: projectDescription ?? '',
-      color: projectColor ?? DEFAULT_PROJECT_COLOR,
+      name: project.name,
+      description: project.description ?? "",
+      color: project.color ?? DEFAULT_PROJECT_COLOR,
     },
   });
-
-  const onSave = (data: UpdateProjectInput) => {
-    updateProject(data, {
-      onSuccess: () => toast.success('Project updated'),
-      onError: () => toast.error('Failed to update project'),
-    });
-  };
-
-  const onDelete = () => {
-    deleteProject(undefined, {
-      onSuccess: () => {
-        toast.success('Project deleted');
-        router.push(`/${workspaceSlug}`);
-      },
-      onError: () => {
-        toast.error('Failed to delete project');
-        setShowDeleteModal(false);
-      },
-    });
-  };
 
   return (
     <>
@@ -80,19 +65,39 @@ export function GeneralTab({
             title="Project details"
             description="Update the project name, description and color."
           />
-          <form onSubmit={handleSubmit(onSave)} className="flex max-w-[400px] flex-col gap-3">
-            <Input label="Project name" {...register('name')} />
-            <Input label="Description" {...register('description')} />
+          <form
+            onSubmit={handleSubmit((data) => updateProject(data))}
+            className="flex max-w-sm flex-col gap-3"
+          >
+            <Input
+              label="Project name"
+              error={errors.name?.message}
+              {...register("name")}
+            />
+            <Input
+              label="Description"
+              error={errors.description?.message}
+              {...register("description")}
+            />
             <Controller
               control={control}
               name="color"
               render={({ field }) => (
-                <ColorPicker label="Color" value={field.value} onChange={field.onChange} />
+                <ColorPicker
+                  label="Color"
+                  value={field.value ?? DEFAULT_PROJECT_COLOR}
+                  onChange={field.onChange}
+                />
               )}
             />
             <div>
-              <Button type="submit" size="sm" disabled={isUpdating || !isDirty}>
-                {isUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Save changes'}
+              <Button
+                type="submit"
+                size="sm"
+                loading={isUpdating}
+                disabled={!isDirty}
+              >
+                Save changes
               </Button>
             </div>
           </form>
@@ -101,11 +106,13 @@ export function GeneralTab({
         {canDelete && (
           <>
             <div className="h-px bg-border-default" />
-            <div className="flex flex-col gap-3 rounded-[4px] border border-danger-text p-4">
-              <p className="text-[13px] font-medium text-danger-text">Danger Zone</p>
-              <p className="text-[12px] text-text-muted">
-                Permanently delete this project and all its issues, sprints, and data. This cannot
-                be undone.
+            <div className="flex flex-col gap-3 rounded-base border border-danger-text p-4">
+              <p className="text-body font-medium text-danger-text">
+                Danger Zone
+              </p>
+              <p className="text-xs text-text-muted">
+                Permanently delete this project and all its issues, sprints, and
+                data. This cannot be undone.
               </p>
               <div>
                 <Button
@@ -125,7 +132,9 @@ export function GeneralTab({
       <ConfirmModal
         open={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
-        onConfirm={onDelete}
+        onConfirm={() =>
+          deleteProject(undefined, { onError: () => setShowDeleteModal(false) })
+        }
         title="Delete project?"
         description="All issues, sprints, and data will be permanently lost. This cannot be undone."
         confirmLabel="Delete project"

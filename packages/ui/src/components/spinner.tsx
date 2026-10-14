@@ -3,6 +3,7 @@ import { cn } from "../lib/cn";
 interface SpinnerProps {
   className?: string;
   size?: "sm" | "md" | "lg";
+  tone?: "accent" | "current";
 }
 
 const sizeMap = {
@@ -11,11 +12,23 @@ const sizeMap = {
   lg: "h-7 w-7",
 };
 
-export function Spinner({ className, size = "md" }: SpinnerProps) {
+const toneMap = {
+  accent: "border-accent",
+  current: "border-current",
+};
+
+export function Spinner({
+  className,
+  size = "md",
+  tone = "accent",
+}: SpinnerProps) {
   return (
-    <div
+    <span
+      aria-hidden="true"
       className={cn(
-        "rounded-full border-2 border-accent border-t-transparent animate-spin",
+        "inline-block rounded-full border-2 animate-spin",
+        toneMap[tone],
+        "border-t-transparent", // keep AFTER the tone class
         sizeMap[size],
         className,
       )}

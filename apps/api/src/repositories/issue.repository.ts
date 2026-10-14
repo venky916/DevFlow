@@ -35,6 +35,15 @@ export const issueRepository = {
     return prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } });
   },
 
+  findLinkContext(issueId: string) {
+    return prisma.issue.findUnique({
+      where: { id: issueId },
+      select: {
+        project: { select: { name: true, slug: true, workspace: { select: { slug: true } } } },
+      },
+    });
+  },
+
   async getNextPosition(projectId: string, sprintId: string | null, parentId?: string) {
     const lastIssue = parentId
       ? await prisma.issue.findFirst({ where: { parentId }, orderBy: { position: 'desc' } })

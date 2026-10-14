@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 
-import { adminAuth } from '@devflow/backend-common';
+import { adminAuth, logger } from '@devflow/backend-common';
 import { prisma } from '@devflow/db';
 
 import { ApiError } from '../lib/ApiError';
@@ -21,38 +21,29 @@ declare global {
   }
 }
 
+const MAX_SESSION_AGE_MS = 24 * 60 * 60 * 1000; // 24h
+
+async function verifyToken(token: string) {
+  try {
+    return await adminAuth.verifyIdToken(token);
+  } catch (err) {
+    logger.warn({ err }, 'ID token verification failed');
+    throw ApiError.unauthorized('Invalid or expired token');
+  }
+}
+
 export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.headers.authorization?.split('Bearer ')[1];
 
     if (!token) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      throw ApiError.unauthorized('Unauthorized');
     }
 
-    const decoded = await adminAuth.verifyIdToken(token);
-    const authTimeMs = decoded.auth_time * 1000;
-    const sessionAge = Date.now() - authTimeMs;
-    const MAX_SESSION_AGE = 24 * 60 * 60 * 1000; // 24h
-
-    if (sessionAge > MAX_SESSION_AGE) {
+    const decoded = await verifyToken(token);
+    if (Date.now() - decoded.auth_time * 1000 > MAX_SESSION_AGE_MS) {
       throw ApiError.unauthorized('Session expired, please sign in again', 'SESSION_EXPIRED');
     }
-
-    // old way 2 db calls
-    // let user = await prisma.user.findUnique({
-    //     where: { firebaseUid: decoded.uid },
-    // });
-
-    // if (!user) {
-    //     user = await prisma.user.create({
-    //         data: {
-    //             firebaseUid: decoded.uid,
-    //             email: decoded.email ?? '',
-    //             name: decoded.name ?? null,
-    //             avatarUrl: decoded.picture ?? null,
-    //         },
-    //     });
-    // }
 
     // 1 db call
     const user = await prisma.user.upsert({
@@ -69,7 +60,6 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     req.user = user;
     next();
   } catch (error) {
-    console.error('[Auth] failed:', error);
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    next(error);
   }
 };

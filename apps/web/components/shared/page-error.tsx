@@ -9,7 +9,7 @@ interface PageErrorProps {
   onRetry?: () => void;
 }
 
-export default function PageError({ message = 'Something went wrong', onRetry }: PageErrorProps) {
+export function PageError({ message = 'Something went wrong', onRetry }: PageErrorProps) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 px-4 text-center">
       <AlertCircle className="h-6 w-6 text-danger-text" />

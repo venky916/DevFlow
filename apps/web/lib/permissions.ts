@@ -3,19 +3,13 @@
 // Mirrors the backend matrix exactly — keep both in sync (or later, move
 // this into @devflow/types so both sides import the literal same file).
 
-export type WorkspaceRole = 'ADMIN' | 'MEMBER';
-export type ProjectRole = 'LEAD' | 'DEVELOPER' | 'VIEWER';
-
-export type ProjectAccess = {
-  isWorkspaceAdmin: boolean;
-  projectRole: ProjectRole | null;
-};
+import type { IProjectAccess, ProjectRole, WorkspaceRole } from '@devflow/types';
 
 // ── Pure role-lookup tables — one row per action from the locked table ──
 export const WORKSPACE_PERMISSIONS = {
   UPDATE_WORKSPACE: ['ADMIN'],
   DELETE_WORKSPACE: ['ADMIN'],
-  VIEW_MEMBERS: ['ADMIN', 'MEMBER'],
+  VIEW_MEMBERS: ['ADMIN'],
   CHANGE_MEMBER_ROLE: ['ADMIN'],
   REMOVE_MEMBER: ['ADMIN'],
   MANAGE_INVITES: ['ADMIN'],
@@ -59,14 +53,14 @@ export function canWorkspace(role: WorkspaceRole | null, action: WorkspaceAction
   return (WORKSPACE_PERMISSIONS[action] as readonly string[]).includes(role);
 }
 
-export function canProject(access: ProjectAccess, action: ProjectAction): boolean {
+export function canProject(access: IProjectAccess, action: ProjectAction): boolean {
   if (access.isWorkspaceAdmin) return true;
   if (!access.projectRole) return false;
   return (PROJECT_PERMISSIONS[action] as readonly string[]).includes(access.projectRole);
 }
 
 // DELETE_PROJECT is admin-only, no LEAD path — deliberately not a table row
-export function canDeleteProject(access: ProjectAccess): boolean {
+export function canDeleteProject(access: IProjectAccess): boolean {
   return access.isWorkspaceAdmin;
 }
 
@@ -75,7 +69,7 @@ export function canDeleteProject(access: ProjectAccess): boolean {
 // Comments screens later just import from this one file, not reinvent it. ──
 
 export function canUpdateIssue(
-  access: ProjectAccess,
+  access: IProjectAccess,
   issue: { assigneeId: string | null },
   userId: string,
 ): boolean {
@@ -85,7 +79,7 @@ export function canUpdateIssue(
 }
 
 export function canMoveIssue(
-  access: ProjectAccess,
+  access: IProjectAccess,
   issue: { assigneeId: string | null },
   userId: string,
 ): boolean {
@@ -97,7 +91,7 @@ export function canEditComment(comment: { authorId: string }, userId: string): b
 }
 
 export function canDeleteComment(
-  access: ProjectAccess,
+  access: IProjectAccess,
   comment: { authorId: string },
   userId: string,
 ): boolean {
@@ -106,7 +100,7 @@ export function canDeleteComment(
 }
 
 export function canDeleteAttachment(
-  access: ProjectAccess,
+  access: IProjectAccess,
   attachment: { uploader?: { id: string } },
   userId: string,
 ): boolean {

@@ -25,8 +25,8 @@ import { KanbanColumn } from '../board/kanban-column';
 import { IssueSlideOver } from '../issue/issue-slide-over';
 import { FilterBar } from '../shared/filter-bar';
 import { ListView } from '../shared/list-view';
-import PageError from '../shared/page-error';
-import PageLoading from '../shared/page-loading';
+import {PageError} from '../shared/page-error';
+import {PageLoading} from '../shared/page-loading';
 
 const STATUSES: IssueStatus[] = ['BACKLOG', 'TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'];
 

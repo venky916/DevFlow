@@ -6,19 +6,23 @@ import {
   createProject,
   deleteLabel,
   deleteProject,
+  getAvailableProjectMembers,
   getLabels,
   getProjectById,
+  getProjectBySlug,
   getProjectMembers,
   getProjects,
+  getProjectSummaries,
   removeProjectMember,
   updateLabel,
   updateProject,
+  updateProjectMemberRole,
 } from '../../controllers/project.controller.js';
-import { updateMemberRole } from '../../controllers/workspace.controller';
 import { authenticate } from '../../middlewares/auth.middleware.js';
 import {
   requireProjectMember,
   requireProjectRole,
+  requireProjectWorkspaceAdmin,
   requireWorkspaceMember,
   requireWorkspaceRole,
 } from '../../middlewares/permission.middleware.js';
@@ -30,14 +34,17 @@ router.use(authenticate);
 // Project CRUD
 router.post('/', requireWorkspaceRole('ADMIN'), createProject);
 router.get('/', requireWorkspaceMember, getProjects);
+router.get('/summary', requireWorkspaceMember, getProjectSummaries); // NEW: /workspaces/:workspaceId/projects/summary
+router.get('/by-slug/:workspaceSlug/:projectSlug', getProjectBySlug); // NEW: /projects/by-slug/...
 router.get('/:id', requireProjectMember, getProjectById);
 router.patch('/:id', requireProjectRole('LEAD'), updateProject);
-router.delete('/:id', requireWorkspaceRole('ADMIN'), deleteProject);
+router.delete('/:id', requireProjectWorkspaceAdmin, deleteProject);
 
 // Member management
 router.get('/:id/members', requireProjectMember, getProjectMembers);
+router.get('/:id/available-members', requireProjectRole('LEAD'), getAvailableProjectMembers);
 router.post('/:id/members', requireProjectRole('LEAD'), addProjectMember);
-router.put('/:id/members/:uid', requireProjectRole('LEAD'), updateMemberRole);
+router.put('/:id/members/:uid', requireProjectRole('LEAD'), updateProjectMemberRole);
 router.delete('/:id/members/:uid', requireProjectRole('LEAD'), removeProjectMember);
 
 // Labels — LEAD/ADMIN only for mutations, any member can read

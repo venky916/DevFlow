@@ -17,8 +17,8 @@ export function ColorDot({ color, onChange, size = "sm" }: ColorDotProps) {
         <button
           type="button"
           className={cn(
-            "rounded-full shrink-0 hover:ring-2 hover:ring-white/20 transition-all",
-            size === "sm" ? "h-5 w-5" : "h-6 w-6",
+            "shrink-0 rounded-full transition-all hover:ring-2 hover:ring-text-primary/20",
+            size === "sm" ? "size-5" : "size-6",
           )}
           style={{ backgroundColor: color }}
           aria-label="Change color"
@@ -28,7 +28,7 @@ export function ColorDot({ color, onChange, size = "sm" }: ColorDotProps) {
         <Popover.Content
           align="start"
           sideOffset={6}
-          className="z-50 rounded-[4px] border border-border-emphasis bg-bg-surface shadow-xl p-2 w-[176px]"
+          className="z-50 w-44 rounded-base border border-border-emphasis bg-bg-surface p-2 shadow-xl"
         >
           <div className="grid grid-cols-5 gap-1">
             {PROJECT_COLORS.map((c) => (
@@ -36,8 +36,9 @@ export function ColorDot({ color, onChange, size = "sm" }: ColorDotProps) {
                 <button
                   type="button"
                   title={c.label}
+                  aria-label={c.label}
                   onClick={() => onChange(c.value)}
-                  className="h-7 w-7 rounded-[4px] hover:scale-110 hover:ring-2 hover:ring-white/20 transition-all"
+                  className="size-7 rounded-base transition-all hover:scale-110 hover:ring-2 hover:ring-text-primary/20"
                   style={{ backgroundColor: c.value }}
                 />
               </Popover.Close>

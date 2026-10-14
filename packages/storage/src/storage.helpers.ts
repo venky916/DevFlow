@@ -23,14 +23,13 @@ const folderOf = (key: string) => key.split("/")[0] as UploadFolder
 const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"]
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024 // 2MB for avatars and logos
 
-export const generatePresignedUploadUrl = async (folder: UploadFolder, fileName: string, mimeType: string, fileSize: number, expiresInSeconds = 3000): Promise<PresignedUploadResult> => {
+export const createUploadTarget = async (folder: UploadFolder, fileName: string, mimeType: string, fileSize: number, expiresInSeconds = 3000): Promise<PresignedUploadResult> => {
 
     // public folders only accept small images
     if (folder !== "attachments") {
         if (!IMAGE_TYPES.includes(mimeType)) throw new Error("Only png, jpeg or webp images are allowed")
         if (fileSize > MAX_IMAGE_SIZE) throw new Error("Image must be 2MB or smaller")
     }
-
 
     // unique key so files never collide
     const ext = fileName.split(".").pop()?.replace(/[^a-z0-9]/gi, "").toLowerCase() || "bin"

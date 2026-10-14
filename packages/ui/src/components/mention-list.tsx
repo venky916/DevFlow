@@ -59,7 +59,7 @@ export const MentionList = forwardRef<MentionListRef, MentionListProps>(
         {items.map((item, index) => (
           <button
             key={item.id}
-            type="button"
+            
             onClick={() => selectItem(index)}
             className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-left text-[12px] ${
               index === selectedIndex

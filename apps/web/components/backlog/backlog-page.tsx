@@ -36,8 +36,8 @@ import { PRIORITY_COLORS } from '../../lib/issue-constants';
 import { CreateIssueModal } from '../issue/create-issue-modal';
 import { IssueSlideOver } from '../issue/issue-slide-over';
 import { FilterBar, type IssueFilters } from '../shared/filter-bar';
-import PageError from '../shared/page-error';
-import PageLoading from '../shared/page-loading';
+import {PageError} from '../shared/page-error';
+import {PageLoading} from '../shared/page-loading';
 import { IssueRow } from './issue-row';
 
 function SprintSection({

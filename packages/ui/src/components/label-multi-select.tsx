@@ -48,7 +48,6 @@ export function LabelMultiSelect({
       <Popover.Root>
         <Popover.Trigger asChild>
           <button
-            type="button"
             disabled={disabled}
             className="flex min-h-9 w-full items-center gap-1.5 flex-wrap rounded-[4px] border border-border-emphasis bg-bg-overlay px-3 py-1.5 text-left transition-colors focus:outline-none focus:border-accent disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -97,7 +96,6 @@ export function LabelMultiSelect({
               return (
                 <button
                   key={l.id}
-                  type="button"
                   onClick={() => toggle(l.id)}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-[3px] px-2 py-1.5 text-[13px] text-left transition-colors",

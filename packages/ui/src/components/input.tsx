@@ -45,10 +45,10 @@ export function Input({
         />
         {isPassword && (
           <button
-            type="button"
             onClick={() => setShowPassword((prev) => !prev)}
             className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors cursor-pointer"
             tabIndex={-1}
+            type="button"
           >
             {showPassword ? (
               <EyeOff className="h-3.5 w-3.5" />

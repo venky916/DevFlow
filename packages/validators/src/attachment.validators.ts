@@ -8,7 +8,7 @@ export const saveAttachmentSchema = z.object({
 }) 
 
 
-export const presignedUrlSchema = z.object({
+export const requestUploadUrlSchema = z.object({
     folder: z.enum(["attachments", "avatars", "logos"]),
     fileName: z.string().min(1),
     mimeType: z.string().min(1),
@@ -22,5 +22,5 @@ export const deleteFileSchema = z.object({
 })
 
 export type SaveAttachmentInput = z.infer<typeof saveAttachmentSchema>
-export type PresignedUrlInput = z.infer<typeof presignedUrlSchema>
+export type RequestUploadUrlInput = z.infer<typeof requestUploadUrlSchema>
 export type DeleteFileInput = z.infer<typeof deleteFileSchema>

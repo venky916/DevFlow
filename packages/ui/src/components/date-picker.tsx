@@ -60,7 +60,6 @@ export function DatePicker({
       <Popover.Root>
         <Popover.Trigger asChild>
           <button
-            type="button"
             disabled={disabled}
             className={cn(
               "flex h-9 w-full items-center justify-between rounded-[4px] border border-border-emphasis bg-bg-overlay px-3 text-sm transition-colors",

@@ -1,30 +1,33 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 
-import { Button } from '@devflow/ui/components/button';
-import { ImageUploadButton } from '@devflow/ui/components/image-upload-button';
-import { Input } from '@devflow/ui/components/input';
-import { Modal } from '@devflow/ui/components/modal';
-import { createWorkspaceSchema, type CreateWorkspaceInput } from '@devflow/validators';
+import { Button } from "@devflow/ui/components/button";
+import { ImageUploadButton } from "@devflow/ui/components/image-upload-button";
+import { Input } from "@devflow/ui/components/input";
+import { Modal } from "@devflow/ui/components/modal";
+import {
+  createWorkspaceSchema,
+  type CreateWorkspaceInput,
+} from "@devflow/validators";
 
-import { useImageUpload } from '../../hooks/use-image-upload';
-import { useCreateWorkspace } from '../../hooks/use-workspaces';
+import { useCreateWorkspace } from "../../hooks/use-workspaces";
+import { slugify } from "../../lib/slugify";
+import { useUploadImage } from "../../hooks/use-upload";
 
-interface Props {
+interface CreateWorkspaceModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-export function CreateWorkspaceModal({ open, onClose }: Props) {
-  const router = useRouter();
-  const { mutateAsync, isPending } = useCreateWorkspace();
-  const { upload, isUploading } = useImageUpload('logos');
+export function CreateWorkspaceModal({
+  open,
+  onClose,
+}: CreateWorkspaceModalProps) {
+  const { mutate: createWorkspace, isPending } = useCreateWorkspace();
+  const { uploadImage, isUploading } = useUploadImage("logos");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -39,83 +42,70 @@ export function CreateWorkspaceModal({ open, onClose }: Props) {
     resolver: zodResolver(createWorkspaceSchema),
   });
 
-  const name = watch('name');
-  useEffect(() => {
-    if (name) {
-      setValue(
-        'slug',
-        name
-          .toLowerCase()
-          .replace(/\s+/g, '-')
-          .replace(/[^a-z0-9-]/g, ''),
-      );
-    }
-  }, [name]);
+  const name = watch("name");
+
+  const handleClose = () => {
+    reset();
+    setLogoUrl(null);
+    setPreviewUrl(null);
+    onClose();
+  };
 
   const handleLogoSelect = async (file: File) => {
-    const localPreview = URL.createObjectURL(file);
-    setPreviewUrl(localPreview);
-    try {
-      const url = await upload(file);
-      setLogoUrl(url);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to upload logo');
-      setPreviewUrl(null);
-    }
+    setPreviewUrl(URL.createObjectURL(file));
+    const url = await uploadImage(file); // the hook shows the error toast and returns null on failure
+    if (url) setLogoUrl(url);
+    else setPreviewUrl(null);
   };
 
-  const onSubmit = async (data: CreateWorkspaceInput) => {
-    try {
-      const workspace = await mutateAsync({
-        ...data,
-        logoUrl: logoUrl ?? undefined,
-      });
-      toast.success('Workspace created!');
-      reset();
-      setLogoUrl(null);
-      setPreviewUrl(null);
-      onClose();
-      router.push(`/${workspace.slug}`);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message ?? 'Failed to create workspace');
-    }
-  };
+  const nameField = register("name");
 
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       title="Create workspace"
       description="A workspace contains your projects and team members."
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      <form
+        onSubmit={handleSubmit((data) =>
+          createWorkspace(
+            { ...data, logoUrl: logoUrl ?? undefined },
+            { onSuccess: handleClose },
+          ),
+        )}
+        className="flex flex-col gap-4"
+      >
         <ImageUploadButton
           src={previewUrl ?? logoUrl}
-          fallbackLabel={name?.charAt(0)?.toUpperCase() ?? '?'}
+          fallbackLabel={name?.charAt(0).toUpperCase() || "?"}
           shape="square"
           size={56}
           isUploading={isUploading}
           onFileSelect={handleLogoSelect}
         />
-
         <Input
           label="Workspace name"
           placeholder="Acme Inc"
           error={errors.name?.message}
-          {...register('name')}
+          {...nameField}
+          onChange={(e) => {
+            nameField.onChange(e);
+            setValue("slug", slugify(e.target.value));
+          }}
         />
         <Input
           label="Slug"
           placeholder="acme-inc"
           error={errors.slug?.message}
-          {...register('slug')}
+          {...register("slug")}
         />
         <div className="mt-2 flex justify-end gap-2">
-          <Button variant="ghost" type="button" onClick={onClose}>
+          <Button type="button" variant="ghost" onClick={handleClose}>
             Cancel
           </Button>
-          <Button variant="primary" type="submit" disabled={isPending}>
-            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create workspace'}
+          <Button type="submit" loading={isPending} disabled={isUploading}>
+            Create workspace
           </Button>
         </div>
       </form>

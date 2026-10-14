@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   createColumnHelper,
@@ -10,27 +10,32 @@ import {
   sortFn_text,
   tableFeatures,
   useTable,
-} from '@tanstack/react-table';
-import type { SortingState } from '@tanstack/react-table';
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react';
+} from "@tanstack/react-table";
+import type { SortingState } from "@tanstack/react-table";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+} from "lucide-react";
 
-import type { IIssueWithRelations, IssueStatus } from '@devflow/types';
-import { Badge } from '@devflow/ui/components/badge';
-import { LabelChip } from '@devflow/ui/components/label-chip';
-import { Select } from '@devflow/ui/components/select';
-import type { SelectOption } from '@devflow/ui/components/select';
+import type { IIssueWithRelations, IssueStatus } from "@devflow/types";
+import { Badge } from "@devflow/ui/components/badge";
+import { LabelChip } from "@devflow/ui/components/label-chip";
+import { Select } from "@devflow/ui/components/select";
+import type { SelectOption } from "@devflow/ui/components/select";
 
-import { useMoveIssue } from '../../hooks/use-board';
-import { useCanMoveIssue } from '../../hooks/use-can-move-issue'; // NEW
-import type { PaginatedResponse } from '../../hooks/use-issues';
+import { useMoveIssue } from "../../hooks/use-board";
+import { useCanMoveIssue } from "../../hooks/use-can-move-issue"; // NEW
+import type { PaginatedResponse } from "../../hooks/use-issues";
 import {
   getStatusVariant,
   PRIORITY_COLORS,
   STATUS_LABELS,
   STATUS_OPTIONS,
-} from '../../lib/issue-constants';
-import PageError from './page-error';
-import PageLoading from './page-loading';
+} from "../../lib/issue-constants";
+import {PageError} from "./page-error";
+import {PageLoading} from "./page-loading";
 
 // module scope — created once, not per render
 const features = tableFeatures({
@@ -67,7 +72,7 @@ function StatusCell<T extends ListViewRow>({
 }: {
   issue: T;
   statusOptions: SelectOption[];
-  moveIssue: ReturnType<typeof useMoveIssue>['mutate'];
+  moveIssue: ReturnType<typeof useMoveIssue>["mutate"];
   onMoved: () => void;
 }) {
   const override = issue.project?.workspace?.slug
@@ -80,10 +85,13 @@ function StatusCell<T extends ListViewRow>({
 
   const status = issue.status;
   const childLocked = !issue.parentId && (issue.children?.length ?? 0) > 0;
-  const allowed = !childLocked && canMove({ assigneeId: issue.assigneeId ?? null });
+  const allowed =
+    !childLocked && canMove({ assigneeId: issue.assigneeId ?? null });
 
   if (!allowed) {
-    return <Badge variant={getStatusVariant(status)}>{STATUS_LABELS[status]}</Badge>;
+    return (
+      <Badge variant={getStatusVariant(status)}>{STATUS_LABELS[status]}</Badge>
+    );
   }
 
   return (
@@ -112,7 +120,7 @@ function StatusCell<T extends ListViewRow>({
 
 function buildColumns<T extends ListViewRow>(
   showProject: boolean,
-  moveIssue: ReturnType<typeof useMoveIssue>['mutate'],
+  moveIssue: ReturnType<typeof useMoveIssue>["mutate"],
   statusOptions: SelectOption[],
   onMoved: () => void, // NEW — replaces the hardcoded queryClient.invalidateQueries call
 ) {
@@ -120,8 +128,8 @@ function buildColumns<T extends ListViewRow>(
 
   return columnHelper.columns([
     columnHelper.accessor((row) => row.title, {
-      id: 'title',
-      header: 'Title',
+      id: "title",
+      header: "Title",
       cell: (info) => {
         const row = info.row;
 
@@ -129,7 +137,6 @@ function buildColumns<T extends ListViewRow>(
           <div className="flex items-center gap-1.5">
             {row.getCanExpand() ? (
               <button
-                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   row.toggleExpanded();
@@ -146,7 +153,9 @@ function buildColumns<T extends ListViewRow>(
               <span className="h-5 w-5" />
             )}
 
-            <span className="text-[13px] text-text-primary">{info.getValue()}</span>
+            <span className="text-[13px] text-text-primary">
+              {info.getValue()}
+            </span>
           </div>
         );
       },
@@ -154,17 +163,19 @@ function buildColumns<T extends ListViewRow>(
     ...(showProject
       ? [
           columnHelper.accessor((row) => row.project, {
-            id: 'project',
-            header: 'Project',
+            id: "project",
+            header: "Project",
             cell: (info) => (
-              <span className="text-[12px] text-text-secondary">{info.getValue()?.name}</span>
+              <span className="text-[12px] text-text-secondary">
+                {info.getValue()?.name}
+              </span>
             ),
           }),
         ]
       : []),
     columnHelper.accessor((row) => row.status, {
-      id: 'status',
-      header: 'Status',
+      id: "status",
+      header: "Status",
       cell: (info) => (
         <StatusCell
           issue={info.row.original}
@@ -175,49 +186,58 @@ function buildColumns<T extends ListViewRow>(
       ),
     }),
     columnHelper.accessor((row) => row.priority, {
-      id: 'priority',
-      header: 'Priority',
+      id: "priority",
+      header: "Priority",
       cell: (info) => (
         <div className="flex items-center gap-1.5">
           <span
             className="h-[6px] w-[6px] rounded-full"
             style={{ backgroundColor: PRIORITY_COLORS[info.getValue()] }}
           />
-          <span className="text-[12px] text-text-secondary">{info.getValue()}</span>
+          <span className="text-[12px] text-text-secondary">
+            {info.getValue()}
+          </span>
         </div>
       ),
     }),
     columnHelper.accessor((row) => row.assignee, {
-      id: 'assignee',
-      header: 'Assignee',
+      id: "assignee",
+      header: "Assignee",
       cell: (info) => {
         const a = info.getValue();
         return a ? (
-          <span className="text-[12px] text-text-secondary">{a.name ?? a.email}</span>
+          <span className="text-[12px] text-text-secondary">
+            {a.name ?? a.email}
+          </span>
         ) : (
           <span className="text-[12px] text-text-muted">Unassigned</span>
         );
       },
     }),
     columnHelper.accessor((row) => row.labels ?? [], {
-      id: 'labels',
-      header: 'Labels',
+      id: "labels",
+      header: "Labels",
       cell: (info) => (
         <div className="flex flex-wrap gap-1">
           {info.getValue().map((l) => (
-            <LabelChip key={l.label.id} name={l.label.name} color={l.label.color} size="sm" />
+            <LabelChip
+              key={l.label.id}
+              name={l.label.name}
+              color={l.label.color}
+              size="sm"
+            />
           ))}
         </div>
       ),
     }),
     columnHelper.accessor((row) => row.dueDate, {
-      id: 'dueDate',
-      header: 'Due date',
+      id: "dueDate",
+      header: "Due date",
       cell: (info) => {
         const v = info.getValue();
         return (
           <span className="font-mono text-[12px] text-text-muted">
-            {v ? new Date(v).toLocaleDateString() : '—'}
+            {v ? new Date(v).toLocaleDateString() : "—"}
           </span>
         );
       },
@@ -255,12 +275,17 @@ export function ListView<T extends IIssueWithRelations>({
   const { mutate: moveIssue } = useMoveIssue();
   const statusOptions = showProjectColumn
     ? STATUS_OPTIONS
-    : STATUS_OPTIONS.filter((option) => option.value !== 'BACKLOG');
+    : STATUS_OPTIONS.filter((option) => option.value !== "BACKLOG");
 
   // Fix A: whichever page owns this table already owns the right query key
   // (useIssueList for Board, useMyIssuesList for My Issues) and passed its own
   // `refetch` in as a prop — use that instead of guessing a queryClient key here.
-  const columns = buildColumns<T>(showProjectColumn, moveIssue, statusOptions, refetch);
+  const columns = buildColumns<T>(
+    showProjectColumn,
+    moveIssue,
+    statusOptions,
+    refetch,
+  );
 
   const table = useTable({
     features,
@@ -269,7 +294,7 @@ export function ListView<T extends IIssueWithRelations>({
     state: { sorting },
     getSubRows: (row) => (row.children ?? []) as T[],
     onSortingChange: (updater) => {
-      const next = typeof updater === 'function' ? updater(sorting) : updater;
+      const next = typeof updater === "function" ? updater(sorting) : updater;
       onSortingChange(next);
       onPageChange(1);
     },
@@ -278,14 +303,18 @@ export function ListView<T extends IIssueWithRelations>({
 
   if (isLoading) return <PageLoading />;
   if (isError) {
-    return <PageError message="Couldn't load issues" onRetry={() => refetch()} />;
+    return (
+      <PageError message="Couldn't load issues" onRetry={() => refetch()} />
+    );
   }
 
   const meta = data?.meta;
 
   return (
     <div className="flex h-full flex-col">
-      <div className={`flex-1 overflow-auto ${isFetching ? 'opacity-60 transition-opacity' : ''}`}>
+      <div
+        className={`flex-1 overflow-auto ${isFetching ? "opacity-60 transition-opacity" : ""}`}
+      >
         <table className="w-full border-collapse">
           <thead className="sticky top-0 border-b border-border-default bg-bg-app">
             {table.getHeaderGroups().map((hg) => (
@@ -298,12 +327,16 @@ export function ListView<T extends IIssueWithRelations>({
                   >
                     <span
                       className={`flex items-center gap-1 ${
-                        header.column.id === 'title' ? 'pl-[26px]' : ''
+                        header.column.id === "title" ? "pl-[26px]" : ""
                       }`}
                     >
-                      {!header.isPlaceholder && <table.FlexRender header={header} />}
-                      {header.column.getIsSorted() === 'asc' && <ChevronUp className="h-3 w-3" />}
-                      {header.column.getIsSorted() === 'desc' && (
+                      {!header.isPlaceholder && (
+                        <table.FlexRender header={header} />
+                      )}
+                      {header.column.getIsSorted() === "asc" && (
+                        <ChevronUp className="h-3 w-3" />
+                      )}
+                      {header.column.getIsSorted() === "desc" && (
                         <ChevronDown className="h-3 w-3" />
                       )}
                     </span>
@@ -331,7 +364,9 @@ export function ListView<T extends IIssueWithRelations>({
 
         {!data?.items.length && (
           <div className="flex items-center justify-center py-16">
-            <p className="text-[13px] text-text-muted">No issues match these filters</p>
+            <p className="text-[13px] text-text-muted">
+              No issues match these filters
+            </p>
           </div>
         )}
       </div>
@@ -339,7 +374,7 @@ export function ListView<T extends IIssueWithRelations>({
       {meta && meta.total > meta.limit && (
         <div className="flex shrink-0 items-center justify-between border-t border-border-default px-3 py-2">
           <span className="text-[12px] text-text-muted">
-            {meta.total} issue{meta.total !== 1 ? 's' : ''}
+            {meta.total} issue{meta.total !== 1 ? "s" : ""}
           </span>
           <div className="flex items-center gap-2">
             <button

@@ -1,38 +1,53 @@
 import { Request, Response } from 'express';
 
 import { adminAuth, logger } from '@devflow/backend-common';
-import { emailQueue } from '@devflow/queues';
-import { NotificationTypes } from '@devflow/types';
+import { forgotPasswordSchema } from '@devflow/validators';
 
-export const me = (req: Request, res: Response) => {
-  return res.json({ user: req.user });
-};
+import { ApiError } from '../lib/ApiError';
+import { sendSuccess } from '../lib/apiResponse';
+import { asyncHandler } from '../lib/asyncHandler';
+import { absoluteUrl, webLinks } from '../lib/web-links';
+import { notificationService } from '../services/notification.service';
 
-export async function forgotPassword(req: Request, res: Response) {
-  const { email } = req.body; // validate with your forgotPasswordSchema
+// Firebase's error codes for an email that has no account
+const UNKNOWN_EMAIL_CODES = new Set(['auth/user-not-found', 'auth/email-not-found']);
 
+function getErrorCode(err: unknown): string | undefined {
+  if (typeof err === 'object' && err !== null && 'code' in err) {
+    const code = (err as { code: unknown }).code;
+    if (typeof code === 'string') return code;
+  }
+  return undefined;
+}
+
+// ─── FORGOT PASSWORD POST /auth/forgot-password ──────────────────────────
+export const forgotPassword = asyncHandler(async (req: Request, res: Response) => {
+  // a bad email format reaches the error handler as a 422
+  const { email } = forgotPasswordSchema.parse(req.body);
+
+  let rawLink: string | undefined;
   try {
-    const rawLink = await adminAuth.generatePasswordResetLink(email, {
-      url: `${process.env.BASE_WEB_URL}/reset-password`,
+    rawLink = await adminAuth.generatePasswordResetLink(email, {
+      url: absoluteUrl('/reset-password'),
       handleCodeInApp: true,
     });
-
-    // pull the oobCode out of Firebase's generated link
-    const oobCode = new URL(rawLink).searchParams.get('oobCode');
-
-    // build your own link pointing straight at your app
-    const resetLink = `${process.env.BASE_WEB_URL}/reset-password?oobCode=${oobCode}`;
-
-    await emailQueue.add('send-email', {
-      to: email,
-      type: NotificationTypes.PASSWORD_RESET,
-      data: { resetLink },
-    });
   } catch (err) {
-    // swallow the "user not found" case — don't leak whether the email exists
-    logger.warn({ email, err }, 'Password reset requested for unknown/failed email');
+    // only "no such account" is swallowed, so the response never reveals whether the email exists
+    if (!UNKNOWN_EMAIL_CODES.has(getErrorCode(err) ?? '')) throw err;
+    logger.warn('Password reset requested for an unknown email');
   }
 
-  // always respond success regardless of outcome
-  res.json({ message: 'If an account exists for this email, a reset link has been sent.' });
-}
+  if (rawLink) {
+    // pull the oobCode out of Firebase's link and point it straight at our app
+    const oobCode = new URL(rawLink).searchParams.get('oobCode');
+    if (!oobCode) throw ApiError.internal('Could not create the reset link');
+
+    await notificationService.sendPasswordResetEmail(
+      email,
+      absoluteUrl(webLinks.resetPassword(oobCode)),
+    );
+  }
+
+  // same answer whether or not the account exists
+  sendSuccess(res, null, 'If an account exists for this email, a reset link has been sent.');
+});

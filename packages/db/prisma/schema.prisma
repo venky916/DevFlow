@@ -146,7 +146,7 @@ model WorkspaceMember {
 model Project {
   id          String   @id @default(cuid())
   name        String
-  slug        String   @unique
+  slug        String  
   description String?
   color       String?
   workspaceId String
@@ -160,6 +160,7 @@ model Project {
   activities ActivityLog[]
   labels     Label[]
 
+  @@unique([workspaceId, slug]) 
   @@index([workspaceId])
   @@map("projects")
 }

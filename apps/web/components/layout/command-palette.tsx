@@ -1,59 +1,43 @@
-// components/command-palette.tsx
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Command } from 'cmdk';
-import { Building2, FileText, FolderKanban, Inbox, ListTodo, Settings, User } from 'lucide-react';
+import { Command } from "cmdk";
+import {
+  Building2,
+  FileText,
+  FolderKanban,
+  Inbox,
+  ListTodo,
+  Settings,
+  User,
+  type LucideIcon,
+} from "lucide-react";
 
-import { useDebouncedValue } from '../../hooks/use-debounced-value';
-import { useGlobalSearch } from '../../hooks/use-global-search';
-import { useUIStore } from '../../stores/ui.store';
+import type { SearchResultType } from "@devflow/types";
+
+import { ROUTES } from "../../constants/routes";
+import { useCommandPalette } from "../../hooks/use-command-palette";
 
 const STATIC_ITEMS = [
-  { name: 'Inbox', url: '/inbox', icon: Inbox },
-  { name: 'My Issues', url: '/my-issues', icon: ListTodo },
-  { name: 'Profile', url: '/profile', icon: User },
-  { name: 'Workspaces', url: '/workspaces', icon: Building2 },
+  { name: "Inbox", url: ROUTES.inbox, icon: Inbox },
+  { name: "My Issues", url: ROUTES.myIssues, icon: ListTodo },
+  { name: "Profile", url: ROUTES.profile, icon: User },
+  { name: "Workspaces", url: ROUTES.workspaces, icon: Building2 },
 ];
 
-const TYPE_ICON = {
+const TYPE_ICON: Record<SearchResultType, LucideIcon> = {
   workspace: Building2,
   project: FolderKanban,
   issue: FileText,
   page: Settings,
-} as const;
+};
+
+const ITEM_CLASS =
+  "flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-body text-text-primary aria-selected:bg-bg-hover";
+const GROUP_CLASS = "px-2 py-1 text-2xs text-text-muted";
 
 export function CommandPalette() {
-  const isOpen = useUIStore((s) => s.isCommandPaletteOpen);
-  const close = useUIStore((s) => s.closeCommandPalette);
-  const toggle = useUIStore((s) => s.toggleCommandPalette);
-  const router = useRouter();
-
-  const [search, setSearch] = useState('');
-  const debouncedSearch = useDebouncedValue(search, 200);
-  const { data: results, isFetching } = useGlobalSearch(debouncedSearch);
-
-  // global Cmd/Ctrl+K listener
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        toggle();
-      }
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [toggle]);
-
-  useEffect(() => {
-    if (!isOpen) setSearch('');
-  }, [isOpen]);
-
-  const go = (url: string) => {
-    close();
-    router.push(url);
-  };
+  const { isOpen, close, search, setSearch, results, isFetching, go } =
+    useCommandPalette();
 
   return (
     <Command.Dialog
@@ -61,41 +45,41 @@ export function CommandPalette() {
       onOpenChange={(open) => (open ? undefined : close())}
       label="Global search"
       className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]"
-      shouldFilter={false} // we filter static items ourselves; server already filtered its own
+      shouldFilter={false} // static items are filtered below, the server filters its own
     >
       <div className="absolute inset-0 bg-black/60" onClick={close} />
-      <div className="relative z-10 w-full max-w-[560px] overflow-hidden rounded-[4px] border border-border-emphasis bg-bg-surface shadow-2xl">
+      <div className="relative z-10 w-full max-w-xl overflow-hidden rounded-base border border-border-emphasis bg-bg-surface shadow-2xl">
         <Command.Input
           value={search}
           onValueChange={setSearch}
           placeholder="Search workspaces, projects, issues..."
-          className="h-11 w-full border-b border-border-default bg-transparent px-4 text-[13px] text-text-primary placeholder:text-text-muted focus:outline-none"
+          className="h-11 w-full border-b border-border-default bg-transparent px-4 text-body text-text-primary placeholder:text-text-muted focus:outline-none"
         />
-        <Command.List className="max-h-[360px] overflow-y-auto p-1.5">
-          <Command.Empty className="py-6 text-center text-[12px] text-text-muted">
-            {isFetching ? 'Searching...' : 'No results found'}
+        <Command.List className="max-h-90 overflow-y-auto p-1.5">
+          <Command.Empty className="py-6 text-center text-xs text-text-muted">
+            {isFetching ? "Searching..." : "No results found"}
           </Command.Empty>
 
           {search.length < 2 && (
-            <Command.Group heading="Navigate" className="px-2 py-1 text-[11px] text-text-muted">
-              {STATIC_ITEMS.filter((i) => i.name.toLowerCase().includes(search.toLowerCase())).map(
-                (item) => (
-                  <Command.Item
-                    key={item.url}
-                    value={item.name}
-                    onSelect={() => go(item.url)}
-                    className="flex cursor-pointer items-center gap-2 rounded-[3px] px-2 py-1.5 text-[13px] text-text-primary aria-selected:bg-bg-hover"
-                  >
-                    <item.icon className="h-3.5 w-3.5 text-text-muted" />
-                    {item.name}
-                  </Command.Item>
-                ),
-              )}
+            <Command.Group heading="Navigate" className={GROUP_CLASS}>
+              {STATIC_ITEMS.filter((item) =>
+                item.name.toLowerCase().includes(search.toLowerCase()),
+              ).map((item) => (
+                <Command.Item
+                  key={item.url}
+                  value={item.name}
+                  onSelect={() => go(item.url)}
+                  className={ITEM_CLASS}
+                >
+                  <item.icon className="size-3.5 text-text-muted" />
+                  {item.name}
+                </Command.Item>
+              ))}
             </Command.Group>
           )}
 
-          {results && results.length > 0 && (
-            <Command.Group heading="Results" className="px-2 py-1 text-[11px] text-text-muted">
+          {results.length > 0 && (
+            <Command.Group heading="Results" className={GROUP_CLASS}>
               {results.map((item) => {
                 const Icon = TYPE_ICON[item.type];
                 return (
@@ -103,12 +87,12 @@ export function CommandPalette() {
                     key={`${item.type}-${item.id}`}
                     value={`${item.type}-${item.id}`}
                     onSelect={() => go(item.url)}
-                    className="flex cursor-pointer items-center gap-2 rounded-[3px] px-2 py-1.5 text-[13px] text-text-primary aria-selected:bg-bg-hover"
+                    className={ITEM_CLASS}
                   >
-                    <Icon className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                    <Icon className="size-3.5 shrink-0 text-text-muted" />
                     <span className="truncate">{item.name}</span>
                     {item.context && (
-                      <span className="ml-auto shrink-0 truncate text-[11px] text-text-muted">
+                      <span className="ml-auto shrink-0 truncate text-2xs text-text-muted">
                         {item.context}
                       </span>
                     )}

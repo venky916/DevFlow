@@ -1,28 +1,27 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from "next/navigation";
 
-import { useWorkspaces } from '../../hooks/use-workspaces';
-import PageLoading from '../shared/page-loading';
+import { useWorkspaceGuard } from "../../hooks/use-workspaces";
+import {PageError} from "../shared/page-error";
+import {PageLoading} from "../shared/page-loading";
 
-export function WorkspaceAccessGuard({ children }: { children: React.ReactNode }) {
+export function WorkspaceAccessGuard({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { workspaceSlug } = useParams<{ workspaceSlug: string }>();
-  const router = useRouter();
-  const { data: workspaces, isLoading } = useWorkspaces();
+  const { status, refetch } = useWorkspaceGuard(workspaceSlug);
 
-  const currentWorkspace = workspaces?.find((ws) => ws.slug === workspaceSlug);
-
-  useEffect(() => {
-    if (isLoading) return;
-    if (!currentWorkspace) {
-      router.replace('/no-access?reason=not-a-member');
-    }
-  }, [isLoading, currentWorkspace, router]);
-
-  if (isLoading || !currentWorkspace) {
-    return <PageLoading />;
+  if (status === "loading") return <PageLoading />;
+  if (status === "error") {
+    return (
+      <PageError
+        message="Couldn't load this workspace"
+        onRetry={() => refetch()}
+      />
+    );
   }
-
   return <>{children}</>;
 }

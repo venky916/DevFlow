@@ -1,7 +1,95 @@
-export function Logo() {
+import { cn } from "@devflow/ui/lib/cn";
+
+/**
+ * DevFlow brand mark.
+ *
+ * - variant="full": D-mark + "devflow." wordmark (auth pages, marketing)
+ * - variant="icon": D-mark only (collapsed sidebar, small spaces)
+ *
+ * Colors come from theme tokens: the mark uses `--color-accent`,
+ * the wordmark text uses `currentColor` (set with a text-* class).
+ * Size is controlled by the `size` prop, never by ad-hoc classes.
+ */
+
+const HEIGHT = {
+  sm: "h-6", // 24px - sidebar, navbar
+  md: "h-8", // 32px - default
+  lg: "h-10", // 40px - auth pages
+} as const;
+
+export interface LogoProps {
+  variant?: "full" | "icon";
+  size?: keyof typeof HEIGHT;
+  className?: string;
+}
+
+function Mark() {
   return (
-    <div className="flex h-10 w-10 items-center justify-center rounded-[4px] bg-accent">
-      <span className="font-mono text-lg font-bold text-accent-text">D</span>
-    </div>
+    <>
+      <path
+        d="M16.5 14 H29.5 A18 18 0 0 1 29.5 50 H16.5 Z"
+        fill="none"
+        stroke="var(--color-accent)"
+        strokeWidth="7"
+        strokeLinejoin="round"
+      />
+      <circle cx="31" cy="32" r="4" fill="var(--color-accent)" />
+    </>
+  );
+}
+
+export function Logo({ variant = "full", size = "md", className }: LogoProps) {
+  const isFull = variant === "full";
+
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox={isFull ? "0 0 288 64" : "0 0 64 64"}
+      role="img"
+      aria-label="DevFlow"
+      className={cn(
+        HEIGHT[size],
+        "w-auto shrink-0 text-text-primary",
+        className,
+      )}
+    >
+      <Mark />
+      {isFull && (
+        <>
+          <path
+            d="M83.728 51.624Q80.192 51.624 77.592 49.856Q74.992 48.088 73.588 44.838Q72.184 41.588 72.184 37.168Q72.184 32.748 73.588 29.498Q74.992 26.248 77.592 24.48Q80.192 22.712 83.728 22.712Q86.588 22.712 88.824 23.908Q91.06 25.104 92.204 27.236V14.079H97.716V51.0H92.568L92.412 46.84Q91.268 49.128 88.954 50.376Q86.64 51.624 83.728 51.624ZM85.184 46.84Q88.564 46.84 90.384 44.292Q92.204 41.744 92.204 37.168Q92.204 32.54 90.384 30.018Q88.564 27.496 85.184 27.496Q81.856 27.496 79.88 30.070Q77.904 32.644 77.904 37.168Q77.904 41.588 79.88 44.214Q81.856 46.84 85.184 46.84Z"
+            fill="currentColor"
+          />
+          <path
+            d="M116.904 51.624Q112.848 51.624 109.91 49.83Q106.972 48.036 105.386 44.786Q103.8 41.536 103.8 37.168Q103.8 32.8 105.386 29.549Q106.972 26.3 109.883 24.506Q112.795 22.712 116.748 22.712Q120.491 22.712 123.352 24.454Q126.212 26.196 127.798 29.472Q129.384 32.748 129.384 37.376V38.78H109.52Q109.728 42.836 111.678 44.864Q113.628 46.892 116.956 46.892Q119.4 46.892 120.986 45.774Q122.572 44.656 123.247 42.68L128.968 43.044Q127.876 46.944 124.678 49.284Q121.48 51.624 116.904 51.624ZM109.52 34.620H123.56Q123.3 30.928 121.428 29.16Q119.556 27.392 116.748 27.392Q113.783 27.392 111.886 29.238Q109.988 31.084 109.52 34.620Z"
+            fill="currentColor"
+          />
+          <path
+            d="M142.799 51.0 132.712 23.336H138.588L146.128 45.384L153.667 23.336H159.595L149.456 51.0Z"
+            fill="currentColor"
+          />
+          <path
+            d="M167.396 51.0V27.86H163.548V23.336H167.396V21.568Q167.396 18.136 169.32 16.108Q171.244 14.079 175.299 14.079H180.239V18.604H176.079Q172.908 18.604 172.908 21.880V23.336H179.823V27.86H172.908V51.0Z"
+            fill="currentColor"
+          />
+          <path
+            d="M192.043 51.0Q189.287 51.0 187.649 49.596Q186.012 48.192 186.012 45.124V14.079H191.524V44.604Q191.524 46.476 193.448 46.476H195.632V51.0Z"
+            fill="currentColor"
+          />
+          <path
+            d="M212.064 51.624Q208.112 51.624 205.147 49.83Q202.183 48.036 200.571 44.812Q198.959 41.588 198.959 37.168Q198.959 32.748 200.571 29.524Q202.183 26.3 205.147 24.506Q208.112 22.712 212.064 22.712Q216.016 22.712 218.98 24.506Q221.944 26.3 223.555 29.524Q225.167 32.748 225.167 37.168Q225.167 41.588 223.555 44.812Q221.944 48.036 218.98 49.83Q216.016 51.624 212.064 51.624ZM212.064 46.84Q215.599 46.84 217.523 44.292Q219.447 41.744 219.447 37.168Q219.447 32.644 217.523 30.070Q215.599 27.496 212.064 27.496Q208.579 27.496 206.63 30.070Q204.679 32.644 204.679 37.168Q204.679 41.744 206.63 44.292Q208.579 46.84 212.064 46.84Z"
+            fill="currentColor"
+          />
+          <path
+            d="M236.92 51.0 228.495 23.336H234.267L240.195 44.968L246.279 23.336H251.479L257.563 44.968L263.544 23.336H269.316L260.892 51.0H254.703L248.879 31.240L243.055 51.0Z"
+            fill="currentColor"
+          />
+          <path
+            d="M272.644 51.0V44.448H279.352V51.0Z"
+            fill="var(--color-accent)"
+          />
+        </>
+      )}
+    </svg>
   );
 }

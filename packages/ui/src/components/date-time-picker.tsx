@@ -103,7 +103,6 @@ export function DateTimePicker({
       <Popover.Root>
         <Popover.Trigger asChild>
           <button
-            type="button"
             disabled={disabled}
             className={cn(
               "flex h-9 w-full items-center justify-between rounded-[4px] border border-border-emphasis bg-bg-overlay px-3 text-sm transition-colors",
@@ -214,7 +213,6 @@ export function DateTimePicker({
                   {/* hour */}
                   <div className="flex flex-col items-center">
                     <button
-                      type="button"
                       onClick={() => changeHour(1)}
                       className="h-6 w-6 flex items-center justify-center rounded-[3px] hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
                     >
@@ -224,7 +222,6 @@ export function DateTimePicker({
                       {pad(hour)}
                     </span>
                     <button
-                      type="button"
                       onClick={() => changeHour(-1)}
                       className="h-6 w-6 flex items-center justify-center rounded-[3px] hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
                     >
@@ -239,7 +236,6 @@ export function DateTimePicker({
                   {/* minute */}
                   <div className="flex flex-col items-center">
                     <button
-                      type="button"
                       onClick={() => changeMinute(1)}
                       className="h-6 w-6 flex items-center justify-center rounded-[3px] hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
                     >
@@ -249,7 +245,6 @@ export function DateTimePicker({
                       {pad(minute)}
                     </span>
                     <button
-                      type="button"
                       onClick={() => changeMinute(-1)}
                       className="h-6 w-6 flex items-center justify-center rounded-[3px] hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
                     >

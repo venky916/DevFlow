@@ -1,29 +1,29 @@
-'use client';
+"use client";
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Lock } from 'lucide-react';
-import { Controller, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2, Lock } from "lucide-react";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 
-import type { ISprint, IUserPublic } from '@devflow/types';
-import { Button } from '@devflow/ui/components/button';
-import { DatePicker } from '@devflow/ui/components/date-picker';
-import { FileUploadList } from '@devflow/ui/components/file-upload-list';
-import { Input } from '@devflow/ui/components/input';
-import { Modal } from '@devflow/ui/components/modal';
-import { Select } from '@devflow/ui/components/select';
-import { Textarea } from '@devflow/ui/components/textarea';
+import type { ISprint, IUserPublic } from "@devflow/types";
+import { Button } from "@devflow/ui/components/button";
+import { DatePicker } from "@devflow/ui/components/date-picker";
+import { FileUploadList } from "@devflow/ui/components/file-upload-list";
+import { Input } from "@devflow/ui/components/input";
+import { Modal } from "@devflow/ui/components/modal";
+import { Select } from "@devflow/ui/components/select";
+import { Textarea } from "@devflow/ui/components/textarea";
 import {
   createIssueSchema,
   type CreateIssueInput,
   type CreateIssueOutput,
-} from '@devflow/validators';
+} from "@devflow/validators";
 
-import { useAttachmentUpload } from '../../hooks/use-attachment-upload';
-import { useCreateIssue } from '../../hooks/use-issues';
-import { PRIORITY_OPTIONS, TYPE_OPTIONS } from '../../lib/issue-constants';
-import { IssueTypeSelect } from '../shared/issue-type-select';
-import { ProjectLabelSelect } from '../shared/project-label-select';
+import { useAttachmentUpload } from "../../hooks/use-attachment-upload";
+import { useCreateIssue } from "../../hooks/use-issues";
+import { PRIORITY_OPTIONS, TYPE_OPTIONS } from "../../lib/issue-constants";
+import { IssueTypeSelect } from "../shared/issue-type-select";
+import { ProjectLabelSelect } from "../shared/project-label-select";
 
 interface Props {
   open: boolean;
@@ -66,9 +66,9 @@ export function CreateIssueModal({
   } = useForm<CreateIssueInput, any, CreateIssueOutput>({
     resolver: zodResolver(createIssueSchema),
     defaultValues: {
-      priority: 'NO_PRIORITY',
-      type: 'TASK',
-      status: isBoardContext ? 'TODO' : 'BACKLOG',
+      priority: "NO_PRIORITY",
+      type: "TASK",
+      status: isBoardContext ? "TODO" : "BACKLOG",
       sprintId: activeSprint?.id ?? null,
       labelIds: [],
     },
@@ -84,17 +84,17 @@ export function CreateIssueModal({
     try {
       await mutateAsync({
         ...data,
-        status: isBoardContext ? 'TODO' : (data.status ?? 'BACKLOG'),
+        status: isBoardContext ? "TODO" : (data.status ?? "BACKLOG"),
         sprintId: data.sprintId || null,
         assigneeId: data.assigneeId || null,
         attachments: readyAttachments,
       });
-      toast.success('Issue created!');
+      toast.success("Issue created!");
       reset();
       resetFiles();
       onClose();
     } catch (err: any) {
-      toast.error(err.response?.data?.message ?? 'Failed to create issue');
+      toast.error(err.response?.data?.message ?? "Failed to create issue");
     }
   };
 
@@ -106,7 +106,7 @@ export function CreateIssueModal({
           label="Title"
           placeholder="Issue title"
           error={errors.title?.message}
-          {...register('title')}
+          {...register("title")}
         />
 
         {/* Description */}
@@ -114,22 +114,28 @@ export function CreateIssueModal({
           label="Description"
           placeholder="Add a description..."
           error={errors.description?.message}
-          {...register('description')}
+          {...register("description")}
         />
-        <FileUploadList items={pendingFiles} onFilesAdded={addFiles} onRemove={removeFile} />
+        <FileUploadList
+          items={pendingFiles}
+          onFilesAdded={addFiles}
+          onRemove={removeFile}
+        />
 
         {/* Type + Priority */}
         <div className="grid grid-cols-2 gap-3">
           <IssueTypeSelect
             label="Type"
-            value={watch('type')}
-            onValueChange={(v) => setValue('type', v)}
+            value={watch("type")}
+            onValueChange={(v) => setValue("type", v)}
           />
           <Select
             label="Priority"
             options={PRIORITY_OPTIONS}
-            value={watch('priority')}
-            onValueChange={(v) => setValue('priority', v as CreateIssueInput['priority'])}
+            value={watch("priority")}
+            onValueChange={(v) =>
+              setValue("priority", v as CreateIssueInput["priority"])
+            }
           />
         </div>
 
@@ -148,8 +154,8 @@ export function CreateIssueModal({
               label="Sprint"
               placeholder="No sprint"
               options={sprintOptions}
-              value={watch('sprintId') ?? ''}
-              onValueChange={(v) => setValue('sprintId', v || null)}
+              value={watch("sprintId") ?? ""}
+              onValueChange={(v) => setValue("sprintId", v || null)}
             />
           ) : (
             <div className="flex flex-col gap-1.5">
@@ -164,8 +170,8 @@ export function CreateIssueModal({
             label="Assignee"
             placeholder="Unassigned"
             options={memberOptions}
-            value={watch('assigneeId') ?? ''}
-            onValueChange={(v) => setValue('assigneeId', v || null)}
+            value={watch("assigneeId") ?? ""}
+            onValueChange={(v) => setValue("assigneeId", v || null)}
           />
         </div>
 
@@ -188,17 +194,21 @@ export function CreateIssueModal({
         <ProjectLabelSelect
           projectId={projectId}
           label="Labels"
-          selectedIds={watch('labelIds') ?? []}
-          onChange={(ids) => setValue('labelIds', ids)}
+          selectedIds={watch("labelIds") ?? []}
+          onChange={(ids) => setValue("labelIds", ids)}
         />
 
         {/* Actions */}
         <div className="mt-2 flex justify-end gap-2">
-          <Button variant="ghost" type="button" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
           <Button variant="primary" type="submit" disabled={isPending}>
-            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create issue'}
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Create issue"
+            )}
           </Button>
         </div>
       </form>

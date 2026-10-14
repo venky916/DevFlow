@@ -1,104 +1,100 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 
-import type { ProjectRole } from '@devflow/types';
-import { Button } from '@devflow/ui/components/button';
-import { Select } from '@devflow/ui/components/select';
-import { Spinner } from '@devflow/ui/components/spinner';
+import type { ProjectRole } from "@devflow/types";
+import { Button } from "@devflow/ui/components/button";
+import { Select } from "@devflow/ui/components/select";
+import { Spinner } from "@devflow/ui/components/spinner";
+import {
+  addProjectMemberSchema,
+  type AddProjectMemberInput,
+} from "@devflow/validators";
 
-import { useAddProjectMember, useProjectMembers } from '../../../hooks/use-project-settings';
-import { useWorkspaceMembers } from '../../../hooks/use-workspace-settings';
-import { displayName, PROJECT_ROLE_OPTIONS } from '../../../lib/roles';
-import { SectionHeading } from '../../shared/section-heading';
+import {
+  useAddProjectMember,
+  useAvailableProjectMembers,
+} from "../../../hooks/use-projects";
+import { displayName, PROJECT_ROLE_OPTIONS } from "../../../lib/roles";
+import {PageError} from "../../shared/page-error";
+import { SectionHeading } from "../../shared/section-heading";
 
-interface Props {
-  projectId: string;
-  workspaceId: string;
-}
-
-export function AddMemberTab({ projectId, workspaceId }: Props) {
-  const { data: workspaceMembers, isLoading } = useWorkspaceMembers(workspaceId);
-  const { data: projectMembers } = useProjectMembers(projectId);
+export function AddMemberTab({ projectId }: { projectId: string }) {
+  const {
+    data: available,
+    isLoading,
+    isError,
+    refetch,
+  } = useAvailableProjectMembers(projectId);
   const { mutate: addMember, isPending } = useAddProjectMember(projectId);
 
-  const [selectedUserId, setSelectedUserId] = useState('');
-  const [role, setRole] = useState<ProjectRole>('DEVELOPER');
+  const { handleSubmit, setValue, watch, reset } =
+    useForm<AddProjectMemberInput>({
+      resolver: zodResolver(addProjectMemberSchema),
+      defaultValues: { userId: "", role: "DEVELOPER" },
+    });
+  const userId = watch("userId");
 
-  const projectMemberIds = new Set(projectMembers?.map((m: any) => m.userId) ?? []);
-  const available = workspaceMembers?.filter((m: any) => !projectMemberIds.has(m.userId)) ?? [];
-
-  const memberOptions = available.map((m: any) => ({
-    label: displayName(m.user),
-    value: m.userId,
-  }));
-
-  const handleMemberChange = (userId: string) => {
-    setSelectedUserId(userId);
-    const member = available.find((m: any) => m.userId === userId);
-    setRole(member?.role === 'VIEWER' ? 'VIEWER' : 'DEVELOPER');
-  };
-
-  const isSelectedViewer =
-    available.find((m: any) => m.userId === selectedUserId)?.role === 'VIEWER';
-
-  const handleAdd = () => {
-    if (!selectedUserId) return;
-    addMember(
-      { userId: selectedUserId, role },
-      {
-        onSuccess: () => {
-          toast.success('Member added to project');
-          setSelectedUserId('');
-          setRole('DEVELOPER');
-        },
-        onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to add member'),
-      },
-    );
-  };
-
-  if (isLoading)
+  if (isLoading) {
     return (
       <div className="flex justify-center pt-8">
         <Spinner size="sm" />
       </div>
     );
+  }
+  if (isError || !available) {
+    return (
+      <PageError message="Couldn't load members" onRetry={() => refetch()} />
+    );
+  }
+
+  const memberOptions = available.map((m) => ({
+    label: displayName(m.user),
+    value: m.userId,
+  }));
 
   return (
-    <div className="flex max-w-[440px] flex-col gap-4">
+    <div className="flex max-w-md flex-col gap-4">
       <SectionHeading
         title="Add member"
         description="Add a workspace member to this project. They must already be in the workspace."
       />
       {memberOptions.length === 0 ? (
-        <p className="text-[13px] text-text-muted">
+        <p className="text-body text-text-muted">
           All workspace members are already in this project.
         </p>
       ) : (
-        <div className="flex flex-col gap-3">
+        <form
+          onSubmit={handleSubmit((data) =>
+            addMember(data, { onSuccess: () => reset() }),
+          )}
+          className="flex flex-col gap-3"
+        >
           <Select
             label="Member"
             placeholder="Select a member..."
             options={memberOptions}
-            value={selectedUserId}
-            onValueChange={handleMemberChange}
+            value={userId}
+            onValueChange={(value) => setValue("userId", value)}
           />
           <Select
             label="Role"
-            options={
-              isSelectedViewer ? [{ label: 'Viewer', value: 'VIEWER' }] : PROJECT_ROLE_OPTIONS
-            }
-            value={role}
-            onValueChange={(v) => setRole(v as ProjectRole)}
+            options={PROJECT_ROLE_OPTIONS}
+            value={watch("role")}
+            onValueChange={(role) => setValue("role", role as ProjectRole)}
           />
           <div>
-            <Button onClick={handleAdd} disabled={!selectedUserId || isPending} size="sm">
-              {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Add to project'}
+            <Button
+              type="submit"
+              size="sm"
+              loading={isPending}
+              disabled={!userId}
+            >
+              Add to project
             </Button>
           </div>
-        </div>
+        </form>
       )}
     </div>
   );

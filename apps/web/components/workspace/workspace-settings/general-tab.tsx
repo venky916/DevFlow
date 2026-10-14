@@ -1,70 +1,45 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 
-import { Button } from '@devflow/ui/components/button';
-import { ConfirmModal } from '@devflow/ui/components/confirm-modal';
-import { ImageUploadButton } from '@devflow/ui/components/image-upload-button';
-import { Input } from '@devflow/ui/components/input';
-import type { UpdateWorkspaceInput } from '@devflow/validators';
+import type { IWorkspaceSummary } from "@devflow/types";
+import { Button } from "@devflow/ui/components/button";
+import { ConfirmModal } from "@devflow/ui/components/confirm-modal";
+import { ImageUploadButton } from "@devflow/ui/components/image-upload-button";
+import { Input } from "@devflow/ui/components/input";
+import {
+  updateWorkspaceSchema,
+  type UpdateWorkspaceInput,
+} from "@devflow/validators";
 
-import { useLogoUpload } from '../../../hooks/use-logo-upload';
-import { useDeleteWorkspace, useUpdateWorkspace } from '../../../hooks/use-workspaces';
-import { SectionHeading } from '../../shared/section-heading';
+import {
+  useDeleteWorkspace,
+  useUpdateWorkspace,
+  useUploadWorkspaceLogo,
+} from "../../../hooks/use-workspaces";
+import { SectionHeading } from "../../shared/section-heading";
 
-interface Props {
-  workspaceId: string;
-  workspaceName: string;
-  workspaceLogoUrl: string | null;
-  isAdmin: boolean;
-}
-
-export function GeneralTab({ workspaceId, workspaceName, workspaceLogoUrl, isAdmin }: Props) {
-  const router = useRouter();
+export function GeneralTab({ workspace }: { workspace: IWorkspaceSummary }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const { mutate: updateWorkspace, isPending: isUpdating } = useUpdateWorkspace(workspaceId);
-  const { mutate: deleteWorkspace, isPending: isDeleting } = useDeleteWorkspace(workspaceId);
-  const { uploadLogo, isUploading } = useLogoUpload(workspaceId);
+  const { mutate: updateWorkspace, isPending: isUpdating } = useUpdateWorkspace(
+    workspace.id,
+  );
+  const { mutate: deleteWorkspace, isPending: isDeleting } = useDeleteWorkspace(
+    workspace.id,
+  );
+  const { uploadLogo, isUploading } = useUploadWorkspaceLogo(workspace.id);
 
   const {
     register,
     handleSubmit,
-    formState: { isDirty },
-  } = useForm<UpdateWorkspaceInput>({ values: { name: workspaceName } });
-
-  const onSave = (data: UpdateWorkspaceInput) => {
-    updateWorkspace(data, {
-      onSuccess: () => toast.success('Workspace updated'),
-      onError: () => toast.error('Failed to update workspace'),
-    });
-  };
-
-  const onDelete = () => {
-    deleteWorkspace(undefined, {
-      onSuccess: () => {
-        toast.success('Workspace deleted');
-        router.push('/workspaces');
-      },
-      onError: () => {
-        toast.error('Failed to delete workspace');
-        setShowDeleteModal(false);
-      },
-    });
-  };
-
-  const handleLogoSelect = async (file: File) => {
-    try {
-      await uploadLogo(file);
-      toast.success('Logo updated');
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to upload logo');
-    }
-  };
+    formState: { isDirty, errors },
+  } = useForm<UpdateWorkspaceInput>({
+    resolver: zodResolver(updateWorkspaceSchema),
+    values: { name: workspace.name },
+  });
 
   return (
     <>
@@ -75,13 +50,12 @@ export function GeneralTab({ workspaceId, workspaceName, workspaceLogoUrl, isAdm
             description="Shown in the sidebar and workspace switcher."
           />
           <ImageUploadButton
-            src={workspaceLogoUrl}
-            fallbackLabel={workspaceName.charAt(0).toUpperCase()}
+            src={workspace.logoUrl}
+            fallbackLabel={workspace.name.charAt(0).toUpperCase()}
             shape="square"
             size={56}
             isUploading={isUploading}
-            disabled={!isAdmin}
-            onFileSelect={handleLogoSelect}
+            onFileSelect={uploadLogo}
           />
         </div>
 
@@ -92,44 +66,57 @@ export function GeneralTab({ workspaceId, workspaceName, workspaceLogoUrl, isAdm
             title="Workspace name"
             description="The display name shown across DevFlow."
           />
-          <form onSubmit={handleSubmit(onSave)} className="flex max-w-[400px] flex-col gap-3">
-            <Input {...register('name')} placeholder="My workspace" />
+          <form
+            onSubmit={handleSubmit((data) => updateWorkspace(data))}
+            className="flex max-w-sm flex-col gap-3"
+          >
+            <Input
+              placeholder="My workspace"
+              error={errors.name?.message}
+              {...register("name")}
+            />
             <div>
-              <Button type="submit" size="sm" disabled={isUpdating || !isDirty}>
-                {isUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Save changes'}
+              <Button
+                type="submit"
+                size="sm"
+                loading={isUpdating}
+                disabled={!isDirty}
+              >
+                Save changes
               </Button>
             </div>
           </form>
         </div>
 
-        {isAdmin && (
-          <>
-            <div className="h-px bg-border-default" />
-            <div className="flex flex-col gap-3 rounded-[4px] border border-danger-text p-4">
-              <p className="text-[13px] font-medium text-danger-text">Danger Zone</p>
-              <p className="text-[12px] text-text-muted">
-                Permanently delete this workspace and all its projects, sprints, and issues. This
-                cannot be undone.
-              </p>
-              <div>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => setShowDeleteModal(true)}
-                  disabled={isDeleting}
-                >
-                  Delete workspace
-                </Button>
-              </div>
-            </div>
-          </>
-        )}
+        <div className="h-px bg-border-default" />
+
+        <div className="flex flex-col gap-3 rounded-base border border-danger-text p-4">
+          <p className="text-body font-medium text-danger-text">Danger Zone</p>
+          <p className="text-xs text-text-muted">
+            Permanently delete this workspace and all its projects, sprints, and
+            issues. This cannot be undone.
+          </p>
+          <div>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => setShowDeleteModal(true)}
+              disabled={isDeleting}
+            >
+              Delete workspace
+            </Button>
+          </div>
+        </div>
       </div>
 
       <ConfirmModal
         open={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
-        onConfirm={onDelete}
+        onConfirm={() =>
+          deleteWorkspace(undefined, {
+            onError: () => setShowDeleteModal(false),
+          })
+        }
         title="Delete workspace?"
         description="All projects, sprints, and issues will be permanently lost. This cannot be undone."
         confirmLabel="Delete workspace"

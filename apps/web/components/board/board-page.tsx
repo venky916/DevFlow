@@ -28,8 +28,8 @@ import { CreateIssueModal } from '../issue/create-issue-modal';
 import { IssueSlideOver } from '../issue/issue-slide-over';
 import { IssueFilters } from '../shared/filter-bar';
 import { ListView } from '../shared/list-view';
-import PageError from '../shared/page-error';
-import PageLoading from '../shared/page-loading';
+import {PageError} from '../shared/page-error';
+import {PageLoading} from '../shared/page-loading';
 import { BoardHeader } from './board-header';
 import { KanbanBoard } from './kanban-board';
 

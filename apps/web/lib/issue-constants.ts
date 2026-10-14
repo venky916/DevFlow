@@ -65,6 +65,7 @@ export const STATUS_COLORS: Record<IssueStatus, string> = {
   IN_REVIEW: '#8B5CF6',
   DONE: '#22C55E',
 };
+export const TYPE_ORDER: IssueType[] = ['BUG', 'FEATURE', 'TASK', 'IMPROVEMENT', 'OTHER'];
 
 export const TYPE_LABELS: Record<IssueType, string> = {
   BUG: 'Bug',
@@ -117,8 +118,8 @@ export function activityText(action: string, meta?: Record<string, any>): string
       return meta?.from === meta?.to
         ? [`reordered to ${STATUS_LABELS[meta?.to as IssueStatus] ?? meta?.to}`]
         : [
-            `moved from ${STATUS_LABELS[meta?.from as IssueStatus] ?? meta?.from} to ${STATUS_LABELS[meta?.to as IssueStatus] ?? meta?.to}`,
-          ];
+          `moved from ${STATUS_LABELS[meta?.from as IssueStatus] ?? meta?.from} to ${STATUS_LABELS[meta?.to as IssueStatus] ?? meta?.to}`,
+        ];
 
     case 'ISSUE_ASSIGNED':
       return ['was assigned this issue'];

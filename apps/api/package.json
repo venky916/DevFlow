@@ -7,7 +7,10 @@
     "build": "tsc -b",
     "start": "node dist/index.js",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit"
   },
   "prettier": "@devflow/config/prettier",
   "keywords": [],
@@ -35,6 +38,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.6.0",
+    "eslint": "9.39.1",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }

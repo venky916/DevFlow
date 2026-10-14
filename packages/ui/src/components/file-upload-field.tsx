@@ -53,7 +53,6 @@ export function FileUploadField({
           onChange={handleChange}
         />
         <button
-          type="button"
           onClick={() => inputRef.current?.click()}
           className="w-full flex flex-col items-center gap-1.5 py-6 rounded-[4px] border border-dashed border-border-emphasis bg-bg-surface hover:border-border-strong hover:bg-bg-hover transition-colors"
         >
@@ -83,7 +82,6 @@ export function FileUploadField({
     >
       {status !== "uploading" && onRemove && (
         <button
-          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onRemove();

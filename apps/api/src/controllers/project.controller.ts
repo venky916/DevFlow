@@ -13,11 +13,37 @@ import {
 } from '@devflow/validators';
 
 import { ApiError } from '../lib/ApiError';
-import { sendNoContent, sendSuccess } from '../lib/apiResponse';
+import { sendCreated, sendNoContent, sendSuccess } from '../lib/apiResponse';
 import { asyncHandler } from '../lib/asyncHandler';
 import { CacheKeys, deleteCache, getCache, setCache, TTL } from '../lib/cache';
 import { buildUpdateData } from '../lib/updateBuilder';
 import { projectService } from '../services/project.service';
+
+const projectSummarySelect = {
+  id: true,
+  name: true,
+  slug: true,
+  description: true,
+  color: true,
+  workspaceId: true,
+  createdAt: true,
+  updatedAt: true,
+  _count: { select: { issues: true, sprints: true, members: true } },
+} as const;
+
+// userIds of workspace admins for this project's workspace.
+// Never cached, because a workspace role change must show up immediately.
+async function getWorkspaceAdminIds(projectId: string): Promise<Set<string>> {
+  const admins = await prisma.workspaceMember.findMany({
+    where: { role: 'ADMIN', workspace: { projects: { some: { id: projectId } } } },
+    select: { userId: true },
+  });
+  return new Set(admins.map((a) => a.userId));
+}
+
+const withAdminFlag = <T extends { userId: string }>(members: T[], adminIds: Set<string>) =>
+  members.map((m) => ({ ...m, isWorkspaceAdmin: adminIds.has(m.userId) }));
+
 
 // ─── POST /workspaces/:workspaceId/projects ───────────────────────
 export const createProject = asyncHandler(async (req: Request, res: Response) => {
@@ -25,15 +51,6 @@ export const createProject = asyncHandler(async (req: Request, res: Response) =>
   const { name, slug, description, color } = createProjectSchema.parse(req.body);
   const userId = req.user!.id;
 
-  const existing = await prisma.project.findUnique({
-    where: {
-      slug,
-    },
-  });
-
-  if (existing) {
-    throw ApiError.conflict(`Project slug already taken`);
-  }
   // create project + add creator as LEAD in one transaction
   const project = await prisma.$transaction(async (tx) => {
     const proj = await tx.project.create({
@@ -55,7 +72,7 @@ export const createProject = asyncHandler(async (req: Request, res: Response) =>
     return proj;
   });
 
-  sendSuccess(res, project, 'Project created successfully');
+  sendCreated(res, project, 'Project created successfully');
 });
 
 // ─── GET /workspaces/:workspaceId/projects ────────────────────────
@@ -126,6 +143,43 @@ export const getProjects = asyncHandler(async (req: Request, res: Response) => {
   sendSuccess(res, mapped, 'Projects fetched successfully');
 });
 
+// ─── GET /workspaces/:workspaceId/projects/summary ────────────────
+// Lean list for workspace home and the sidebar. No member lists.
+export const getProjectSummaries = asyncHandler(async (req: Request, res: Response) => {
+  const { workspaceId } = req.params;
+  const userId = req.user!.id;
+
+  const wsMember = await prisma.workspaceMember.findUnique({
+    where: { workspaceId_userId: { workspaceId: workspaceId as string, userId } },
+    select: { role: true },
+  });
+  if (!wsMember) throw ApiError.forbidden('You are not a member of this workspace');
+
+  const isWorkspaceAdmin = wsMember.role === 'ADMIN';
+
+  const projects = await prisma.project.findMany({
+    where: {
+      workspaceId: workspaceId as string,
+      // admins see every project, everyone else only their own
+      ...(!isWorkspaceAdmin && { members: { some: { userId } } }),
+    },
+    select: {
+      ...projectSummarySelect,
+      members: { where: { userId }, select: { role: true } }, // only my row
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const data = projects.map(({ members, ...project }) => ({
+    ...project,
+    currentUserAccess: isWorkspaceAdmin
+      ? { isWorkspaceAdmin: true, projectRole: null }
+      : { isWorkspaceAdmin: false, projectRole: members[0]?.role ?? null },
+  }));
+
+  sendSuccess(res, data, 'Project summaries fetched successfully');
+});
+
 // ─── GET /projects/:id ────────────────────────────────────────────
 export const getProjectById = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -175,9 +229,11 @@ export const getProjectById = asyncHandler(async (req: Request, res: Response) =
   if (!project) {
     throw ApiError.notFound('Project not found');
   }
+  const adminIds = await getWorkspaceAdminIds(id as string);
   const mapped = {
     ...project,
     currentUserAccess: req.projectAccess,
+    members: withAdminFlag(project.members, adminIds),
     sprints: project.sprints.map((sprint) => {
       return {
         ...sprint,
@@ -187,6 +243,46 @@ export const getProjectById = asyncHandler(async (req: Request, res: Response) =
   };
 
   sendSuccess(res, mapped, 'Project fetched successfully');
+});
+
+// ─── GET /projects/by-slug/:workspaceSlug/:projectSlug ────────────
+// One project + the caller's access. 404 when it doesn't exist OR the caller
+// can't see it (same answer, so slugs can't be probed).
+export const getProjectBySlug = asyncHandler(async (req: Request, res: Response) => {
+  const { workspaceSlug, projectSlug } = req.params;
+  const userId = req.user!.id;
+
+  const project = await prisma.project.findFirst({
+    where: {
+      slug: projectSlug as string,
+      workspace: { slug: workspaceSlug as string, members: { some: { userId } } },
+    },
+    select: {
+      ...projectSummarySelect,
+      members: { where: { userId }, select: { role: true } },
+      workspace: { select: { members: { where: { userId }, select: { role: true } } } },
+    },
+  });
+
+  if (!project) throw ApiError.notFound('Project not found');
+
+  const { members, workspace, ...rest } = project;
+  const isWorkspaceAdmin = workspace.members[0]?.role === 'ADMIN';
+  const projectRole = members[0]?.role ?? null;
+
+  // a workspace member who isn't in this project gets the same 404
+  if (!isWorkspaceAdmin && !projectRole) throw ApiError.notFound('Project not found');
+
+  sendSuccess(
+    res,
+    {
+      ...rest,
+      currentUserAccess: isWorkspaceAdmin
+        ? { isWorkspaceAdmin: true, projectRole: null }
+        : { isWorkspaceAdmin: false, projectRole },
+    },
+    'Project fetched successfully',
+  );
 });
 
 // ─── PATCH /projects/:id ──────────────────────────────────────────
@@ -216,7 +312,7 @@ export const deleteProject = asyncHandler(async (req: Request, res: Response) =>
     select: { fileKey: true },
   });
   // 2. delete the project (Cascade removes everything inside it)
-  const project = await prisma.project.delete({
+  await prisma.project.delete({
     where: {
       id: id as string,
     },
@@ -244,19 +340,21 @@ export const addProjectMember = asyncHandler(async (req: Request, res: Response)
     role as ProjectRole,
   );
 
-  sendSuccess(res, member, 'Member added to project');
+  sendCreated(res, member, 'Member added to project');
 });
 
 // ─── GET /projects/:id/members ────────────────────────────────────
 export const getProjectMembers = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
 
+  const adminIds = await getWorkspaceAdminIds(id as string);
+
   // ─── Check cache ──────────────────────────────────────────
   const cacheKey = CacheKeys.projectMembers(id as string);
   const cached = await getCache(cacheKey);
 
   if (cached) {
-    sendSuccess(res, cached, 'Members fetched successfully');
+    sendSuccess(res, withAdminFlag(cached as { userId: string }[], adminIds), 'Members fetched successfully');
     return;
   }
 
@@ -282,10 +380,30 @@ export const getProjectMembers = asyncHandler(async (req: Request, res: Response
   // cache raw (unsigned) data — signed URLs expire, raw keys don't
   await setCache(cacheKey, members, TTL.MEMBERS);
 
-  sendSuccess(res, members, 'Members fetched successfully');
+  sendSuccess(res, withAdminFlag(members, adminIds), 'Members fetched successfully');
 });
 
-// ─── PATCH /projects/:id/members/:uid ────────────────────────────
+// ─── GET /projects/:id/available-members ──────────────────────────
+// Workspace members not yet in this project. LEAD can call it, unlike the admin-only workspace members route.
+export const getAvailableProjectMembers = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const members = await prisma.workspaceMember.findMany({
+    where: {
+      workspace: { projects: { some: { id: id as string } } },
+      user: { projects: { none: { projectId: id as string } } },
+    },
+    select: {
+      userId: true,
+      user: { select: { id: true, email: true, name: true, avatarUrl: true } },
+    },
+    orderBy: { joinedAt: 'asc' },
+  });
+
+  sendSuccess(res, members, 'Available members fetched successfully');
+});
+
+// ─── PUT /projects/:id/members/:uid ────────────────────────────
 export const updateProjectMemberRole = asyncHandler(async (req: Request, res: Response) => {
   const { id, uid } = req.params;
   const { role } = updateProjectMemberRoleSchema.parse(req.body);

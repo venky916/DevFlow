@@ -114,6 +114,72 @@ export const getMyWorkspaces = asyncHandler(async (req: Request, res: Response) 
   sendSuccess(res, signed, 'Workspaces fetched successfully');
 });
 
+// ─── GET /workspaces/summary ──────────────────────────────────
+// Lean list for the workspaces page, guard and switcher.
+// Only the caller's role + counts. No member list.
+export const getMyWorkspaceSummaries = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+
+  const workspaces = await prisma.workspace.findMany({
+    where: { members: { some: { userId } } },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      logoUrl: true,
+      createdAt: true,
+      updatedAt: true,
+      _count: { select: { projects: true, members: true } },
+      members: { where: { userId }, select: { role: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const data = workspaces.map(({ members, ...ws }) => ({
+    ...ws,
+    currentUserWorkspaceRole: members[0]!.role,
+  }));
+
+  sendSuccess(res, data, 'Workspace summaries fetched successfully');
+});
+
+// ─── GET /workspaces/by-slug/:slug ────────────────────────────────
+// One workspace + the caller's role. 404 when it doesn't exist OR the caller
+// isn't a member (same answer, so slugs can't be probed).
+export const getWorkspaceBySlug = asyncHandler(async (req: Request, res: Response) => {
+  const { slug } = req.params;
+  const userId = req.user!.id;
+
+  const workspace = await prisma.workspace.findFirst({
+    where: {
+      slug: slug as string,
+      members: { some: { userId } },
+    },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      logoUrl: true,
+      createdAt: true,
+      updatedAt: true,
+      _count: { select: { projects: true, members: true } },
+      members: { where: { userId }, select: { role: true } },
+    },
+  });
+
+  if (!workspace) {
+    throw ApiError.notFound('Workspace not found');
+  }
+
+  const { members, ...rest } = workspace;
+
+  sendSuccess(
+    res,
+    { ...rest, currentUserWorkspaceRole: members[0]?.role },
+    'Workspace fetched successfully',
+  );
+});
+
 // ─── GET /workspaces/:id ──────────────────────────────────────────
 export const getWorkspaceById = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -185,7 +251,7 @@ export const getWorkspaceById = asyncHandler(async (req: Request, res: Response)
 // ─── PATCH /workspaces/: id ────────────────────────────────────────
 export const updateWorkspace = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, logoUrl } = updateWorkspaceSchema.parse(req.body);
+  const { name } = updateWorkspaceSchema.parse(req.body);
   const userId = req.user!.id;
 
   const member = await getMember(id as string, userId);
@@ -198,7 +264,7 @@ export const updateWorkspace = asyncHandler(async (req: Request, res: Response) 
     where: {
       id: id as string,
     },
-    data: buildUpdateData({ name, logoUrl }),
+    data: buildUpdateData({ name }),
   });
 
   sendSuccess(res, workspace, 'Workspace updated successfully');
@@ -283,7 +349,7 @@ export const getWorkspaceMembers = asyncHandler(async (req: Request, res: Respon
   sendSuccess(res, members, 'Members fetched successfully');
 });
 
-// ─── PATCH /workspaces/:id/members/:uid ──────────────────────────
+// ─── PUT /workspaces/:id/members/:uid ──────────────────────────
 export const updateMemberRole = asyncHandler(async (req: Request, res: Response) => {
   const { id, uid } = req.params;
 
@@ -302,7 +368,7 @@ export const updateMemberRole = asyncHandler(async (req: Request, res: Response)
     throw ApiError.notFound('Member not found in this workspace');
   }
 
-  if (targetMember.role === 'ADMIN' && role === 'ADMIN') {
+  if (targetMember.role === 'ADMIN' && role !== 'ADMIN') {
     const adminCount = await prisma.workspaceMember.count({
       where: { workspaceId: id as string, role: 'ADMIN' },
     });
@@ -382,8 +448,14 @@ export const removeMember = asyncHandler(async (req: Request, res: Response) => 
     });
   });
 
+  const projects = await prisma.project.findMany({
+    where: { workspaceId: id as string },
+    select: { id: true },
+  });
+
   // add after DB write in both functions:
   await deleteCache(CacheKeys.workspaceMembers(id as string));
+  await Promise.all(projects.map((p) => deleteCache(CacheKeys.projectMembers(p.id))));
   sendNoContent(res);
 });
 

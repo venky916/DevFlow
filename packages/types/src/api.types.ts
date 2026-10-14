@@ -1,15 +1,16 @@
-export interface IApiResponse <T = any>{
+export interface IApiResponse<T> {
     success: boolean;
     data: T;
     message: string;
 }
 
 
-export interface IPaginatedResponse<T = any> extends IApiResponse<T[]> {
-    meta: {
-        total: number;
-        page: number;
-        limit: number;
-        hasMore: boolean;
-    };
+export interface IPaginatedData<T> {
+    items: T[];
+    meta: { total: number; page: number; limit: number; hasMore: boolean };
+}
+
+export interface ICursorPaginatedData<T> {
+    items: T[];
+    meta: { nextCursor: string | null; hasMore: boolean };
 }

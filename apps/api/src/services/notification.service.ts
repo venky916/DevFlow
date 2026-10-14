@@ -2,7 +2,38 @@
 import { emailQueue, notificationQueue } from '@devflow/queues';
 import { NotificationTypes } from '@devflow/types';
 
+import { absoluteUrl, webLinks } from '../lib/web-links';
 import { issueRepository } from '../repositories/issue.repository';
+import { projectRepository } from '../repositories/project.repository';
+
+interface LinkContext {
+  workspaceSlug: string;
+  projectSlug: string;
+  projectName: string;
+}
+
+// Pages are addressed by slug, so every link starts from a project's slugs.
+// null means the project or issue was deleted: skip the notification.
+async function getProjectContext(projectId: string): Promise<LinkContext | null> {
+  const project = await projectRepository.findLinkContext(projectId);
+  if (!project) return null;
+  return {
+    workspaceSlug: project.workspace.slug,
+    projectSlug: project.slug,
+    projectName: project.name,
+  };
+}
+
+async function getIssueContext(issueId: string): Promise<LinkContext | null> {
+  const issue = await issueRepository.findLinkContext(issueId);
+  if (!issue) return null;
+  const { project } = issue;
+  return {
+    workspaceSlug: project.workspace.slug,
+    projectSlug: project.slug,
+    projectName: project.name,
+  };
+}
 
 export const notificationService = {
   async notifySprintStarted(
@@ -12,13 +43,16 @@ export const notificationService = {
     projectId: string,
     triggeredBy: string,
   ) {
+    const ctx = await getProjectContext(projectId);
+    if (!ctx) return;
+
     await Promise.all(
       memberUserIds.map((userId) =>
         notificationQueue.add('notification', {
           userId,
           type: NotificationTypes.SPRINT_STARTED,
           content: `Sprint "${sprintName}" has started`,
-          link: `/projects/${projectId}/board`,
+          link: webLinks.board(ctx.workspaceSlug, ctx.projectSlug),
           triggeredBy,
         }),
       ),
@@ -34,13 +68,16 @@ export const notificationService = {
     doneCount: number,
     incompleteCount: number,
   ) {
+    const ctx = await getProjectContext(projectId);
+    if (!ctx) return;
+
     await Promise.all(
       memberUserIds.map((userId) =>
         notificationQueue.add('notification', {
           userId,
           type: NotificationTypes.SPRINT_COMPLETED,
           content: `Sprint "${sprintName}" completed — ${doneCount} done, ${incompleteCount} moved to backlog`,
-          link: `/projects/${projectId}/board`,
+          link: webLinks.board(ctx.workspaceSlug, ctx.projectSlug),
           triggeredBy,
         }),
       ),
@@ -48,16 +85,18 @@ export const notificationService = {
   },
 
   async notifyProjectMemberAdded(userId: string, projectId: string, triggeredBy: string) {
+    const ctx = await getProjectContext(projectId);
+    if (!ctx) return;
+
     await notificationQueue.add('notification', {
       userId,
       type: NotificationTypes.PROJECT_ADDED,
-      content: `You've been added to project`,
-      link: `/projects/${projectId}`,
+      content: `You've been added to ${ctx.projectName}`,
+      link: webLinks.project(ctx.workspaceSlug, ctx.projectSlug),
       triggeredBy,
     });
   },
 
-  // services/notification.service.ts — add these two methods to the existing object
   async notifyWorkspaceInvited(
     userId: string,
     workspaceName: string,
@@ -68,7 +107,7 @@ export const notificationService = {
       userId,
       type: NotificationTypes.WORKSPACE_INVITED,
       content: `You've been invited to join ${workspaceName}`,
-      link: `/invite?token=${inviteToken}`,
+      link: webLinks.invite(inviteToken),
       triggeredBy,
     });
   },
@@ -86,7 +125,7 @@ export const notificationService = {
       data: {
         workspaceName,
         invitedBy: invitedByName,
-        inviteLink: `${process.env.BASE_WEB_URL}/invite?token=${inviteToken}`,
+        inviteLink: absoluteUrl(webLinks.invite(inviteToken)),
         role,
       },
     });
@@ -99,11 +138,14 @@ export const notificationService = {
     issueId: string,
     triggeredBy: string,
   ): Promise<void> {
+    const ctx = await getIssueContext(issueId);
+    if (!ctx) return;
+
     await notificationQueue.add('notification', {
       userId,
       type: NotificationTypes.MENTION,
       content: `@${commenterName} mentioned you in: ${issueTitle}`,
-      link: `/issues/${issueId}`,
+      link: webLinks.issue(ctx.workspaceSlug, ctx.projectSlug, issueId),
       triggeredBy,
     });
   },
@@ -115,11 +157,14 @@ export const notificationService = {
     issueId: string,
     triggeredBy: string,
   ): Promise<void> {
+    const ctx = await getIssueContext(issueId);
+    if (!ctx) return;
+
     await notificationQueue.add('notification', {
       userId,
       type: NotificationTypes.ISSUE_COMMENTED,
       content: `@${commenterName} commented on your issue: ${issueTitle}`,
-      link: `/issues/${issueId}`,
+      link: webLinks.issue(ctx.workspaceSlug, ctx.projectSlug, issueId),
       triggeredBy,
     });
   },
@@ -133,6 +178,9 @@ export const notificationService = {
     projectId: string,
     issueId: string,
   ): Promise<void> {
+    const ctx = await getProjectContext(projectId);
+    if (!ctx) return;
+
     await emailQueue.add('email', {
       to,
       type: NotificationTypes.ISSUE_COMMENTED,
@@ -141,8 +189,8 @@ export const notificationService = {
         commentedBy: commenterName,
         comment: commentPreview.slice(0, 200),
         assigneeName: creatorName,
-        projectName: projectId,
-        issueLink: `${process.env.BASE_WEB_URL}/issues/${issueId}`,
+        projectName: ctx.projectName,
+        issueLink: absoluteUrl(webLinks.issue(ctx.workspaceSlug, ctx.projectSlug, issueId)),
       },
     });
   },
@@ -154,15 +202,20 @@ export const notificationService = {
     issueTitle: string,
     projectId: string,
   ): Promise<void> {
+    const ctx = await getProjectContext(projectId);
+    if (!ctx) return;
+
+    const issuePath = webLinks.issue(ctx.workspaceSlug, ctx.projectSlug, issueId);
+
     await notificationQueue.add('notification', {
       userId: assigneeId,
       type: NotificationTypes.ISSUE_ASSIGNED,
       content: `You were assigned to: ${issueTitle}`,
-      link: `/issues/${issueId}`,
+      link: issuePath,
       triggeredBy,
     });
 
-    const assignee = await issueRepository.findAssigneeContact(assigneeId); // add this tiny method to issue.repository.ts, or reuse a shared user lookup if you have one
+    const assignee = await issueRepository.findAssigneeContact(assigneeId);
     if (assignee) {
       await emailQueue.add('email', {
         to: assignee.email,
@@ -170,11 +223,19 @@ export const notificationService = {
         data: {
           assigneeName: assignee.name,
           issueTitle,
-          projectName: projectId,
+          projectName: ctx.projectName,
           assignedBy: triggeredBy,
-          issueLink: `${process.env.BASE_WEB_URL}/issues/${issueId}`,
+          issueLink: absoluteUrl(issuePath),
         },
       });
     }
+  },
+
+  async sendPasswordResetEmail(email: string, resetLink: string): Promise<void> {
+    await emailQueue.add('email', {
+      to: email,
+      type: NotificationTypes.PASSWORD_RESET,
+      data: { resetLink },
+    });
   },
 };

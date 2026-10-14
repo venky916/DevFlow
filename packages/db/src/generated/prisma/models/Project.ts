@@ -233,11 +233,12 @@ export type ProjectOrderByWithRelationInput = {
 
 export type ProjectWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  slug?: string
+  workspaceId_slug?: Prisma.ProjectWorkspaceIdSlugCompoundUniqueInput
   AND?: Prisma.ProjectWhereInput | Prisma.ProjectWhereInput[]
   OR?: Prisma.ProjectWhereInput[]
   NOT?: Prisma.ProjectWhereInput | Prisma.ProjectWhereInput[]
   name?: Prisma.StringFilter<"Project"> | string
+  slug?: Prisma.StringFilter<"Project"> | string
   description?: Prisma.StringNullableFilter<"Project"> | string | null
   color?: Prisma.StringNullableFilter<"Project"> | string | null
   workspaceId?: Prisma.StringFilter<"Project"> | string
@@ -249,7 +250,7 @@ export type ProjectWhereUniqueInput = Prisma.AtLeast<{
   issues?: Prisma.IssueListRelationFilter
   activities?: Prisma.ActivityLogListRelationFilter
   labels?: Prisma.LabelListRelationFilter
-}, "id" | "slug">
+}, "id" | "workspaceId_slug">
 
 export type ProjectOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -383,6 +384,11 @@ export type ProjectListRelationFilter = {
 
 export type ProjectOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type ProjectWorkspaceIdSlugCompoundUniqueInput = {
+  workspaceId: string
+  slug: string
 }
 
 export type ProjectCountOrderByAggregateInput = {

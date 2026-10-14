@@ -2,7 +2,6 @@ import {
   confirmPasswordReset,
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
-  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   updateProfile,
@@ -12,12 +11,13 @@ import {
 import { useAuthStore } from '../stores/auth.store';
 import { api } from './axios';
 import { auth, githubProvider, googleProvider } from './firebase';
+import type { IApiResponse, IUser } from '@devflow/types';
 
 // after firebase signin → get user from our backend
-async function syncWithBackend() {
+async function syncWithBackend(): Promise<IUser> {
   // api.ts interceptor auto attaches firebase token
-  const res = await api.get('/auth/me');
-  const user = res.data.user;
+  const res = await api.get<IApiResponse<IUser>>('/users/me');
+  const user = res.data.data;
   useAuthStore.getState().setUser(user);
   return user;
 }
@@ -30,6 +30,7 @@ export async function signInWithEmail(email: string, password: string) {
 export async function signUpWithEmail(email: string, password: string, name: string) {
   const { user } = await createUserWithEmailAndPassword(auth, email, password);
   await updateProfile(user, { displayName: name });
+  await user.getIdToken(true);
   return syncWithBackend();
 }
 

@@ -43,7 +43,6 @@ export function ColorPicker({
         )}
         <Popover.Trigger asChild>
           <button
-            type="button"
             className={cn(
               "flex items-center gap-2 px-3 py-2 w-full rounded-[4px]",
               "border border-border-default bg-bg-input",
@@ -75,14 +74,12 @@ export function ColorPicker({
             {PROJECT_COLORS.map((c) => (
               <Popover.Close asChild key={c.value}>
                 <button
-                  type="button"
                   title={c.label}
                   onClick={() => onChange(c.value)}
                   className={cn(
                     "h-7 w-7 rounded-[4px] flex items-center justify-center transition-all",
                     "hover:scale-110 hover:ring-2 hover:ring-white/20",
                     activeColor === c.value && "ring-2 ring-white/40 scale-105",
-                    
                   )}
                   style={{ backgroundColor: c.value }}
                 />

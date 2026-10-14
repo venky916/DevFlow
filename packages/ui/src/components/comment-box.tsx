@@ -74,39 +74,35 @@ export function CommentBox({
       <div className="flex items-center justify-between pt-2.5">
         <div className="flex gap-0.5">
           <button
-            type="button"
             onClick={() => editor.chain().focus().toggleBold().run()}
             className={toolbarBtnClass(editor.isActive("bold"))}
           >
             <span className="text-[13px] font-bold">B</span>
           </button>
           <button
-            type="button"
             onClick={() => editor.chain().focus().toggleItalic().run()}
             className={toolbarBtnClass(editor.isActive("italic"))}
           >
             <span className="text-[13px] italic">I</span>
           </button>
           <button
-            type="button"
             onClick={() => editor.chain().focus().toggleUnderline().run()}
             className={toolbarBtnClass(editor.isActive("underline"))}
           >
             <span className="text-[13px] underline">U</span>
           </button>
-          <button type="button" className={toolbarBtnClass(false)}>
+          <button className={toolbarBtnClass(false)}>
             <Paperclip size={14} />
           </button>
         </div>
 
         <div className="flex items-center gap-2">
           {onCancel && (
-            <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+            <Button variant="ghost" size="sm" onClick={onCancel}>
               Cancel
             </Button>
           )}
           <Button
-            type="button"
             variant="primary"
             size="sm"
             onClick={handleSubmit}

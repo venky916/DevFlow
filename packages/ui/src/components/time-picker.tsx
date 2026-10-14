@@ -81,7 +81,6 @@ export function TimePicker({
       <Popover.Root>
         <Popover.Trigger asChild>
           <button
-            type="button"
             disabled={disabled}
             className={cn(
               "flex h-9 w-full items-center gap-2 rounded-[4px] border border-border-emphasis bg-bg-overlay px-3 text-sm transition-colors",
@@ -116,7 +115,6 @@ export function TimePicker({
               {/* hour column */}
               <div className="flex flex-col items-center gap-1">
                 <button
-                  type="button"
                   onClick={() => changeHour(1)}
                   className="h-7 w-7 flex items-center justify-center rounded-[4px] hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
                 >
@@ -126,7 +124,6 @@ export function TimePicker({
                   HH
                 </span>
                 <button
-                  type="button"
                   onClick={() => changeHour(-1)}
                   className="h-7 w-7 flex items-center justify-center rounded-[4px] hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
                 >
@@ -139,7 +136,6 @@ export function TimePicker({
               {/* minute column */}
               <div className="flex flex-col items-center gap-1">
                 <button
-                  type="button"
                   onClick={() => changeMinute(1)}
                   className="h-7 w-7 flex items-center justify-center rounded-[4px] hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
                 >
@@ -149,7 +145,6 @@ export function TimePicker({
                   MM
                 </span>
                 <button
-                  type="button"
                   onClick={() => changeMinute(-1)}
                   className="h-7 w-7 flex items-center justify-center rounded-[4px] hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
                 >
@@ -163,7 +158,6 @@ export function TimePicker({
               {["09:00", "12:00", "17:00", "18:30"].map((t) => (
                 <button
                   key={t}
-                  type="button"
                   onClick={() => {
                     const { h, m } = parseTime(t);
                     setHour(h);

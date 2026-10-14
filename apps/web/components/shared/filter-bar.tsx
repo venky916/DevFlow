@@ -6,8 +6,9 @@ import { Calendar, ChevronDown, X } from 'lucide-react';
 import type { IUserPublic } from '@devflow/types';
 
 import { useProjectSprints } from '../../hooks/use-issues';
-import { useProjectLabels } from '../../hooks/use-project-settings';
+
 import { PRIORITY_OPTIONS, TYPE_OPTIONS } from '../../lib/issue-constants';
+import { useProjectLabels } from '../../hooks/use-projects';
 
 export type FilterField =
   | 'assignee'

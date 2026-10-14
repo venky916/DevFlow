@@ -5,24 +5,46 @@ import { logger } from '@devflow/backend-common';
 
 import { ApiError } from '../lib/ApiError';
 
-export const errorMiddleware = (err: Error, req: Request, res: Response, next: NextFunction) => {
+function getPrismaCode(err: unknown): string | undefined {
+  if (typeof err === 'object' && err !== null && 'code' in err) {
+    const code = (err as { code: unknown }).code;
+    if (typeof code === 'string') return code;
+  }
+  return undefined;
+}
+
+// Turns known Prisma errors into API errors, so controllers never handle them.
+function normalizeError(err: Error): Error {
+  switch (getPrismaCode(err)) {
+    case 'P2002': // unique constraint (slugs, label names, duplicate members)
+      return ApiError.conflict('Resource already exists');
+    case 'P2025': // record not found on update/delete
+      return ApiError.notFound('Resource not found');
+    default:
+      return err;
+  }
+}
+
+export const errorMiddleware = (rawError: Error, req: Request, res: Response, next: NextFunction) => {
   // Zod validation errors
-  if (err instanceof ZodError) {
+  if (rawError instanceof ZodError) {
     logger.warn({
       message: 'Validation failed',
       url: req.url,
-      errors: err.issues,
+      errors: rawError.issues,
     });
     return res.status(422).json({
       success: false,
       message: 'Validation failed',
-      errors: err.issues.map((e) => ({
+      errors: rawError.issues.map((e) => ({
         field: e.path.join('.'),
         message: e.message,
       })),
       data: null,
     });
   }
+
+  const err = normalizeError(rawError);
 
   // 4xx — warn, 5xx — error
   if (err instanceof ApiError && err.statusCode < 500) {
@@ -46,14 +68,6 @@ export const errorMiddleware = (err: Error, req: Request, res: Response, next: N
       success: false,
       message: err.message,
       code: err.code,
-      data: null,
-    });
-  }
-
-  if (err.message.includes('Unique constraint')) {
-    return res.status(409).json({
-      success: false,
-      message: 'Resource already exists',
       data: null,
     });
   }

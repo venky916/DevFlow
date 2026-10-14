@@ -5,6 +5,7 @@ import { ApiError } from '../lib/ApiError';
 import { projectRepository } from '../repositories/project.repository';
 import { activityService } from './activity.service';
 import { notificationService } from './notification.service';
+import { CacheKeys, deleteCache } from '../lib/cache';
 
 export const projectService = {
   async addMember(projectId: string, requesterId: string, targetUserId: string, role: ProjectRole) {
@@ -20,10 +21,10 @@ export const projectService = {
     const finalRole: ProjectRole = role ?? 'DEVELOPER';
 
     const member = await projectRepository.addMember(projectId, targetUserId, finalRole);
+    await deleteCache(CacheKeys.projectMembers(projectId as string));
 
     await activityService.logMemberAdded(projectId, requesterId, targetUserId, finalRole);
     await notificationService.notifyProjectMemberAdded(targetUserId, projectId, requesterId);
-
     return member;
   },
 };

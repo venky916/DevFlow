@@ -7,6 +7,7 @@ import { ApiError } from '../lib/ApiError';
 import { sendCreated, sendSuccess } from '../lib/apiResponse';
 import { asyncHandler } from '../lib/asyncHandler';
 import { inviteService } from '../services/invite.service';
+import { CacheKeys, deleteCache } from '../lib/cache';
 
 // ─── POST /workspaces/:id/invites ─────────────────────────────
 // Owner/Admin sends invite to an email
@@ -101,6 +102,8 @@ export const acceptInvite = asyncHandler(async (req: Request, res: Response) => 
       },
     });
   });
+  // a new member joined: the cached members list is out of date
+  await deleteCache(CacheKeys.workspaceMembers(invite.workspaceId));
 
   sendSuccess(
     res,

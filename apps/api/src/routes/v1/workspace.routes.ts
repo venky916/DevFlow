@@ -9,7 +9,9 @@ import {
   createWorkspace,
   deleteWorkspace,
   getMyWorkspaces,
+  getMyWorkspaceSummaries,
   getWorkspaceById,
+  getWorkspaceBySlug,
   getWorkspaceMembers,
   removeMember,
   updateMemberRole,
@@ -26,7 +28,9 @@ router.use(authenticate);
 // Workspace CRUD
 router.post('/', createWorkspace);
 router.get('/', getMyWorkspaces);
+router.get('/summary', getMyWorkspaceSummaries);
 router.get('/:id', getWorkspaceById);
+router.get('/by-slug/:slug', getWorkspaceBySlug);
 router.patch('/:id', requireWorkspaceRole('ADMIN'), updateWorkspace);
 router.delete('/:id', requireWorkspaceRole('ADMIN'), deleteWorkspace);
 
