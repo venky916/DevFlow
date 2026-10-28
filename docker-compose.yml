@@ -19,9 +19,6 @@ services:
     build:
       context: .
       dockerfile: docker/api.Dockerfile
-      args:
-        DATABASE_URL: ${DATABASE_URL}
-        DIRECT_URL: ${DIRECT_URL}
     env_file: apps/api/.env
     ports: ["4000:4000"]
     depends_on: [redis-cache, redis-queue, redis-pubsub]
@@ -30,9 +27,6 @@ services:
     build:
       context: .
       dockerfile: docker/ws.Dockerfile
-      args:
-        DATABASE_URL: ${DATABASE_URL}
-        DIRECT_URL: ${DIRECT_URL}
     env_file: apps/ws/.env
     ports: ["4001:4001"]
     depends_on: [redis-pubsub]
@@ -41,9 +35,6 @@ services:
     build:
       context: .
       dockerfile: docker/workers.Dockerfile
-      args:
-        DATABASE_URL: ${DATABASE_URL}
-        DIRECT_URL: ${DIRECT_URL}
     env_file: apps/workers/.env
     depends_on: [redis-queue, redis-pubsub]
 

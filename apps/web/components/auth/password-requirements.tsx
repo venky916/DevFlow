@@ -1,13 +1,8 @@
-"use client";
+'use client';
 
-import {
-  useWatch,
-  type Control,
-  type FieldPath,
-  type FieldValues,
-} from "react-hook-form";
+import { useWatch, type Control, type FieldPath, type FieldValues } from 'react-hook-form';
 
-import { passwordRules } from "@devflow/validators";
+import { passwordRules } from '@devflow/validators';
 
 interface PasswordRequirementsProps<T extends FieldValues> {
   control: Control<T>;
@@ -19,7 +14,7 @@ export function PasswordRequirements<T extends FieldValues>({
   name,
 }: PasswordRequirementsProps<T>) {
   const value: unknown = useWatch({ control, name });
-  const password = typeof value === "string" ? value : "";
+  const password = typeof value === 'string' ? value : '';
 
   if (!password) return null;
 
@@ -31,16 +26,10 @@ export function PasswordRequirements<T extends FieldValues>({
           <li key={rule.id} className="flex items-center gap-2">
             <span
               className={
-                met
-                  ? "size-1.5 rounded-full bg-accent"
-                  : "size-1.5 rounded-full bg-text-disabled"
+                met ? 'size-1.5 rounded-full bg-accent' : 'size-1.5 rounded-full bg-text-disabled'
               }
             />
-            <span
-              className={
-                met ? "text-xs text-accent" : "text-xs text-text-disabled"
-              }
-            >
+            <span className={met ? 'text-xs text-accent' : 'text-xs text-text-disabled'}>
               {rule.label}
             </span>
           </li>

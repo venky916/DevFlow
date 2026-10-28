@@ -1,87 +1,63 @@
+'use client';
+
 import { useQuery } from '@tanstack/react-query';
 
-import type { IIssueWithRelations, IssueStatus } from '@devflow/types';
+import type {
+  IApiResponse,
+  IMyIssue,
+  IMyIssuesBoard,
+  IMyIssuesProject,
+  IPaginatedData,
+} from '@devflow/types';
 
-import type { IssueFilters } from '../components/shared/filter-bar';
 import { api } from '../lib/axios';
-import type { PaginatedResponse } from './use-issues';
+import { toMyIssuesFilters, type IssueFilters } from '../lib/issue-filters';
+import { issueKeys } from './use-issues';
 
-// getMyIssues includes `project` — not part of the shared IIssueWithRelations,
-// since board/backlog issues never carry it (already scoped to one project)
-export interface IMyIssue extends IIssueWithRelations {
-  project: {
-    id: string;
-    name: string;
-    slug: string;
-    workspace: { id: string; slug: string };
-  };
-}
-
-// extends IssueFilters rather than redeclaring the same fields — this is
-// what fixes the dueDatePreset type mismatch, since there's now only one
-// real definition of it (IssueFilters'), not two that can drift apart.
-// projectId/sprintId/priority/type/dueDate*/noDueDate/dueDatePreset all
-// already exist on IssueFilters, so nothing new needs declaring here —
-// this interface exists only so My Issues has its own name for the concept
-export interface MyIssuesFilters extends IssueFilters {}
-
-export interface MyIssuesListParams extends MyIssuesFilters {
+export interface MyIssuesListParams extends IssueFilters {
   page?: number;
   limit?: number;
   sortBy?: 'updatedAt' | 'createdAt' | 'priority' | 'dueDate' | 'title' | 'status';
   sortOrder?: 'asc' | 'desc';
 }
 
-interface MyIssuesBoardResponse {
-  columns: Record<IssueStatus, IMyIssue[]>;
-}
-
-export function useMyIssuesBoard(filters: MyIssuesFilters = {}) {
-  return useQuery<MyIssuesBoardResponse>({
-    queryKey: ['my-issues-board', filters],
+export function useMyIssuesBoard(filters: IssueFilters = {}, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: issueKeys.myBoard(filters),
     queryFn: async () => {
-      const res = await api.get('/users/my-issues/board', {
-        params: {
-          projectId: filters.projectId,
-          sprintId: filters.sprintId,
-          priority: filters.priority,
-          type: filters.type,
-          dueDateFrom: filters.dueDateFrom,
-          dueDateTo: filters.dueDateTo,
-          noDueDate: filters.noDueDate,
-          q: filters.q,
-        },
+      const res = await api.get<IApiResponse<IMyIssuesBoard>>('/users/my-issues/board', {
+        params: toMyIssuesFilters(filters),
       });
       return res.data.data;
     },
-    placeholderData: (prev) => prev, // NEW — same fix as useBoard
-  }); // includes refetch, isFetching by default
+    enabled: options?.enabled ?? true,
+    placeholderData: (previous) => previous, // keep the old board visible while a filter loads
+  });
 }
 
-export function useMyIssuesList(params: MyIssuesListParams = {}) {
+export function useMyIssuesList(params: MyIssuesListParams = {}, options?: { enabled?: boolean }) {
   const { page = 1, limit = 25, sortBy = 'updatedAt', sortOrder = 'desc', ...filters } = params;
 
-  return useQuery<PaginatedResponse<IMyIssue>>({
-    queryKey: ['my-issues-list', filters, page, limit, sortBy, sortOrder],
+  return useQuery({
+    queryKey: issueKeys.myList({ ...filters, page, limit, sortBy, sortOrder }),
     queryFn: async () => {
-      const res = await api.get('/users/my-issues/list', {
-        params: {
-          projectId: filters.projectId,
-          sprintId: filters.sprintId,
-          priority: filters.priority,
-          type: filters.type,
-          dueDateFrom: filters.dueDateFrom,
-          dueDateTo: filters.dueDateTo,
-          noDueDate: filters.noDueDate,
-          q: filters.q,
-          page,
-          limit,
-          sortBy,
-          sortOrder,
-        },
+      const res = await api.get<IApiResponse<IPaginatedData<IMyIssue>>>('/users/my-issues/list', {
+        params: { ...toMyIssuesFilters(filters), page, limit, sortBy, sortOrder },
       });
       return res.data.data;
     },
-    placeholderData: (prev) => prev, // keep old page's rows visible while next page loads
+    enabled: options?.enabled ?? true,
+    placeholderData: (previous) => previous, // keep the old page's rows while the next one loads
+  });
+}
+
+// the projects where you have issues, for the project filter
+export function useMyIssuesProjects() {
+  return useQuery({
+    queryKey: issueKeys.myProjects(),
+    queryFn: async () => {
+      const res = await api.get<IApiResponse<IMyIssuesProject[]>>('/users/my-issues/projects');
+      return res.data.data;
+    },
   });
 }

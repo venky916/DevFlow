@@ -1,61 +1,52 @@
-"use client";
+'use client';
 
-import { useParams } from "next/navigation";
-import { FolderKanban, ListTodo, Users, Zap } from "lucide-react";
+import { useParams } from 'next/navigation';
+import { FolderKanban, ListTodo, Users, Zap } from 'lucide-react';
 
-import type { WorkspaceRole } from "@devflow/types";
-import { Avatar } from "@devflow/ui/components/avatar";
-import { DEFAULT_PROJECT_COLOR } from "@devflow/ui/components/color-picker";
+import type { WorkspaceRole } from '@devflow/types';
+import { Avatar } from '@devflow/ui/components/avatar';
+import { DEFAULT_PROJECT_COLOR } from '@devflow/ui/components/color-picker';
 
-import {
-  useRequireWorkspaceRole,
-  useWorkspaceAnalytics,
-} from "../../hooks/use-workspaces";
-import { displayName } from "../../lib/roles";
-import { BarRow } from "../shared/bar-row";
-import { PageContainer } from "../shared/page-container";
-import {PageError} from "../shared/page-error";
-import { PageHeading } from "../shared/page-heading";
-import {PageLoading} from "../shared/page-loading";
-import { RoleBadge } from "../shared/role-badge";
-import { StatCard } from "../shared/stat-card";
-import { PanelTitle } from "../shared/panel-title";
+import { useRequireWorkspaceRole, useWorkspaceAnalytics } from '../../hooks/use-workspaces';
+import { displayName } from '../../lib/roles';
+import { BarRow } from '../shared/bar-row';
+import { PageContainer } from '../shared/page-container';
+import { PageError } from '../shared/page-error';
+import { PageHeading } from '../shared/page-heading';
+import { PageLoading } from '../shared/page-loading';
+import { PanelTitle } from '../shared/panel-title';
+import { RoleBadge } from '../shared/role-badge';
+import { StatCard } from '../shared/stat-card';
 
-const ROLES: WorkspaceRole[] = ["ADMIN", "MEMBER"];
+const ROLES: WorkspaceRole[] = ['ADMIN', 'MEMBER'];
 
 // Theme tokens, not hex. Values are CSS variables, so they work in inline style.
 const ROLE_COLORS: Record<WorkspaceRole, string> = {
-  ADMIN: "var(--color-danger-text)",
-  MEMBER: "var(--color-info-text)",
+  ADMIN: 'var(--color-danger-text)',
+  MEMBER: 'var(--color-info-text)',
 };
 
 const MEMBER_PREVIEW_LIMIT = 6;
-
 
 export function WorkspaceAnalytics() {
   const { workspaceSlug } = useParams<{ workspaceSlug: string }>();
   const { workspace, isAllowed } = useRequireWorkspaceRole(
     workspaceSlug,
-    "VIEW_WORKSPACE_ANALYTICS",
+    'VIEW_WORKSPACE_ANALYTICS',
   );
   const {
     data: analytics,
     isLoading,
     isError,
     refetch,
-  } = useWorkspaceAnalytics(isAllowed && workspace ? workspace.id : "");
+  } = useWorkspaceAnalytics(isAllowed && workspace ? workspace.id : '');
 
   if (!workspace || !isAllowed || isLoading) return <PageLoading />;
   if (isError || !analytics) {
-    return (
-      <PageError message="Couldn't load analytics" onRetry={() => refetch()} />
-    );
+    return <PageError message="Couldn't load analytics" onRetry={() => refetch()} />;
   }
 
-  const maxProjectCount = Math.max(
-    ...analytics.issuesByProject.map((p) => p.count),
-    1,
-  );
+  const maxProjectCount = Math.max(...analytics.issuesByProject.map((p) => p.count), 1);
   const maxRoleCount = Math.max(...Object.values(analytics.roleBreakdown), 1);
 
   return (
@@ -63,21 +54,9 @@ export function WorkspaceAnalytics() {
       <PageHeading title="Analytics" description={workspace.name} />
 
       <div className="grid grid-cols-4 gap-3">
-        <StatCard
-          label="Projects"
-          value={analytics.issuesByProject.length}
-          icon={FolderKanban}
-        />
-        <StatCard
-          label="Active Sprints"
-          value={analytics.activeSprintsCount}
-          icon={Zap}
-        />
-        <StatCard
-          label="Total Issues"
-          value={analytics.totalIssues}
-          icon={ListTodo}
-        />
+        <StatCard label="Projects" value={analytics.issuesByProject.length} icon={FolderKanban} />
+        <StatCard label="Active Sprints" value={analytics.activeSprintsCount} icon={Zap} />
+        <StatCard label="Total Issues" value={analytics.totalIssues} icon={ListTodo} />
         <StatCard label="Members" value={analytics.memberCount} icon={Users} />
       </div>
 
@@ -107,17 +86,11 @@ export function WorkspaceAnalytics() {
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-3 rounded-md border border-border-default p-4">
           <PanelTitle>
-            Members{" "}
-            <span className="text-text-disabled">
-              ({analytics.members.length})
-            </span>
+            Members <span className="text-text-disabled">({analytics.members.length})</span>
           </PanelTitle>
           <div className="flex max-h-60 flex-col gap-2 overflow-y-auto">
             {analytics.members.slice(0, MEMBER_PREVIEW_LIMIT).map((member) => (
-              <div
-                key={member.user.id}
-                className="flex items-center justify-between"
-              >
+              <div key={member.user.id} className="flex items-center justify-between">
                 <div className="flex min-w-0 items-center gap-2">
                   <Avatar name={displayName(member.user)} size="sm" />
                   <span className="truncate text-body text-text-primary">

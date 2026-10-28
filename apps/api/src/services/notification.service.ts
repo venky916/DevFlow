@@ -131,6 +131,14 @@ export const notificationService = {
     });
   },
 
+  async sendPasswordResetEmail(email: string, resetLink: string): Promise<void> {
+    await emailQueue.add('email', {
+      to: email,
+      type: NotificationTypes.PASSWORD_RESET,
+      data: { resetLink },
+    });
+  },
+
   async notifyMention(
     userId: string,
     commenterName: string,
@@ -169,32 +177,6 @@ export const notificationService = {
     });
   },
 
-  async sendCommentEmail(
-    to: string,
-    issueTitle: string,
-    commenterName: string,
-    commentPreview: string,
-    creatorName: string | null,
-    projectId: string,
-    issueId: string,
-  ): Promise<void> {
-    const ctx = await getProjectContext(projectId);
-    if (!ctx) return;
-
-    await emailQueue.add('email', {
-      to,
-      type: NotificationTypes.ISSUE_COMMENTED,
-      data: {
-        issueTitle,
-        commentedBy: commenterName,
-        comment: commentPreview.slice(0, 200),
-        assigneeName: creatorName,
-        projectName: ctx.projectName,
-        issueLink: absoluteUrl(webLinks.issue(ctx.workspaceSlug, ctx.projectSlug, issueId)),
-      },
-    });
-  },
-
   async notifyIssueAssigned(
     assigneeId: string,
     triggeredBy: string,
@@ -215,27 +197,22 @@ export const notificationService = {
       triggeredBy,
     });
 
-    const assignee = await issueRepository.findAssigneeContact(assigneeId);
+    // the email names who assigned it (it used to show a user id)
+    const [assignee, assigner] = await Promise.all([
+      issueRepository.findAssigneeContact(assigneeId),
+      issueRepository.findAssigneeContact(triggeredBy),
+    ]);
     if (assignee) {
       await emailQueue.add('email', {
         to: assignee.email,
         type: NotificationTypes.ISSUE_ASSIGNED,
         data: {
-          assigneeName: assignee.name,
+          assignedBy: assigner?.name ?? 'Someone',
           issueTitle,
           projectName: ctx.projectName,
-          assignedBy: triggeredBy,
           issueLink: absoluteUrl(issuePath),
         },
       });
     }
-  },
-
-  async sendPasswordResetEmail(email: string, resetLink: string): Promise<void> {
-    await emailQueue.add('email', {
-      to: email,
-      type: NotificationTypes.PASSWORD_RESET,
-      data: { resetLink },
-    });
   },
 };

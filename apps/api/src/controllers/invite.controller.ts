@@ -6,8 +6,8 @@ import { acceptInviteSchema, createInviteSchema } from '@devflow/validators';
 import { ApiError } from '../lib/ApiError';
 import { sendCreated, sendSuccess } from '../lib/apiResponse';
 import { asyncHandler } from '../lib/asyncHandler';
-import { inviteService } from '../services/invite.service';
 import { CacheKeys, deleteCache } from '../lib/cache';
+import { inviteService } from '../services/invite.service';
 
 // ─── POST /workspaces/:id/invites ─────────────────────────────
 // Owner/Admin sends invite to an email

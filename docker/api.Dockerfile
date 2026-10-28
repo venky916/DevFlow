@@ -1,6 +1,6 @@
-# docker/api.Dockerfile
-FROM node:20-slim AS base
-RUN npm install -g pnpm turbo
+FROM node:22-slim AS base
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+RUN npm install -g pnpm@9.0.0 turbo@2.9.8
 
 FROM base AS pruner
 WORKDIR /app
@@ -12,19 +12,15 @@ WORKDIR /app
 COPY --from=pruner /app/out/json/ .
 RUN pnpm install --frozen-lockfile
 COPY --from=pruner /app/out/full/ .
-
-ARG DATABASE_URL
-ARG DIRECT_URL
-ENV DATABASE_URL=$DATABASE_URL
-ENV DIRECT_URL=$DIRECT_URL
-
-RUN echo "DATABASE_URL=$DATABASE_URL" > packages/db/.env && \
-    echo "DIRECT_URL=$DIRECT_URL" >> packages/db/.env
-    
-RUN pnpm turbo run build --filter=api
+# Prisma 7 reads the database URL from prisma.config.ts even just to generate the client.
+# This placeholder is only for that step. No real secret goes into the image.
+RUN DIRECT_URL="postgresql://build:build@localhost:5432/build" pnpm --filter @devflow/db run build
 
 FROM base AS runner
+ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=installer /app .
+USER node
+WORKDIR /app/apps/api
 EXPOSE 4000
-CMD ["node", "apps/api/dist/index.js"]
+CMD ["node", "--import", "tsx", "src/index.ts"]

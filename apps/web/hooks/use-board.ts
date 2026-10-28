@@ -1,76 +1,61 @@
-import { useEffect } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { toast } from 'sonner';
+'use client';
 
-import type { IIssueWithRelations, ISprint, IssueStatus } from '@devflow/types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import type { IApiResponse, IBoard, IIssue } from '@devflow/types';
 import type { MoveIssueInput } from '@devflow/validators';
 
-import type { IssueFilters } from '../components/shared/filter-bar';
 import { api } from '../lib/axios';
-import { useBoardStore } from '../stores/board.store';
+import { moveIssueInBoard } from '../lib/board-utils';
+import { toApiFilters, type IssueFilters } from '../lib/issue-filters';
+import { showError } from '../lib/show-error';
+import { issueKeys, refreshIssueViews } from './use-issues';
 
-interface BoardResponse {
-  activeSprint: ISprint | null;
-  columns: Record<IssueStatus, IIssueWithRelations[]>;
-}
-
-export function useBoard(projectId: string, filters: IssueFilters = {}) {
-  const setColumns = useBoardStore((s) => s.setColumns);
-  const setActiveSprint = useBoardStore((s) => s.setActiveSprint);
-
-  const query = useQuery<BoardResponse>({
-    // filters in the key — different filter combos cache separately,
-    // and changing filters triggers a real refetch automatically
-    queryKey: ['board', projectId, filters],
+export function useBoard(
+  projectId: string,
+  filters: IssueFilters = {},
+  options?: { enabled?: boolean },
+) {
+  return useQuery({
+    // filters are in the key, so each filter combination caches separately
+    queryKey: issueKeys.board(projectId, filters),
     queryFn: async () => {
-      const res = await api.get(`/projects/${projectId}/issues/board`, {
-        params: {
-          assigneeId: filters.assigneeId,
-          labelId: filters.labelId,
-          priority: filters.priority,
-          type: filters.type,
-          dueDateFrom: filters.dueDateFrom,
-          dueDateTo: filters.dueDateTo,
-          noDueDate: filters.noDueDate,
-          q: filters.q, // ← new
-        },
+      const res = await api.get<IApiResponse<IBoard>>(`/projects/${projectId}/issues/board`, {
+        params: toApiFilters(filters),
       });
       return res.data.data;
     },
-    enabled: !!projectId,
-    placeholderData: (prev) => prev, // NEW — keep old filtered result on screen while new filter loads
+    enabled: !!projectId && (options?.enabled ?? true),
+    placeholderData: (previous) => previous, // keep the old board visible while a new filter loads
   });
-
-  useEffect(() => {
-    if (!query.data) return;
-    setColumns(query.data.columns);
-    setActiveSprint(query.data.activeSprint);
-  }, [query.data]);
-
-  return query;
 }
 
+// Moves a card (drag, or the status field). Without a position the server puts it at the end of the column.
+// The board updates at once and rolls back if the server refuses. Every view refreshes afterwards.
 export function useMoveIssue() {
-  const moveIssue = useBoardStore((s) => s.moveIssue);
+  const qc = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ issueId, data }: { issueId: string; data: MoveIssueInput }) => {
-      const res = await api.patch(`/issues/${issueId}/move`, data);
+      const res = await api.patch<IApiResponse<IIssue>>(`/issues/${issueId}/move`, data);
       return res.data.data;
     },
-    onMutate: ({ issueId, data }) => {
-      const snapshot = useBoardStore.getState().columns;
-      const fromStatus = Object.entries(snapshot).find(([, issues]) =>
-        issues.some((i) => i.id === issueId),
-      )?.[0] as IssueStatus;
-      if (fromStatus) moveIssue(issueId, fromStatus, data.status, data.position);
-      return { snapshot }; // return for rollback
+    onMutate: async ({ issueId, data }) => {
+      const filter = {
+        predicate: (query: { queryKey: readonly unknown[] }) => issueKeys.isBoard(query.queryKey),
+      };
+
+      await qc.cancelQueries(filter);
+      const snapshots = qc.getQueriesData<IBoard>(filter);
+      qc.setQueriesData<IBoard>(filter, (board) =>
+        board ? moveIssueInBoard(board, issueId, data.status, data.position) : board,
+      );
+      return { snapshots };
     },
-    onError: (_err, _vars, context) => {
-      if (context?.snapshot) {
-        useBoardStore.getState().setColumns(context.snapshot);
-      }
-      toast.error('Failed to move issue');
+    onError: (err, _vars, context) => {
+      context?.snapshots.forEach(([key, board]) => qc.setQueryData(key, board));
+      showError(err, 'Failed to move issue');
     },
+    onSettled: () => refreshIssueViews(qc),
   });
 }

@@ -25,12 +25,17 @@ function normalizeError(err: Error): Error {
   }
 }
 
-export const errorMiddleware = (rawError: Error, req: Request, res: Response, next: NextFunction) => {
+export const errorMiddleware = (
+  rawError: Error,
+  req: Request,
+  res: Response,
+  _next: NextFunction,
+) => {
   // Zod validation errors
   if (rawError instanceof ZodError) {
     logger.warn({
       message: 'Validation failed',
-      url: req.url,
+      url: req.originalUrl,
       errors: rawError.issues,
     });
     return res.status(422).json({
@@ -51,14 +56,14 @@ export const errorMiddleware = (rawError: Error, req: Request, res: Response, ne
     logger.warn({
       message: err.message,
       method: req.method,
-      url: req.url,
+      url: req.originalUrl,
       statusCode: err.statusCode,
     });
   } else {
     logger.error({
       message: err.message,
       method: req.method,
-      url: req.url,
+      url: req.originalUrl,
       stack: err.stack,
     });
   }

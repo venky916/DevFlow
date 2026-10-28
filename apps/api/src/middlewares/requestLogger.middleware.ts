@@ -9,7 +9,7 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
     const duration = Date.now() - start;
     logger.info({
       method: req.method,
-      url: req.url,
+      url: req.originalUrl,
       statusCode: res.statusCode,
       duration: `${duration}ms`,
       userId: req.user?.id ?? 'unauthenticated',

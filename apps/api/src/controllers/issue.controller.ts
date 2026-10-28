@@ -2,7 +2,9 @@ import { Request, Response } from 'express';
 
 import { prisma } from '@devflow/db';
 import {
+  attachChildSchema,
   createIssueSchema,
+  createSubIssueSchema,
   issueFilterSchema,
   moveIssueSchema,
   moveIssueToSprintSchema,
@@ -11,11 +13,17 @@ import {
 } from '@devflow/validators';
 
 import { ApiError } from '../lib/ApiError';
-import { sendNoContent, sendPaginated, sendSuccess } from '../lib/apiResponse';
+import { sendCreated, sendNoContent, sendPaginated, sendSuccess } from '../lib/apiResponse';
 import { asyncHandler } from '../lib/asyncHandler';
 import { CacheKeys, getCache, setCache, TTL } from '../lib/cache';
-import { issueInclude } from '../repositories/issue.repository';
+import { getIssueActor } from '../lib/issue-rules';
+import { serializeIssue } from '../lib/issue-serializer';
+import { childrenInclude, issueInclude } from '../repositories/issue.repository';
 import { issueService } from '../services/issue.service';
+
+// same position twice must never swap places randomly, so id breaks ties
+const POSITION_ORDER = [{ position: 'asc' as const }, { id: 'asc' as const }];
+const CARD_INCLUDE = { ...issueInclude, ...childrenInclude };
 
 // ─── shared filter builder from query params ──────────────────────
 function buildFilterWhere(query: Record<string, any>) {
@@ -44,13 +52,13 @@ function buildFilterWhere(query: Record<string, any>) {
 export const createIssue = asyncHandler(async (req: Request, res: Response) => {
   const { id: projectId } = req.params;
   const input = createIssueSchema.parse(req.body);
-  const issue = await issueService.createIssue(projectId as string, req.user!.id, input);
-  sendSuccess(res, issue, 'Issue created successfully');
+  const actor = getIssueActor(req.user!.id, req.projectAccess!);
+  const issue = await issueService.createIssue(projectId as string, actor, input);
+  sendCreated(res, issue, 'Issue created successfully');
 });
 
 // ─── GET /projects/:id/issues/search ──────────────────────────────
 // mode=child → only issues safe to become a child (no parent, no children of own)
-// no mode → default parent-candidate search (just parentId: null) — not used by any UI now, kept for flexibility
 export const searchProjectIssues = asyncHandler(async (req: Request, res: Response) => {
   const { id: projectId } = req.params;
   const { q, excludeId, mode } = req.query;
@@ -82,30 +90,19 @@ export const searchProjectIssues = asyncHandler(async (req: Request, res: Respon
   sendSuccess(res, issues, 'Issues fetched successfully');
 });
 
+// ─── GET /projects/:id/issues/board ───────────────────────────────
 export const getBoardIssues = asyncHandler(async (req: Request, res: Response) => {
   const { id: projectId } = req.params;
 
-  // Get active sprint first
   const activeSprint = await prisma.sprint.findFirst({
-    where: {
-      projectId: projectId as string,
-      status: 'ACTIVE',
-    },
+    where: { projectId: projectId as string, status: 'ACTIVE' },
   });
 
-  // If no active sprint, return empty board immediately
+  // no active sprint: empty board
   if (!activeSprint) {
     sendSuccess(
       res,
-      {
-        activeSprint: null,
-        columns: {
-          TODO: [],
-          IN_PROGRESS: [],
-          IN_REVIEW: [],
-          DONE: [],
-        },
-      },
+      { activeSprint: null, columns: { TODO: [], IN_PROGRESS: [], IN_REVIEW: [], DONE: [] } },
       'Board fetched successfully',
     );
     return;
@@ -113,56 +110,31 @@ export const getBoardIssues = asyncHandler(async (req: Request, res: Response) =
 
   const filterWhere = buildFilterWhere(req.query);
 
-  // Cache key includes filters so filtered results don't pollute unfiltered cache
+  // only the unfiltered board is cached
   const hasFilters = Object.keys(filterWhere).length > 0;
-  const cacheKey = CacheKeys.board(projectId as string, activeSprint?.id ?? null);
+  const cacheKey = CacheKeys.board(projectId as string, activeSprint.id);
 
-  // ─── Check cache ──────────────────────────────────────────
   if (!hasFilters) {
     const cached = await getCache(cacheKey);
-
     if (cached) {
       sendSuccess(res, cached, 'Board fetched successfully');
       return;
     }
   }
 
-  // ─── Fetch issues ─────────────────────────────────────────
-  const issues = await prisma.issue.findMany({
+  // sub-issues are not cards: they appear inside their parent's card
+  const rows = await prisma.issue.findMany({
     where: {
       projectId: projectId as string,
       sprintId: activeSprint.id,
       parentId: null,
-      NOT: {
-        status: 'BACKLOG',
-      },
+      NOT: { status: 'BACKLOG' },
       ...filterWhere,
     },
-    include: {
-      ...issueInclude,
-
-      children: {
-        select: {
-          id: true,
-          title: true,
-          status: true,
-          assignee: {
-            select: {
-              id: true,
-              name: true,
-              avatarUrl: true,
-            },
-          },
-        },
-        orderBy: {
-          position: 'asc',
-        },
-      },
-    },
-    orderBy: {
-      position: 'asc',
-    },
+    include: CARD_INCLUDE,
+    orderBy: POSITION_ORDER,
   });
+  const issues = rows.map(serializeIssue);
 
   const board = {
     activeSprint,
@@ -174,8 +146,6 @@ export const getBoardIssues = asyncHandler(async (req: Request, res: Response) =
     },
   };
 
-  // ─── Store raw URLs in cache ───────────────────────────────
-  // Signed URLs expire, so never cache signed URLs.
   if (!hasFilters) {
     await setCache(cacheKey, board, TTL.BOARD);
   }
@@ -183,7 +153,7 @@ export const getBoardIssues = asyncHandler(async (req: Request, res: Response) =
   sendSuccess(res, board, 'Board fetched successfully');
 });
 
-// whitelist — never let sortBy be an arbitrary user-supplied column name (injection/error surface)
+// whitelist — never let sortBy be an arbitrary user-supplied column name
 const LIST_SORTABLE_FIELDS = [
   'position',
   'priority',
@@ -196,7 +166,7 @@ const LIST_SORTABLE_FIELDS = [
 type ListSortField = (typeof LIST_SORTABLE_FIELDS)[number];
 
 // ─── GET /projects/:id/issues/list ────────────────────────────────
-// flat, paginated view of active sprint's issues (list-view toggle, TanStack Table)
+// flat, paginated view of the active sprint's issues (not cached: the query is cheap)
 export const getListIssues = asyncHandler(async (req: Request, res: Response) => {
   const { id: projectId } = req.params;
 
@@ -210,10 +180,7 @@ export const getListIssues = asyncHandler(async (req: Request, res: Response) =>
   const sortOrder: 'asc' | 'desc' = req.query.sortOrder === 'desc' ? 'desc' : 'asc';
 
   const activeSprint = await prisma.sprint.findFirst({
-    where: {
-      projectId: projectId as string,
-      status: 'ACTIVE',
-    },
+    where: { projectId: projectId as string, status: 'ACTIVE' },
   });
 
   if (!activeSprint) {
@@ -222,166 +189,75 @@ export const getListIssues = asyncHandler(async (req: Request, res: Response) =>
   }
 
   const filterWhere = buildFilterWhere(req.query);
-  const hasFilters = Object.keys(filterWhere).length > 0;
-
-  const isDefaultSort = sortBy === 'position' && sortOrder === 'asc';
-  const cacheable = !hasFilters && isDefaultSort;
-  const cacheKey = CacheKeys.list(projectId as string, activeSprint.id, page, limit);
-
-  if (cacheable) {
-    const cached = await getCache(cacheKey);
-
-    if (cached) {
-      const cachedIssues = (cached as any).issues;
-      sendPaginated(res, cachedIssues, (cached as any).meta);
-      return;
-    }
-  }
 
   const where = {
     projectId: projectId as string,
     sprintId: activeSprint.id,
     parentId: null,
-    NOT: {
-      status: 'BACKLOG' as const,
-    },
+    NOT: { status: 'BACKLOG' as const },
     ...filterWhere,
   };
 
-  const [issues, total] = await Promise.all([
+  const [rows, total] = await Promise.all([
     prisma.issue.findMany({
       where,
-      include: {
-        ...issueInclude,
-        children: {
-          select: {
-            id: true,
-            title: true,
-            status: true,
-            assignee: {
-              select: {
-                id: true,
-                name: true,
-                avatarUrl: true,
-              },
-            },
-          },
-          orderBy: { position: 'asc' },
-        },
-      },
-      orderBy: { [sortBy]: sortOrder },
+      include: CARD_INCLUDE,
+      orderBy: [{ [sortBy]: sortOrder }, { id: 'asc' as const }],
       skip,
       take: limit,
     }),
     prisma.issue.count({ where }),
   ]);
 
-  const meta = {
+  sendPaginated(res, rows.map(serializeIssue), {
     total,
     page,
     limit,
-    hasMore: skip + issues.length < total,
-  };
-
-  if (cacheable) {
-    await setCache(cacheKey, { issues, meta }, TTL.BOARD);
-  }
-
-  sendPaginated(res, issues, meta);
+    hasMore: skip + rows.length < total,
+  });
 });
 
-// ─── GET /projects/:id/backlog ────────────────────────────────────
+// ─── GET /projects/:id/issues/backlog ─────────────────────────────
 export const getBacklogIssues = asyncHandler(async (req: Request, res: Response) => {
   const { id: projectId } = req.params;
   const filterWhere = buildFilterWhere(req.query);
 
-  const issues = await prisma.issue.findMany({
-    where: {
-      projectId: projectId as string,
-      sprintId: null,
-      ...filterWhere,
-    },
+  const rows = await prisma.issue.findMany({
+    where: { projectId: projectId as string, sprintId: null, ...filterWhere },
     include: issueInclude,
-    orderBy: {
-      position: 'asc',
-    },
+    orderBy: POSITION_ORDER,
   });
-  sendSuccess(res, issues, 'Issues fetched successfully');
+  sendSuccess(res, rows.map(serializeIssue), 'Issues fetched successfully');
 });
 
-// ─── GET /projects/:id/backlog/grouped ────────────────────────────
+// ─── GET /projects/:id/issues/backlog/grouped ─────────────────────
 export const getBacklogGrouped = asyncHandler(async (req: Request, res: Response) => {
   const { id: projectId } = req.params;
   const filterWhere = buildFilterWhere(req.query);
 
-  const childrenInclude = {
-    children: {
-      select: {
-        id: true,
-        title: true,
-        status: true,
-        assignee: {
-          select: {
-            id: true,
-            name: true,
-            avatarUrl: true,
-          },
-        },
-      },
-      orderBy: {
-        position: 'asc' as const,
-      },
-    },
-  };
-
   const sprints = await prisma.sprint.findMany({
-    where: {
-      projectId: projectId as string,
-      status: {
-        not: 'COMPLETED',
-      },
-    },
+    where: { projectId: projectId as string, status: { not: 'COMPLETED' } },
     include: {
       issues: {
-        where: {
-          parentId: null,
-          ...filterWhere,
-        },
-        include: {
-          ...issueInclude,
-          ...childrenInclude,
-        },
-        orderBy: {
-          position: 'asc',
-        },
+        where: { parentId: null, ...filterWhere },
+        include: CARD_INCLUDE,
+        orderBy: POSITION_ORDER,
       },
     },
-    orderBy: {
-      createdAt: 'asc',
-    },
+    orderBy: { createdAt: 'asc' },
   });
 
   const backlogIssues = await prisma.issue.findMany({
-    where: {
-      projectId: projectId as string,
-      sprintId: null,
-      parentId: null,
-      ...filterWhere,
-    },
-    include: {
-      ...issueInclude,
-      ...childrenInclude,
-    },
-    orderBy: {
-      position: 'asc',
-    },
+    where: { projectId: projectId as string, sprintId: null, parentId: null, ...filterWhere },
+    include: CARD_INCLUDE,
+    orderBy: POSITION_ORDER,
   });
 
   sendSuccess(
     res,
     {
-      sprints,
-      backlogIssues,
+      sprints: sprints.map((sprint) => ({ ...sprint, issues: sprint.issues.map(serializeIssue) })),
+      backlogIssues: backlogIssues.map(serializeIssue),
     },
     'Backlog fetched successfully',
   );
@@ -392,28 +268,19 @@ export const getIssueById = asyncHandler(async (req: Request, res: Response) => 
   const { id } = req.params;
 
   const issue = await prisma.issue.findUnique({
-    where: {
-      id: id as string,
-    },
+    where: { id: id as string },
     include: {
       ...issueInclude,
-      sprint: {
+      sprint: { select: { id: true, name: true, status: true } },
+      project: {
         select: {
           id: true,
           name: true,
-          status: true,
+          slug: true,
+          workspace: { select: { id: true, slug: true } },
         },
       },
-      // sub-issues
-      parent: {
-        select: {
-          id: true,
-          title: true,
-          status: true,
-          type: true,
-          priority: true,
-        },
-      },
+      parent: { select: { id: true, title: true, status: true, type: true, priority: true } },
       children: {
         select: {
           id: true,
@@ -421,32 +288,13 @@ export const getIssueById = asyncHandler(async (req: Request, res: Response) => 
           status: true,
           type: true,
           priority: true,
-          assignee: {
-            select: {
-              id: true,
-              name: true,
-              avatarUrl: true,
-            },
-          },
+          assignee: { select: { id: true, name: true, avatarUrl: true } },
         },
-        orderBy: {
-          createdAt: 'asc',
-        },
+        orderBy: { createdAt: 'asc' },
       },
-      // attachments
       attachments: {
-        include: {
-          uploader: {
-            select: {
-              id: true,
-              name: true,
-              avatarUrl: true,
-            },
-          },
-        },
-        orderBy: {
-          createdAt: 'asc',
-        },
+        include: { uploader: { select: { id: true, name: true, avatarUrl: true } } },
+        orderBy: { createdAt: 'asc' },
       },
     },
   });
@@ -455,25 +303,16 @@ export const getIssueById = asyncHandler(async (req: Request, res: Response) => 
     throw ApiError.notFound('Issue not found');
   }
 
-  sendSuccess(res, issue, 'Issue fetched successfully');
+  sendSuccess(res, serializeIssue(issue), 'Issue fetched successfully');
 });
 
 // ─── PATCH /issues/:id ────────────────────────────────────────────
 export const updateIssue = asyncHandler(async (req: Request, res: Response) => {
-  const { id, projectId } = req.params;
+  const { id } = req.params;
   const input = updateIssueSchema.parse(req.body);
-  const access = req.projectAccess!;
-  const canAssignAnyone = access.isWorkspaceAdmin || access.projectRole === 'LEAD';
-  const isLeadOrAdmin = access.isWorkspaceAdmin || access.projectRole === 'LEAD';
+  const actor = getIssueActor(req.user!.id, req.projectAccess!);
 
-  const updated = await issueService.updateIssue(
-    id as string,
-    projectId as string,
-    req.user!.id,
-    input,
-    canAssignAnyone,
-    isLeadOrAdmin,
-  );
+  const updated = await issueService.updateIssue(id as string, actor, input);
   sendSuccess(res, updated, 'Issue updated successfully');
 });
 
@@ -496,58 +335,41 @@ export const moveIssueToSprint = asyncHandler(async (req: Request, res: Response
 // ─── POST /issues/:id/children ────────────────────────────────────
 export const createSubIssue = asyncHandler(async (req: Request, res: Response) => {
   const { id: parentId } = req.params;
-  const input = createIssueSchema.parse(req.body);
-  const subIssue = await issueService.createSubIssue(
-    parentId as string,
-    req.user!.id,
-    req.user!.id,
-    input,
-  );
-  sendSuccess(res, subIssue, 'Issue created successfully');
+  const input = createSubIssueSchema.parse(req.body);
+  const actor = getIssueActor(req.user!.id, req.projectAccess!);
+  const subIssue = await issueService.createSubIssue(parentId as string, actor, input);
+  sendCreated(res, subIssue, 'Issue created successfully');
 });
 
-// ─── GET /issues/: id / children ─────────────────────────────────────
+// ─── GET /issues/:id/children ─────────────────────────────────────
 export const getSubIssues = asyncHandler(async (req: Request, res: Response) => {
   const { id: parentId } = req.params;
 
-  const parent = await prisma.issue.findUnique({
-    where: {
-      id: parentId as string,
-    },
-  });
-
+  const parent = await prisma.issue.findUnique({ where: { id: parentId as string } });
   if (!parent) {
     throw ApiError.notFound('Parent issue not found');
   }
 
   const children = await prisma.issue.findMany({
-    where: {
-      parentId: parentId as string,
-    },
+    where: { parentId: parentId as string },
     include: issueInclude,
-    orderBy: {
-      position: 'asc',
-    },
+    orderBy: POSITION_ORDER,
   });
 
-  sendSuccess(res, children, 'Sub-issues fetched successfully');
+  sendSuccess(res, children.map(serializeIssue), 'Sub-issues fetched successfully');
 });
 
 // ─── POST /issues/:id/children/attach ─────────────────────────────
-// lead/admin only — attaches an EXISTING standalone issue as a child of :id
-// called from the PARENT's page only (dev-1's sub-issue search box)
+// lead/admin only. Attaches an EXISTING standalone issue as a child of :id.
 export const attachChildIssue = asyncHandler(async (req: Request, res: Response) => {
   const { id: parentId } = req.params;
-  const { issueId: childId } = req.body;
-  if (!childId) throw ApiError.badRequest('issueId is required');
+  const { issueId: childId } = attachChildSchema.parse(req.body);
 
   const updated = await issueService.attachChildIssue(parentId as string, childId, req.user!.id);
   sendSuccess(res, updated, 'Issue attached as sub-issue');
 });
 
 // ─── DELETE /issues/:id/children/:childId ─────────────────────────
-// lead/admin only — detaches a child, making it standalone again
-// called from the PARENT's page only (dev-1's sub-issue list, X button)
 export const detachChildIssue = asyncHandler(async (req: Request, res: Response) => {
   const { id: parentId, childId } = req.params;
   const updated = await issueService.detachChildIssue(
@@ -565,11 +387,16 @@ export const deleteIssue = asyncHandler(async (req: Request, res: Response) => {
   sendNoContent(res);
 });
 
+const myIssuesBase = (userId: string) => ({
+  assigneeId: userId,
+  NOT: { status: 'DONE' as const, sprint: { status: 'COMPLETED' as const } },
+});
+
 // ─── shared filter builder for /my-issues ─────────────────────────
 function buildMyIssuesFilterWhere(userId: string, query: Record<string, any>) {
   const filters = myIssuesFilterSchema.parse(query);
   return {
-    assigneeId: userId,
+    ...myIssuesBase(userId),
     ...(filters.projectId && { projectId: filters.projectId }),
     ...(filters.sprintId && { sprintId: filters.sprintId }),
     ...(filters.type && { type: filters.type }),
@@ -589,44 +416,30 @@ function buildMyIssuesFilterWhere(userId: string, query: Record<string, any>) {
 }
 
 const myIssuesInclude = {
-  ...issueInclude,
+  ...CARD_INCLUDE,
   project: {
     select: {
       id: true,
       name: true,
       slug: true,
-      workspace: {
-        select: { id: true, slug: true },
-      },
+      workspace: { select: { id: true, slug: true } },
     },
   },
   sprint: { select: { id: true, name: true, status: true } },
   parent: { select: { id: true, title: true } },
 };
 
-// ─── GET /my-issues/board ──────────────────────────────────────────
+// ─── GET /users/my-issues/board ───────────────────────────────────
 export const getMyIssuesBoard = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user!.id;
   const where = buildMyIssuesFilterWhere(userId, req.query);
 
-  // only cache the unfiltered default view — same reasoning as project board
-  const { assigneeId, ...restFilters } = where as any;
-  const hasFilters = Object.keys(restFilters).length > 0;
-  const cacheKey = CacheKeys.myIssuesBoard(userId);
-
-  if (!hasFilters) {
-    const cached = await getCache(cacheKey);
-    if (cached) {
-      sendSuccess(res, cached, 'My issues fetched successfully');
-      return;
-    }
-  }
-
-  const issues = await prisma.issue.findMany({
+  const rows = await prisma.issue.findMany({
     where,
     include: myIssuesInclude,
-    orderBy: { updatedAt: 'desc' },
+    orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }],
   });
+  const issues = rows.map(serializeIssue);
 
   const columns = {
     BACKLOG: issues.filter((i) => i.status === 'BACKLOG'),
@@ -636,14 +449,10 @@ export const getMyIssuesBoard = asyncHandler(async (req: Request, res: Response)
     DONE: issues.filter((i) => i.status === 'DONE'),
   };
 
-  if (!hasFilters) {
-    await setCache(cacheKey, { columns }, TTL.BOARD);
-  }
-
   sendSuccess(res, { columns }, 'My issues fetched successfully');
 });
 
-// ─── GET /my-issues/list ────────────────────────────────────────────
+// ─── GET /users/my-issues/list ────────────────────────────────────
 const MY_ISSUES_SORTABLE_FIELDS = [
   'updatedAt',
   'createdAt',
@@ -669,36 +478,41 @@ export const getMyIssuesList = asyncHandler(async (req: Request, res: Response) 
   const sortOrder: 'asc' | 'desc' = req.query.sortOrder === 'asc' ? 'asc' : 'desc';
 
   const where = buildMyIssuesFilterWhere(userId, req.query);
-  const { assigneeId, ...restFilters } = where as any;
-  const hasFilters = Object.keys(restFilters).length > 0;
-  const isDefaultSort = sortBy === 'updatedAt' && sortOrder === 'desc';
-  const cacheable = !hasFilters && isDefaultSort && page === 1;
-  const cacheKey = CacheKeys.myIssuesList(userId, page, limit);
 
-  if (cacheable) {
-    const cached = await getCache(cacheKey);
-    if (cached) {
-      sendPaginated(res, (cached as any).issues, (cached as any).meta);
-      return;
-    }
-  }
-
-  const [issues, total] = await Promise.all([
+  const [rows, total] = await Promise.all([
     prisma.issue.findMany({
       where,
       include: myIssuesInclude,
-      orderBy: { [sortBy]: sortOrder },
+      orderBy: [{ [sortBy]: sortOrder }, { id: 'asc' as const }],
       skip,
       take: limit,
     }),
     prisma.issue.count({ where }),
   ]);
 
-  const meta = { total, page, limit, hasMore: skip + issues.length < total };
+  sendPaginated(res, rows.map(serializeIssue), {
+    total,
+    page,
+    limit,
+    hasMore: skip + rows.length < total,
+  });
+});
 
-  if (cacheable) {
-    await setCache(cacheKey, { issues, meta }, TTL.BOARD);
-  }
+// ─── GET /users/my-issues/projects ────────────────────────────────
+// the projects where the user has issues, for the project filter
+export const getMyIssuesProjects = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!.id;
 
-  sendPaginated(res, issues, meta);
+  const projects = await prisma.project.findMany({
+    where: { issues: { some: myIssuesBase(userId) } },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      workspace: { select: { id: true, name: true, slug: true } },
+    },
+    orderBy: { name: 'asc' },
+  });
+
+  sendSuccess(res, projects, 'Projects fetched successfully');
 });

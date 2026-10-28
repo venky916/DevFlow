@@ -1,7 +1,7 @@
 {
   "name": "api",
   "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc -b",
@@ -10,13 +10,9 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc --noEmit"
+    "check-types": "tsc --noEmit"
   },
-  "prettier": "@devflow/config/prettier",
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "prettier": "@devflow/config/prettier.js",
   "dependencies": {
     "@devflow/backend-common": "workspace:*",
     "@devflow/db": "workspace:*",
@@ -33,13 +29,11 @@
   },
   "devDependencies": {
     "@devflow/config": "workspace:*",
-    "@repo/eslint-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.6.0",
     "eslint": "9.39.1",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.3"
+    "typescript": "5.9.2"
   }
 }

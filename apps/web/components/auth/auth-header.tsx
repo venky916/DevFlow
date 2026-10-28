@@ -1,4 +1,4 @@
-import { Logo } from "../shared/logo";
+import { Logo } from '../shared/logo';
 
 interface AuthHeaderProps {
   title: string;

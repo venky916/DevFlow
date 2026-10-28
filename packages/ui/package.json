@@ -17,8 +17,6 @@
   "devDependencies": {
     "@devflow/config": "workspace:^",
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
-    "@repo/eslint-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
     "@types/node": "^22.15.3",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   BarChart2,
@@ -9,19 +9,14 @@ import {
   List,
   Settings,
   Zap,
-} from "lucide-react";
+} from 'lucide-react';
 
-import { ROUTES } from "../../constants/routes";
-import { useSidebar, type SidebarState } from "../../hooks/use-sidebar";
-import { ProjectSwitcher } from "./project-switcher";
-import {
-  SectionLabel,
-  SidebarDivider,
-  SidebarItem,
-  SidebarProjectLink,
-} from "./sidebar-item";
-import { UserMenu } from "./user-menu";
-import { WorkspaceSwitcher } from "./workspace-switcher";
+import { ROUTES } from '../../constants/routes';
+import { useSidebar, type SidebarState } from '../../hooks/use-sidebar';
+import { ProjectSwitcher } from './project-switcher';
+import { SectionLabel, SidebarDivider, SidebarItem, SidebarProjectLink } from './sidebar-item';
+import { UserMenu } from './user-menu';
+import { WorkspaceSwitcher } from './workspace-switcher';
 
 interface NavProps {
   sidebar: SidebarState;
@@ -83,14 +78,13 @@ function WorkspaceNav({ sidebar, onNavigate }: NavProps) {
 
 // Project level: project switcher + project links
 function ProjectNav({ sidebar, onNavigate }: NavProps) {
-  const { workspace, workspaceSlug, projectSlug, currentProject, can, active } =
-    sidebar;
+  const { workspace, workspaceSlug, projectSlug, currentProject, can, active } = sidebar;
 
   return (
     <>
       <ProjectSwitcher
         project={currentProject}
-        workspaceId={workspace?.id ?? ""}
+        workspaceId={workspace?.id ?? ''}
         workspaceSlug={workspaceSlug}
         projectSlug={projectSlug}
         canSwitch={(workspace?._count.projects ?? 0) > 1}
@@ -160,8 +154,7 @@ interface SidebarContentProps {
 
 export function SidebarContent({ onNavigate }: SidebarContentProps) {
   const sidebar = useSidebar();
-  const { workspaceSlug, workspace, isOnProject, counts, active, user } =
-    sidebar;
+  const { workspaceSlug, workspace, isOnProject, counts, active, user } = sidebar;
 
   return (
     <>

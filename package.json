@@ -8,7 +8,8 @@
     "format:check": "turbo run format:check",
     "lint": "turbo run lint",
     "check-types": "turbo run check-types",
-    "check": "turbo run format:check lint check-types"
+    "check": "turbo run format:check lint check-types",
+    "test": "turbo run test"
   },
   "devDependencies": {
     "eslint": "9.39.1",
@@ -18,6 +19,6 @@
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   }
 }

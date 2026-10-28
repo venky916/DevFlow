@@ -1,7 +1,7 @@
 @theme {
   /* ── Fonts ── */
-  --font-sans: "Geist Sans", sans-serif;
-  --font-mono: "Geist Mono", monospace;
+  --font-sans: 'Geist Sans', sans-serif;
+  --font-mono: 'Geist Mono', monospace;
 
   /* ── Backgrounds ── */
   --color-bg-app: #000000;

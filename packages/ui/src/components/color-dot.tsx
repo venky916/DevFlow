@@ -1,24 +1,25 @@
-"use client";
+'use client';
 
-import * as Popover from "@radix-ui/react-popover";
-import { PROJECT_COLORS } from "./color-picker";
-import { cn } from "../lib/cn";
+import * as Popover from '@radix-ui/react-popover';
+
+import { cn } from '../lib/cn';
+import { PROJECT_COLORS } from './color-picker';
 
 interface ColorDotProps {
   color: string;
   onChange: (color: string) => void;
-  size?: "sm" | "md";
+  size?: 'sm' | 'md';
 }
 
-export function ColorDot({ color, onChange, size = "sm" }: ColorDotProps) {
+export function ColorDot({ color, onChange, size = 'sm' }: ColorDotProps) {
   return (
     <Popover.Root>
       <Popover.Trigger asChild>
         <button
           type="button"
           className={cn(
-            "shrink-0 rounded-full transition-all hover:ring-2 hover:ring-text-primary/20",
-            size === "sm" ? "size-5" : "size-6",
+            'shrink-0 rounded-full transition-all hover:ring-2 hover:ring-text-primary/20',
+            size === 'sm' ? 'size-5' : 'size-6',
           )}
           style={{ backgroundColor: color }}
           aria-label="Change color"

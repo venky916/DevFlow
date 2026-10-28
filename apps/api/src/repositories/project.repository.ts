@@ -19,7 +19,7 @@ export const projectRepository = {
       include: { user: { select: { id: true, name: true, email: true } } },
     });
   },
-  
+
   findLinkContext(projectId: string) {
     return prisma.project.findUnique({
       where: { id: projectId },

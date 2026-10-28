@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ShieldOff } from 'lucide-react';
 
 import { auth } from '../../lib/firebase';
@@ -32,7 +32,6 @@ const REASON_CONFIG: Record<Reason, { title: string; message: string; actionLabe
 export function NoAccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { workspaceSlug } = useParams<{ workspaceSlug?: string }>();
   const clearAuth = useAuthStore((s) => s.clearAuth);
 
   const reason = (searchParams.get('reason') as Reason) ?? 'no-projects';

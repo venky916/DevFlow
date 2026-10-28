@@ -1,22 +1,16 @@
-"use client";
+'use client';
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Controller, useForm } from 'react-hook-form';
 
-import { Button } from "@devflow/ui/components/button";
-import {
-  ColorPicker,
-  DEFAULT_PROJECT_COLOR,
-} from "@devflow/ui/components/color-picker";
-import { Input } from "@devflow/ui/components/input";
-import { Modal } from "@devflow/ui/components/modal";
-import {
-  createProjectSchema,
-  type CreateProjectInput,
-} from "@devflow/validators";
+import { Button } from '@devflow/ui/components/button';
+import { ColorPicker, DEFAULT_PROJECT_COLOR } from '@devflow/ui/components/color-picker';
+import { Input } from '@devflow/ui/components/input';
+import { Modal } from '@devflow/ui/components/modal';
+import { createProjectSchema, type CreateProjectInput } from '@devflow/validators';
 
-import { useCreateProject } from "../../hooks/use-projects";
-import { slugify } from "../../lib/slugify";
+import { useCreateProject } from '../../hooks/use-projects';
+import { slugify } from '../../lib/slugify';
 
 interface CreateProjectModalProps {
   open: boolean;
@@ -24,11 +18,7 @@ interface CreateProjectModalProps {
   workspaceId: string;
 }
 
-export function CreateProjectModal({
-  open,
-  onClose,
-  workspaceId,
-}: CreateProjectModalProps) {
+export function CreateProjectModal({ open, onClose, workspaceId }: CreateProjectModalProps) {
   const { mutate: createProject, isPending } = useCreateProject(workspaceId);
 
   const {
@@ -48,7 +38,7 @@ export function CreateProjectModal({
     onClose();
   };
 
-  const nameField = register("name");
+  const nameField = register('name');
 
   return (
     <Modal
@@ -58,9 +48,7 @@ export function CreateProjectModal({
       description="Projects contain your board, backlog and sprints."
     >
       <form
-        onSubmit={handleSubmit((data) =>
-          createProject(data, { onSuccess: handleClose }),
-        )}
+        onSubmit={handleSubmit((data) => createProject(data, { onSuccess: handleClose }))}
         className="flex flex-col gap-4"
       >
         <Input
@@ -70,30 +58,26 @@ export function CreateProjectModal({
           {...nameField}
           onChange={(e) => {
             nameField.onChange(e);
-            setValue("slug", slugify(e.target.value));
+            setValue('slug', slugify(e.target.value));
           }}
         />
         <Input
           label="Slug"
           placeholder="frontend"
           error={errors.slug?.message}
-          {...register("slug")}
+          {...register('slug')}
         />
         <Input
           label="Description"
           placeholder="What is this project about?"
           error={errors.description?.message}
-          {...register("description")}
+          {...register('description')}
         />
         <Controller
           control={control}
           name="color"
           render={({ field }) => (
-            <ColorPicker
-              label="Color"
-              value={field.value}
-              onChange={field.onChange}
-            />
+            <ColorPicker label="Color" value={field.value} onChange={field.onChange} />
           )}
         />
         <div className="mt-2 flex justify-end gap-2">

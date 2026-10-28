@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
-import * as Popover from "@radix-ui/react-popover";
-import { Check, Tag, X } from "lucide-react";
-import { cn } from "../lib/cn";
-import { LabelChip } from "./label-chip";
+import * as Popover from '@radix-ui/react-popover';
+import { Check, Tag, X } from 'lucide-react';
+
+import { cn } from '../lib/cn';
+import { LabelChip } from './label-chip';
 
 interface Label {
   id: string;
@@ -40,7 +41,7 @@ export function LabelMultiSelect({
   return (
     <div className="flex flex-col gap-2">
       {label && (
-        <label className="text-[11px] uppercase tracking-[0.03em] text-text-muted font-mono">
+        <label className="font-mono text-[11px] tracking-[0.03em] text-text-muted uppercase">
           {label}
         </label>
       )}
@@ -49,7 +50,7 @@ export function LabelMultiSelect({
         <Popover.Trigger asChild>
           <button
             disabled={disabled}
-            className="flex min-h-9 w-full items-center gap-1.5 flex-wrap rounded-[4px] border border-border-emphasis bg-bg-overlay px-3 py-1.5 text-left transition-colors focus:outline-none focus:border-accent disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex min-h-9 w-full flex-wrap items-center gap-1.5 rounded-[4px] border border-border-emphasis bg-bg-overlay px-3 py-1.5 text-left transition-colors focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           >
             {selectedLabels.length === 0 ? (
               <span className="flex items-center gap-2 text-sm text-text-disabled">
@@ -69,12 +70,12 @@ export function LabelMultiSelect({
                         toggle(l.id);
                       }}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
+                        if (e.key === 'Enter' || e.key === ' ') {
                           e.stopPropagation();
                           toggle(l.id);
                         }
                       }}
-                      className="text-text-muted hover:text-text-primary transition-colors"
+                      className="text-text-muted transition-colors hover:text-text-primary"
                     >
                       <X className="h-2.5 w-2.5" />
                     </span>
@@ -89,7 +90,7 @@ export function LabelMultiSelect({
           <Popover.Content
             align="start"
             sideOffset={6}
-            className="z-50 w-[220px] rounded-[4px] border border-border-emphasis bg-bg-surface shadow-lg p-1"
+            className="z-50 w-[220px] rounded-[4px] border border-border-emphasis bg-bg-surface p-1 shadow-lg"
           >
             {labels.map((l) => {
               const checked = selectedIds.includes(l.id);
@@ -98,18 +99,16 @@ export function LabelMultiSelect({
                   key={l.id}
                   onClick={() => toggle(l.id)}
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-[3px] px-2 py-1.5 text-[13px] text-left transition-colors",
+                    'flex w-full items-center gap-2 rounded-[3px] px-2 py-1.5 text-left text-[13px] transition-colors',
                     checked
-                      ? "bg-accent-subtle text-text-primary"
-                      : "text-text-secondary hover:bg-bg-hover",
+                      ? 'bg-accent-subtle text-text-primary'
+                      : 'text-text-secondary hover:bg-bg-hover',
                   )}
                 >
                   <span
                     className={cn(
-                      "h-3.5 w-3.5 rounded-[3px] border flex items-center justify-center shrink-0",
-                      checked
-                        ? "bg-accent border-accent"
-                        : "border-border-emphasis",
+                      'flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border',
+                      checked ? 'border-accent bg-accent' : 'border-border-emphasis',
                     )}
                   >
                     {checked && <Check className="h-2.5 w-2.5 text-white" />}
@@ -119,9 +118,7 @@ export function LabelMultiSelect({
               );
             })}
             {labels.length === 0 && (
-              <p className="text-[12px] text-text-muted px-2 py-3 text-center">
-                No labels yet
-              </p>
+              <p className="px-2 py-3 text-center text-[12px] text-text-muted">No labels yet</p>
             )}
           </Popover.Content>
         </Popover.Portal>

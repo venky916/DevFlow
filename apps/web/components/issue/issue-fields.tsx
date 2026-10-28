@@ -1,51 +1,30 @@
 'use client';
 
-import { Controller } from 'react-hook-form';
-
-import type { IIssueWithRelations, IssueType } from '@devflow/types';
+import type { IIssueDetail } from '@devflow/types';
 import { Avatar } from '@devflow/ui/components/avatar';
-import { DatePicker } from '@devflow/ui/components/date-picker';
-import { Select } from '@devflow/ui/components/select';
 
-import { useIssueForm } from '../../hooks/use-issue-form';
-import { PRIORITY_OPTIONS, STATUS_OPTIONS } from '../../lib/issue-constants';
-import { FieldRow } from '../shared/field-row';
-import { IssueTypeSelect } from '../shared/issue-type-select';
+import type { IssueFormState } from '../../hooks/pages/use-issue-form';
+import { displayName } from '../../lib/roles';
 import { ParentLink } from '../shared/parent-link';
-import { ProjectLabelSelect } from '../shared/project-label-select';
 import { SubIssueList } from '../shared/sub-issue-list';
+import { IssueProperties } from './issue-properties';
 
-interface Props {
-  issue: IIssueWithRelations;
+interface IssueFieldsProps {
+  issue: IIssueDetail;
   projectId: string;
-  onSaving: (saving: boolean) => void;
+  form: IssueFormState;
+  projectContext: { workspaceSlug: string; projectSlug: string };
   onNavigate: (issueId: string) => void;
-  workspaceSlug: string; // NEW
-  projectSlug: string; // NEW
 }
 
 export function IssueFields({
   issue,
   projectId,
-  onSaving,
+  form,
+  projectContext,
   onNavigate,
-  workspaceSlug,
-  projectSlug,
-}: Props) {
-  const {
-    register,
-    handleSubmit,
-    control,
-    setValue,
-    watch,
-    save,
-    sprintOptions,
-    memberOptions,
-    hasChildren,
-    canEditIssue,
-    canMoveToSprint,
-    canEditDueDate,
-  } = useIssueForm(issue, projectId, onSaving, { workspaceSlug, projectSlug });
+}: IssueFieldsProps) {
+  const { register, save, canEditIssue } = form;
 
   return (
     <div className="flex flex-col gap-5">
@@ -56,7 +35,7 @@ export function IssueFields({
         placeholder="Issue title"
         disabled={!canEditIssue}
         {...register('title')}
-        onBlur={handleSubmit(save)}
+        onBlur={save}
       />
 
       <textarea
@@ -64,118 +43,33 @@ export function IssueFields({
         placeholder="Add description..."
         disabled={!canEditIssue}
         {...register('description')}
-        onBlur={handleSubmit(save)}
+        onBlur={save}
       />
 
       <div className="h-px bg-border-default" />
 
-      <div className="flex flex-col gap-3">
-        <FieldRow label="Status">
-          <Select
-            options={STATUS_OPTIONS}
-            value={watch('status')}
-            disabled={hasChildren || !canEditIssue}
-            onValueChange={(v) => {
-              setValue('status', v as any);
-              handleSubmit(save)();
-            }}
+      <IssueProperties issue={issue} form={form} />
+
+      <SubIssueList
+        issue={issue}
+        projectId={projectId}
+        projectContext={projectContext}
+        onNavigate={onNavigate}
+      />
+
+      <div className="flex flex-col gap-1.5">
+        <span className="font-mono text-[11px] tracking-[0.04em] text-text-muted uppercase">
+          Created by
+        </span>
+        <div className="flex items-center gap-2">
+          <Avatar
+            name={displayName(issue?.creator)}
+            src={issue?.creator?.avatarUrl ?? undefined}
+            size="sm"
           />
-        </FieldRow>
-
-        <FieldRow label="Priority">
-          <Select
-            options={PRIORITY_OPTIONS}
-            value={watch('priority')}
-            disabled={!canEditIssue}
-            onValueChange={(v) => {
-              setValue('priority', v as any);
-              handleSubmit(save)();
-            }}
-          />
-        </FieldRow>
-
-        <FieldRow label="Type">
-          <IssueTypeSelect
-            value={watch('type') as IssueType}
-            disabled={!canEditIssue}
-            onValueChange={(v) => {
-              setValue('type', v);
-              handleSubmit(save)();
-            }}
-          />
-        </FieldRow>
-
-        <FieldRow label="Assignee">
-          <Select
-            placeholder="Unassigned"
-            options={memberOptions}
-            value={watch('assigneeId') ?? undefined}
-            disabled={!canEditIssue}
-            onValueChange={(v) => {
-              setValue('assigneeId', v || null);
-              handleSubmit(save)();
-            }}
-          />
-        </FieldRow>
-
-        <FieldRow label="Sprint">
-          <Select
-            placeholder="No sprint"
-            options={sprintOptions}
-            value={watch('sprintId') ?? undefined}
-            disabled={!canEditIssue || !canMoveToSprint}
-            onValueChange={(v) => {
-              setValue('sprintId' as any, v || null);
-              handleSubmit(save)();
-            }}
-          />
-        </FieldRow>
-
-        <FieldRow label="Due date">
-          <Controller
-            name="dueDate"
-            control={control}
-            render={({ field }) => (
-              <DatePicker
-                value={field.value ? new Date(field.value as string) : null}
-                disabled={!canEditIssue || !canEditDueDate}
-                onChange={(date) => {
-                  field.onChange(date ? date.toISOString() : null);
-                  handleSubmit(save)();
-                }}
-              />
-            )}
-          />
-        </FieldRow>
-
-        <FieldRow label="Labels">
-          <ProjectLabelSelect
-            projectId={projectId}
-            selectedIds={watch('labelIds') ?? []}
-            disabled={!canEditIssue}
-            onChange={(ids) => {
-              setValue('labelIds', ids);
-              handleSubmit(save)();
-            }}
-          />
-        </FieldRow>
-      </div>
-
-      <SubIssueList issue={issue} projectId={projectId} onNavigate={onNavigate} />
-
-      {issue.creator && (
-        <div className="flex flex-col gap-1.5">
-          <span className="font-mono text-[11px] tracking-[0.04em] text-text-muted uppercase">
-            Created by
-          </span>
-          <div className="flex items-center gap-2">
-            <Avatar name={issue.creator.name ?? issue.creator.email} size="sm" />
-            <span className="text-[12px] text-text-secondary">
-              {issue.creator.name ?? issue.creator.email}
-            </span>
-          </div>
+          <span className="text-[12px] text-text-secondary">{displayName(issue.creator)}</span>
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { getIssueActivities, getProjectActivities } from '../../controllers/activity.controller';
+import { getIssueActivities } from '../../controllers/activity.controller';
 import { authenticate } from '../../middlewares/auth.middleware';
 import { attachIssueProject, requireProjectMember } from '../../middlewares/permission.middleware';
 

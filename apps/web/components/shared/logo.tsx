@@ -1,4 +1,4 @@
-import { cn } from "@devflow/ui/lib/cn";
+import { cn } from '@devflow/ui/lib/cn';
 
 /**
  * DevFlow brand mark.
@@ -12,13 +12,13 @@ import { cn } from "@devflow/ui/lib/cn";
  */
 
 const HEIGHT = {
-  sm: "h-6", // 24px - sidebar, navbar
-  md: "h-8", // 32px - default
-  lg: "h-10", // 40px - auth pages
+  sm: 'h-6', // 24px - sidebar, navbar
+  md: 'h-8', // 32px - default
+  lg: 'h-10', // 40px - auth pages
 } as const;
 
 export interface LogoProps {
-  variant?: "full" | "icon";
+  variant?: 'full' | 'icon';
   size?: keyof typeof HEIGHT;
   className?: string;
 }
@@ -38,20 +38,16 @@ function Mark() {
   );
 }
 
-export function Logo({ variant = "full", size = "md", className }: LogoProps) {
-  const isFull = variant === "full";
+export function Logo({ variant = 'full', size = 'md', className }: LogoProps) {
+  const isFull = variant === 'full';
 
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox={isFull ? "0 0 288 64" : "0 0 64 64"}
+      viewBox={isFull ? '0 0 288 64' : '0 0 64 64'}
       role="img"
       aria-label="DevFlow"
-      className={cn(
-        HEIGHT[size],
-        "w-auto shrink-0 text-text-primary",
-        className,
-      )}
+      className={cn(HEIGHT[size], 'w-auto shrink-0 text-text-primary', className)}
     >
       <Mark />
       {isFull && (
@@ -84,10 +80,7 @@ export function Logo({ variant = "full", size = "md", className }: LogoProps) {
             d="M236.92 51.0 228.495 23.336H234.267L240.195 44.968L246.279 23.336H251.479L257.563 44.968L263.544 23.336H269.316L260.892 51.0H254.703L248.879 31.240L243.055 51.0Z"
             fill="currentColor"
           />
-          <path
-            d="M272.644 51.0V44.448H279.352V51.0Z"
-            fill="var(--color-accent)"
-          />
+          <path d="M272.644 51.0V44.448H279.352V51.0Z" fill="var(--color-accent)" />
         </>
       )}
     </svg>

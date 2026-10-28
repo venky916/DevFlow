@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { Check, ChevronDown } from "lucide-react";
+import { useState } from 'react';
+import Link from 'next/link';
+import { Check, ChevronDown } from 'lucide-react';
 
-import type { IProjectSummary } from "@devflow/types";
-import { DropdownLabel, DropdownMenu } from "@devflow/ui/components/dropdown";
-import { Spinner } from "@devflow/ui/components/spinner";
+import type { IProjectSummary } from '@devflow/types';
+import { DropdownLabel, DropdownMenu } from '@devflow/ui/components/dropdown';
+import { Spinner } from '@devflow/ui/components/spinner';
 
-import { ROUTES } from "../../constants/routes";
-import { useProjects } from "../../hooks/use-projects";
-import { ProjectDot } from "../shared/project-dot";
-import { MENU_LINK_CLASS } from "./sidebar-item";
+import { ROUTES } from '../../constants/routes';
+import { useProjects } from '../../hooks/use-projects';
+import { ProjectDot } from '../shared/project-dot';
+import { MENU_LINK_CLASS } from './sidebar-item';
 
 interface ProjectSwitcherProps {
   project: IProjectSummary | undefined;
@@ -64,9 +64,7 @@ export function ProjectSwitcher({
           {trigger}
         </button>
       ) : (
-        <div className="flex w-full items-center gap-2 rounded-base px-2 py-1.25">
-          {trigger}
-        </div>
+        <div className="flex w-full items-center gap-2 rounded-base px-2 py-1.25">{trigger}</div>
       )}
 
       {canSwitch && (
@@ -86,9 +84,7 @@ export function ProjectSwitcher({
             >
               <ProjectDot color={p.color} size="sm" />
               <span className="flex-1 truncate text-left">{p.name}</span>
-              {p.slug === projectSlug && (
-                <Check className="size-3 shrink-0 text-accent" />
-              )}
+              {p.slug === projectSlug && <Check className="size-3 shrink-0 text-accent" />}
             </Link>
           ))}
         </DropdownMenu>

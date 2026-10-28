@@ -6,7 +6,7 @@ import { AuthenticatedWebSocket } from './types/socket.types';
 
 class RoomManager {
   private static instance: RoomManager;
-  private rooms: Map<String, Set<AuthenticatedWebSocket>>;
+  private rooms: Map<string, Set<AuthenticatedWebSocket>>;
 
   private constructor() {
     this.rooms = new Map();

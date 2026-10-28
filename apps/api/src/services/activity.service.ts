@@ -57,14 +57,64 @@ export const activityService = {
     });
   },
 
-  logIssueCreated(issueId: string, projectId: string, userId: string, title: string) {
+  logCommentUpdated(issueId: string, projectId: string, userId: string, commentId: string) {
+    return logActivity({
+      action: ActivityActions.COMMENT_UPDATED,
+      scope: 'ISSUE',
+      userId,
+      projectId,
+      issueId,
+      meta: { commentId },
+    });
+  },
+
+  logCommentDeleted(issueId: string, projectId: string, userId: string, commentId: string) {
+    return logActivity({
+      action: ActivityActions.COMMENT_DELETED,
+      scope: 'ISSUE',
+      userId,
+      projectId,
+      issueId,
+      meta: { commentId },
+    });
+  },
+
+  logAttachmentAdded(issueId: string, projectId: string, userId: string, fileName: string) {
+    return logActivity({
+      action: ActivityActions.ATTACHMENT_ADDED,
+      scope: 'ISSUE',
+      userId,
+      projectId,
+      issueId,
+      meta: { fileName },
+    });
+  },
+
+  logAttachmentDeleted(issueId: string, projectId: string, userId: string, fileName: string) {
+    return logActivity({
+      action: ActivityActions.ATTACHMENT_DELETED,
+      scope: 'ISSUE',
+      userId,
+      projectId,
+      issueId,
+      meta: { fileName },
+    });
+  },
+
+  logIssueCreated(
+    issueId: string,
+    projectId: string,
+    userId: string,
+    title: string,
+    parentId?: string | null,
+  ) {
     return logActivity({
       action: ActivityActions.ISSUE_CREATED,
       scope: 'ISSUE',
       userId,
       projectId,
       issueId,
-      meta: { title },
+      meta: { title, ...(parentId && { parentId }) },
     });
   },
 
@@ -104,7 +154,7 @@ export const activityService = {
   logIssueDeleted(issueId: string, projectId: string, userId: string, title: string) {
     return logActivity({
       action: ActivityActions.ISSUE_DELETED,
-      scope: 'ISSUE',
+      scope: 'PROJECT',
       userId,
       projectId,
       issueId,

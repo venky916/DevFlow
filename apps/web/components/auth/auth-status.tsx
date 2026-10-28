@@ -1,6 +1,6 @@
-import Link from "next/link";
+import Link from 'next/link';
 
-import { AuthHeader } from "./auth-header";
+import { AuthHeader } from './auth-header';
 
 interface AuthStatusProps {
   title: string;

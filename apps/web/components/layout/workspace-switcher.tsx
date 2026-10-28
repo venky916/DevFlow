@@ -1,21 +1,17 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { Check, ChevronDown, Plus } from "lucide-react";
+import { useState } from 'react';
+import Link from 'next/link';
+import { Check, ChevronDown, Plus } from 'lucide-react';
 
-import type { IWorkspaceSummary } from "@devflow/types";
-import {
-  DropdownDivider,
-  DropdownLabel,
-  DropdownMenu,
-} from "@devflow/ui/components/dropdown";
-import { Spinner } from "@devflow/ui/components/spinner";
+import type { IWorkspaceSummary } from '@devflow/types';
+import { DropdownDivider, DropdownLabel, DropdownMenu } from '@devflow/ui/components/dropdown';
+import { Spinner } from '@devflow/ui/components/spinner';
 
-import { ROUTES } from "../../constants/routes";
-import { useWorkspaces } from "../../hooks/use-workspaces";
-import { WorkspaceLogo } from "../shared/workspace-logo";
-import { MENU_LINK_CLASS } from "./sidebar-item";
+import { ROUTES } from '../../constants/routes';
+import { useWorkspaces } from '../../hooks/use-workspaces';
+import { WorkspaceLogo } from '../shared/workspace-logo';
+import { MENU_LINK_CLASS } from './sidebar-item';
 
 interface WorkspaceSwitcherProps {
   workspace: IWorkspaceSummary | undefined;
@@ -23,11 +19,7 @@ interface WorkspaceSwitcherProps {
   onNavigate?: () => void;
 }
 
-export function WorkspaceSwitcher({
-  workspace,
-  activeSlug,
-  onNavigate,
-}: WorkspaceSwitcherProps) {
+export function WorkspaceSwitcher({ workspace, activeSlug, onNavigate }: WorkspaceSwitcherProps) {
   const [open, setOpen] = useState(false);
   // the full list is only requested once the menu is opened
   const { data: workspaces, isLoading } = useWorkspaces({ enabled: open });
@@ -46,12 +38,9 @@ export function WorkspaceSwitcher({
         aria-expanded={open}
         className="flex w-full items-center gap-2 rounded-base px-2 py-1.25 transition-colors hover:bg-bg-hover"
       >
-        <WorkspaceLogo
-          name={workspace?.name ?? ""}
-          logoUrl={workspace?.logoUrl ?? null}
-        />
+        <WorkspaceLogo name={workspace?.name ?? ''} logoUrl={workspace?.logoUrl ?? null} />
         <span className="flex-1 truncate text-left text-xs font-medium text-text-secondary">
-          {workspace?.name ?? "Workspace"}
+          {workspace?.name ?? 'Workspace'}
         </span>
         <ChevronDown className="size-3 shrink-0 text-text-muted" />
       </button>
@@ -72,17 +61,11 @@ export function WorkspaceSwitcher({
           >
             <WorkspaceLogo name={ws.name} logoUrl={ws.logoUrl} size="xs" />
             <span className="flex-1 truncate text-left">{ws.name}</span>
-            {ws.slug === activeSlug && (
-              <Check className="size-3 shrink-0 text-accent" />
-            )}
+            {ws.slug === activeSlug && <Check className="size-3 shrink-0 text-accent" />}
           </Link>
         ))}
         <DropdownDivider />
-        <Link
-          href={ROUTES.workspaces}
-          onClick={handleNavigate}
-          className={MENU_LINK_CLASS}
-        >
+        <Link href={ROUTES.workspaces} onClick={handleNavigate} className={MENU_LINK_CLASS}>
           <Plus className="size-3.5 shrink-0" />
           New workspace
         </Link>

@@ -1,12 +1,13 @@
-"use client";
+'use client';
 
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Placeholder from "@tiptap/extension-placeholder";
-import Mention from "@tiptap/extension-mention";
-import { Paperclip, Loader2 } from "lucide-react";
-import { useState } from "react";
-import { Button } from "./button";
+import Mention from '@tiptap/extension-mention';
+import Placeholder from '@tiptap/extension-placeholder';
+import { EditorContent, useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import { Loader2 } from 'lucide-react';
+import { useState } from 'react';
+
+import { Button } from './button';
 
 interface CommentBoxProps {
   onSubmit: (json: object) => Promise<void> | void;
@@ -20,10 +21,10 @@ interface CommentBoxProps {
 export function CommentBox({
   onSubmit,
   onCancel,
-  placeholder = "Leave a comment...",
+  placeholder = 'Leave a comment...',
   initialContent,
   mentionSuggestion,
-  submitLabel = "Send",
+  submitLabel = 'Send',
 }: CommentBoxProps) {
   const [submitting, setSubmitting] = useState(false);
 
@@ -32,15 +33,15 @@ export function CommentBox({
       StarterKit,
       Placeholder.configure({ placeholder }),
       Mention.configure({
-        HTMLAttributes: { class: "mention" },
+        HTMLAttributes: { class: 'mention' },
         suggestion: mentionSuggestion,
       }),
     ],
-    content: initialContent ?? "",
+    content: initialContent ?? '',
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: "text-[13px] text-white focus:outline-none min-h-[24px]",
+        class: 'text-[13px] text-white focus:outline-none min-h-[24px]',
       },
     },
   });
@@ -53,6 +54,8 @@ export function CommentBox({
       setSubmitting(true);
       await onSubmit(editor.getJSON());
       editor.commands.clearContent();
+    } catch {
+      // the caller shows the error, and what was typed stays in the editor
     } finally {
       setSubmitting(false);
     }
@@ -60,39 +63,40 @@ export function CommentBox({
 
   const toolbarBtnClass = (active: boolean) =>
     `w-[26px] h-[26px] flex items-center justify-center rounded ${
-      active
-        ? "bg-[#1a1a1a] text-white"
-        : "text-[#a0a0a0] hover:bg-[#1a1a1a] hover:text-white"
+      active ? 'bg-[#1a1a1a] text-white' : 'text-[#a0a0a0] hover:bg-[#1a1a1a] hover:text-white'
     }`;
 
   return (
-    <div className="bg-[#111111] border border-[#1f1f1f] rounded-lg px-3.5 pt-3.5 pb-2.5">
-      <div className="pb-3.5 border-b border-[#1f1f1f]">
+    <div className="rounded-lg border border-[#1f1f1f] bg-[#111111] px-3.5 pt-3.5 pb-2.5">
+      <div className="border-b border-[#1f1f1f] pb-3.5">
         <EditorContent editor={editor} />
       </div>
 
       <div className="flex items-center justify-between pt-2.5">
         <div className="flex gap-0.5">
           <button
+            type="button"
+            aria-label="Bold"
             onClick={() => editor.chain().focus().toggleBold().run()}
-            className={toolbarBtnClass(editor.isActive("bold"))}
+            className={toolbarBtnClass(editor.isActive('bold'))}
           >
             <span className="text-[13px] font-bold">B</span>
           </button>
           <button
+            type="button"
+            aria-label="Italic"
             onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={toolbarBtnClass(editor.isActive("italic"))}
+            className={toolbarBtnClass(editor.isActive('italic'))}
           >
             <span className="text-[13px] italic">I</span>
           </button>
           <button
+            type="button"
+            aria-label="Underline"
             onClick={() => editor.chain().focus().toggleUnderline().run()}
-            className={toolbarBtnClass(editor.isActive("underline"))}
+            className={toolbarBtnClass(editor.isActive('underline'))}
           >
             <span className="text-[13px] underline">U</span>
-          </button>
-          <button className={toolbarBtnClass(false)}>
-            <Paperclip size={14} />
           </button>
         </div>
 
@@ -109,11 +113,7 @@ export function CommentBox({
             disabled={submitting}
             className="min-w-[52px]"
           >
-            {submitting ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              submitLabel
-            )}
+            {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : submitLabel}
           </Button>
         </div>
       </div>

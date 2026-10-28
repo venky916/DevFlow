@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from 'next/navigation';
 
-import { Button } from "@devflow/ui/components/button";
+import { Button } from '@devflow/ui/components/button';
 
-import { ROUTES } from "../../constants/routes";
-import { useAcceptInvite } from "../../hooks/use-auth";
-import { useAuthStore } from "../../stores/auth.store";
-import { AuthHeader } from "./auth-header";
-import { AuthStatus } from "./auth-status";
+import { ROUTES } from '../../constants/routes';
+import { useAcceptInvite } from '../../hooks/use-auth';
+import { useAuthStore } from '../../stores/auth.store';
+import { AuthHeader } from './auth-header';
+import { AuthStatus } from './auth-status';
 
 export function AcceptInviteForm() {
   const router = useRouter();
-  const token = useSearchParams().get("token");
+  const token = useSearchParams().get('token');
   const user = useAuthStore((s) => s.user);
   const { mutate: acceptInvite, isPending } = useAcceptInvite();
 
@@ -43,9 +43,7 @@ export function AcceptInviteForm() {
         </Button>
       ) : (
         <div className="flex flex-col items-center gap-3">
-          <p className="text-sm text-text-muted">
-            Sign in to accept this invite
-          </p>
+          <p className="text-sm text-text-muted">Sign in to accept this invite</p>
           <Button
             size="xl"
             className="w-full"

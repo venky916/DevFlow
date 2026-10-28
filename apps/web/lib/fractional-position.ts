@@ -15,3 +15,11 @@ export function getFractionalPosition(list: HasPosition[], dropIndex: number): s
   const after = list[dropIndex]?.position ?? null;
   return generateKeyBetween(before, after);
 }
+
+export function getDropPosition(list: HasPosition[], dropIndex: number): string | undefined {
+  try {
+    return getFractionalPosition(list, dropIndex);
+  } catch {
+    return undefined;
+  }
+}

@@ -3,31 +3,32 @@
   "version": "1.0.0",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "private": true,
+  "prettier": "@devflow/config/prettier.js",
   "scripts": {
     "build": "prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "lint": "eslint .",
+    "check-types": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
     "@prisma/adapter-neon": "^7.8.0",
     "@prisma/client": "^7.8.0",
-    "dotenv": "^17.4.2"
+    "dotenv": "^17.4.2",
+    "ws": "^8.20.0"
   },
   "devDependencies": {
     "@devflow/config": "workspace:*",
-    "@repo/eslint-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
     "@types/node": "^25.6.0",
     "@types/ws": "^8.18.1",
     "prisma": "^7.8.0",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.3",
-    "ws": "^8.20.0"
+    "typescript": "5.9.2"
   }
 }

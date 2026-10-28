@@ -1,20 +1,17 @@
-"use client";
+'use client';
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 
-import type { WorkspaceRole } from "@devflow/types";
-import { Button } from "@devflow/ui/components/button";
-import { Input } from "@devflow/ui/components/input";
-import { Select } from "@devflow/ui/components/select";
-import {
-  createInviteSchema,
-  type CreateInviteInput,
-} from "@devflow/validators";
+import type { WorkspaceRole } from '@devflow/types';
+import { Button } from '@devflow/ui/components/button';
+import { Input } from '@devflow/ui/components/input';
+import { Select } from '@devflow/ui/components/select';
+import { createInviteSchema, type CreateInviteInput } from '@devflow/validators';
 
-import { useCreateInvite } from "../../../hooks/use-workspaces";
-import { WORKSPACE_ROLE_OPTIONS } from "../../../lib/roles";
-import { SectionHeading } from "../../shared/section-heading";
+import { useCreateInvite } from '../../../hooks/use-workspaces';
+import { WORKSPACE_ROLE_OPTIONS } from '../../../lib/roles';
+import { SectionHeading } from '../../shared/section-heading';
 
 export function SendInviteTab({ workspaceId }: { workspaceId: string }) {
   const { mutate: createInvite, isPending } = useCreateInvite(workspaceId);
@@ -28,7 +25,7 @@ export function SendInviteTab({ workspaceId }: { workspaceId: string }) {
     formState: { errors },
   } = useForm<CreateInviteInput>({
     resolver: zodResolver(createInviteSchema),
-    defaultValues: { email: "", role: "MEMBER" },
+    defaultValues: { email: '', role: 'MEMBER' },
   });
 
   return (
@@ -38,9 +35,7 @@ export function SendInviteTab({ workspaceId }: { workspaceId: string }) {
         description="Send an invite link to a colleague. The invite expires in 7 days."
       />
       <form
-        onSubmit={handleSubmit((data) =>
-          createInvite(data, { onSuccess: () => reset() }),
-        )}
+        onSubmit={handleSubmit((data) => createInvite(data, { onSuccess: () => reset() }))}
         className="flex flex-col gap-3"
       >
         <Input
@@ -48,13 +43,13 @@ export function SendInviteTab({ workspaceId }: { workspaceId: string }) {
           type="email"
           placeholder="colleague@company.com"
           error={errors.email?.message}
-          {...register("email")}
+          {...register('email')}
         />
         <Select
           label="Role"
           options={WORKSPACE_ROLE_OPTIONS}
-          value={watch("role")}
-          onValueChange={(role) => setValue("role", role as WorkspaceRole)}
+          value={watch('role')}
+          onValueChange={(role) => setValue('role', role as WorkspaceRole)}
         />
         <div>
           <Button type="submit" size="sm" loading={isPending}>

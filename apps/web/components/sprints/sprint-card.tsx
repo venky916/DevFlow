@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCheck, Loader2, Pencil, Play, Trash2 } from 'lucide-react';
+import { CheckCheck, Pencil, Play, Trash2 } from 'lucide-react';
 
 import type { ISprintWithCount } from '@devflow/types';
 import { Badge } from '@devflow/ui/components/badge';
@@ -9,7 +9,18 @@ import { Button } from '@devflow/ui/components/button';
 import { ConfirmModal } from '@devflow/ui/components/confirm-modal';
 import { cn } from '@devflow/ui/lib/cn';
 
-interface Props {
+import { formatShortDate } from '../../lib/format-date';
+
+const STATUS_BADGE = {
+  ACTIVE: 'success',
+  PLANNED: 'warning',
+  COMPLETED: 'neutral',
+} as const;
+
+const ICON_BUTTON =
+  'flex size-7 items-center justify-center rounded-base text-text-muted transition-colors hover:bg-bg-hover';
+
+interface SprintCardProps {
   sprint: ISprintWithCount;
   active?: boolean;
   onStart?: () => void;
@@ -33,119 +44,92 @@ export function SprintCard({
   completing,
   deleting,
   hasActiveSprint,
-}: Props) {
+}: SprintCardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const issueCount = sprint._count?.issues ?? 0;
+  const issueCount = sprint._count.issues;
   const isCompleted = sprint.status === 'COMPLETED';
-
-  const formatDate = (date: Date | null) => {
-    if (!date) return '—';
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
+  const percent = issueCount > 0 ? Math.round((sprint.doneCount / issueCount) * 100) : 0;
 
   return (
     <div
       className={cn(
-        'flex flex-col gap-3 rounded-[4px] border bg-bg-surface p-4',
-        active ? 'border-[3px] border-border-default border-l-accent' : 'border-border-default',
+        'flex flex-col gap-3 rounded-base border bg-bg-surface p-4',
+        active ? 'border-3 border-border-default border-l-accent' : 'border-border-default',
       )}
     >
-      {/* Top row */}
       <div className="flex items-center justify-between">
-        {/* Left */}
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
-            <span className="text-[13px] font-medium text-text-primary">{sprint.name}</span>
-            <Badge
-              variant={
-                sprint.status === 'ACTIVE'
-                  ? 'success'
-                  : sprint.status === 'PLANNED'
-                    ? 'warning'
-                    : 'neutral'
-              }
-            >
+            <span className="text-body font-medium text-text-primary">{sprint.name}</span>
+            <Badge variant={STATUS_BADGE[sprint.status]}>
               {sprint.status.charAt(0) + sprint.status.slice(1).toLowerCase()}
             </Badge>
           </div>
-          <div className="flex items-center gap-3 text-[11px] text-text-muted">
+          <div className="flex items-center gap-3 text-2xs text-text-muted">
             <span>
-              {formatDate(sprint.startDate)} → {formatDate(sprint.endDate)}
+              {formatShortDate(sprint.startDate)} → {formatShortDate(sprint.endDate)}
             </span>
             <span>{issueCount} issues</span>
           </div>
         </div>
 
-        {/* Right — actions */}
         <div className="flex items-center gap-2">
           {!isCompleted && onEdit && (
             <button
+              type="button"
               onClick={onEdit}
+              aria-label="Edit sprint"
               title="Edit sprint"
-              className="flex h-7 w-7 items-center justify-center rounded-[4px] text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary"
+              className={cn(ICON_BUTTON, 'hover:text-text-primary')}
             >
-              <Pencil className="h-3.5 w-3.5" />
+              <Pencil className="size-3.5" />
             </button>
           )}
 
           {!isCompleted && !active && onDelete && (
             <button
+              type="button"
               onClick={() => setConfirmOpen(true)}
+              aria-label="Delete sprint"
               title="Delete sprint"
-              className="flex h-7 w-7 items-center justify-center rounded-[4px] text-text-muted transition-colors hover:bg-bg-hover hover:text-danger-text"
+              className={cn(ICON_BUTTON, 'hover:text-danger-text')}
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="size-3.5" />
             </button>
           )}
 
           {active && onComplete && (
-            <Button variant="secondary" size="sm" onClick={onComplete} disabled={completing}>
-              {completing ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <>
-                  <CheckCheck className="mr-1.5 h-3.5 w-3.5" /> Complete
-                </>
-              )}
+            <Button variant="secondary" size="sm" onClick={onComplete} loading={completing}>
+              {!completing && <CheckCheck className="mr-1.5 size-3.5" />}
+              Complete
             </Button>
           )}
+
           {!active && sprint.status === 'PLANNED' && onStart && (
             <Button
               variant="secondary"
               size="sm"
               onClick={onStart}
-              disabled={starting || hasActiveSprint}
+              loading={starting}
+              disabled={hasActiveSprint}
             >
-              {starting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <>
-                  <Play className="mr-1.5 h-3.5 w-3.5" /> Start
-                </>
-              )}
+              {!starting && <Play className="mr-1.5 size-3.5" />}
+              Start
             </Button>
           )}
         </div>
       </div>
 
-      {/* Progress bar — active sprint only */}
       {active && (
         <div className="flex items-center gap-2">
-          <div className="h-[3px] flex-1 overflow-hidden rounded-full bg-bg-hover">
+          <div className="h-0.75 flex-1 overflow-hidden rounded-full bg-bg-hover">
             <div
               className="h-full rounded-full bg-accent transition-all"
-              style={{
-                width:
-                  issueCount > 0 ? `${Math.round((sprint.doneCount / issueCount) * 100)}%` : '0%',
-              }}
+              style={{ width: `${percent}%` }}
             />
           </div>
-          <span className="shrink-0 font-mono text-[11px] text-text-muted">
+          <span className="shrink-0 font-mono text-2xs text-text-muted">
             {sprint.doneCount}/{issueCount}
           </span>
         </div>

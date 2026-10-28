@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { Command } from "cmdk";
+import { Command } from 'cmdk';
 import {
   Building2,
   FileText,
@@ -10,18 +10,18 @@ import {
   Settings,
   User,
   type LucideIcon,
-} from "lucide-react";
+} from 'lucide-react';
 
-import type { SearchResultType } from "@devflow/types";
+import type { SearchResultType } from '@devflow/types';
 
-import { ROUTES } from "../../constants/routes";
-import { useCommandPalette } from "../../hooks/use-command-palette";
+import { ROUTES } from '../../constants/routes';
+import { useCommandPalette } from '../../hooks/use-command-palette';
 
 const STATIC_ITEMS = [
-  { name: "Inbox", url: ROUTES.inbox, icon: Inbox },
-  { name: "My Issues", url: ROUTES.myIssues, icon: ListTodo },
-  { name: "Profile", url: ROUTES.profile, icon: User },
-  { name: "Workspaces", url: ROUTES.workspaces, icon: Building2 },
+  { name: 'Inbox', url: ROUTES.inbox, icon: Inbox },
+  { name: 'My Issues', url: ROUTES.myIssues, icon: ListTodo },
+  { name: 'Profile', url: ROUTES.profile, icon: User },
+  { name: 'Workspaces', url: ROUTES.workspaces, icon: Building2 },
 ];
 
 const TYPE_ICON: Record<SearchResultType, LucideIcon> = {
@@ -32,12 +32,11 @@ const TYPE_ICON: Record<SearchResultType, LucideIcon> = {
 };
 
 const ITEM_CLASS =
-  "flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-body text-text-primary aria-selected:bg-bg-hover";
-const GROUP_CLASS = "px-2 py-1 text-2xs text-text-muted";
+  'flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-body text-text-primary aria-selected:bg-bg-hover';
+const GROUP_CLASS = 'px-2 py-1 text-2xs text-text-muted';
 
 export function CommandPalette() {
-  const { isOpen, close, search, setSearch, results, isFetching, go } =
-    useCommandPalette();
+  const { isOpen, close, search, setSearch, results, isFetching, go } = useCommandPalette();
 
   return (
     <Command.Dialog
@@ -57,7 +56,7 @@ export function CommandPalette() {
         />
         <Command.List className="max-h-90 overflow-y-auto p-1.5">
           <Command.Empty className="py-6 text-center text-xs text-text-muted">
-            {isFetching ? "Searching..." : "No results found"}
+            {isFetching ? 'Searching...' : 'No results found'}
           </Command.Empty>
 
           {search.length < 2 && (

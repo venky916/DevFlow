@@ -1,16 +1,19 @@
 {
   "name": "@devflow/config",
   "version": "1.0.0",
-  "main": "index.js",
-  "files": [
-    "prettier.js"
-  ],
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "devDependencies": {
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@eslint/js": "^9.39.1",
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
-    "prettier": "^3.7.4"
+    "@next/eslint-plugin-next": "^16.2.0",
+    "eslint": "9.39.1",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^16.5.0",
+    "prettier": "^3.7.4",
+    "typescript": "5.9.2",
+    "typescript-eslint": "^8.50.0"
   }
 }

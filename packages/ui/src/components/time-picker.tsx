@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
-import * as Popover from "@radix-ui/react-popover";
-import { Clock, ChevronUp, ChevronDown } from "lucide-react";
-import { useState, useCallback } from "react";
-import { cn } from "../lib/cn";
+import * as Popover from '@radix-ui/react-popover';
+import { ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { useCallback, useState } from 'react';
+
+import { cn } from '../lib/cn';
 
 // ─── types ────────────────────────────────────────────────────────
 // RHF stores the value as "HH:MM" string
@@ -20,12 +21,12 @@ interface TimePickerProps {
 }
 
 function pad(n: number) {
-  return String(n).padStart(2, "0");
+  return String(n).padStart(2, '0');
 }
 
 function parseTime(val?: string | null) {
   if (!val) return { h: 9, m: 0 };
-  const [hs = "9", ms = "0"] = val.split(":");
+  const [hs = '9', ms = '0'] = val.split(':');
   const h = Number(hs);
   const m = Number(ms);
   return { h: isNaN(h) ? 9 : h, m: isNaN(m) ? 0 : m };
@@ -37,7 +38,7 @@ export function TimePicker({
   onChange,
   label,
   error,
-  placeholder = "Pick a time",
+  placeholder = 'Pick a time',
   disabled,
   minuteStep = 15,
   className,
@@ -71,9 +72,9 @@ export function TimePicker({
   const displayValue = value ? `${pad(hour)}:${pad(minute)}` : null;
 
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
+    <div className={cn('flex flex-col gap-2', className)}>
       {label && (
-        <label className="text-[11px] uppercase tracking-[0.03em] text-text-muted font-mono">
+        <label className="font-mono text-[11px] tracking-[0.03em] text-text-muted uppercase">
           {label}
         </label>
       )}
@@ -83,14 +84,14 @@ export function TimePicker({
           <button
             disabled={disabled}
             className={cn(
-              "flex h-9 w-full items-center gap-2 rounded-[4px] border border-border-emphasis bg-bg-overlay px-3 text-sm transition-colors",
-              "focus:outline-none focus:border-accent",
-              "disabled:opacity-50 disabled:cursor-not-allowed",
-              displayValue ? "text-text-primary" : "text-text-disabled",
-              error && "border-danger-text",
+              'flex h-9 w-full items-center gap-2 rounded-[4px] border border-border-emphasis bg-bg-overlay px-3 text-sm transition-colors',
+              'focus:border-accent focus:outline-none',
+              'disabled:cursor-not-allowed disabled:opacity-50',
+              displayValue ? 'text-text-primary' : 'text-text-disabled',
+              error && 'border-danger-text',
             )}
           >
-            <Clock className="h-3.5 w-3.5 text-text-muted shrink-0" />
+            <Clock className="h-3.5 w-3.5 shrink-0 text-text-muted" />
             {displayValue ?? placeholder}
           </button>
         </Popover.Trigger>
@@ -100,53 +101,53 @@ export function TimePicker({
             align="start"
             sideOffset={6}
             className={cn(
-              "z-50 rounded-[4px] border border-border-emphasis bg-bg-surface shadow-lg p-4",
-              "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
-              "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+              'z-50 rounded-[4px] border border-border-emphasis bg-bg-surface p-4 shadow-lg',
+              'data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',
+              'data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95',
             )}
           >
             {/* display */}
-            <div className="text-center text-2xl font-mono font-medium text-text-primary mb-4 tracking-widest">
+            <div className="mb-4 text-center font-mono text-2xl font-medium tracking-widest text-text-primary">
               {pad(hour)}:{pad(minute)}
             </div>
 
             {/* spinners */}
-            <div className="flex items-center gap-6 justify-center">
+            <div className="flex items-center justify-center gap-6">
               {/* hour column */}
               <div className="flex flex-col items-center gap-1">
                 <button
                   onClick={() => changeHour(1)}
-                  className="h-7 w-7 flex items-center justify-center rounded-[4px] hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
+                  className="flex h-7 w-7 items-center justify-center rounded-[4px] text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary"
                 >
                   <ChevronUp className="h-4 w-4" />
                 </button>
-                <span className="text-xs text-text-muted font-mono w-7 text-center select-none">
+                <span className="w-7 text-center font-mono text-xs text-text-muted select-none">
                   HH
                 </span>
                 <button
                   onClick={() => changeHour(-1)}
-                  className="h-7 w-7 flex items-center justify-center rounded-[4px] hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
+                  className="flex h-7 w-7 items-center justify-center rounded-[4px] text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary"
                 >
                   <ChevronDown className="h-4 w-4" />
                 </button>
               </div>
 
-              <span className="text-text-muted font-mono text-lg mb-1">:</span>
+              <span className="mb-1 font-mono text-lg text-text-muted">:</span>
 
               {/* minute column */}
               <div className="flex flex-col items-center gap-1">
                 <button
                   onClick={() => changeMinute(1)}
-                  className="h-7 w-7 flex items-center justify-center rounded-[4px] hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
+                  className="flex h-7 w-7 items-center justify-center rounded-[4px] text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary"
                 >
                   <ChevronUp className="h-4 w-4" />
                 </button>
-                <span className="text-xs text-text-muted font-mono w-7 text-center select-none">
+                <span className="w-7 text-center font-mono text-xs text-text-muted select-none">
                   MM
                 </span>
                 <button
                   onClick={() => changeMinute(-1)}
-                  className="h-7 w-7 flex items-center justify-center rounded-[4px] hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
+                  className="flex h-7 w-7 items-center justify-center rounded-[4px] text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary"
                 >
                   <ChevronDown className="h-4 w-4" />
                 </button>
@@ -155,7 +156,7 @@ export function TimePicker({
 
             {/* quick presets */}
             <div className="mt-4 flex flex-wrap gap-1.5">
-              {["09:00", "12:00", "17:00", "18:30"].map((t) => (
+              {['09:00', '12:00', '17:00', '18:30'].map((t) => (
                 <button
                   key={t}
                   onClick={() => {
@@ -165,9 +166,9 @@ export function TimePicker({
                     commit(h, m);
                   }}
                   className={cn(
-                    "rounded-[4px] border border-border-emphasis px-2 py-1 text-[11px] font-mono transition-colors",
-                    "hover:bg-bg-hover text-text-secondary hover:text-text-primary",
-                    value === t && "bg-accent/10 border-accent text-accent",
+                    'rounded-[4px] border border-border-emphasis px-2 py-1 font-mono text-[11px] transition-colors',
+                    'text-text-secondary hover:bg-bg-hover hover:text-text-primary',
+                    value === t && 'border-accent bg-accent/10 text-accent',
                   )}
                 >
                   {t}

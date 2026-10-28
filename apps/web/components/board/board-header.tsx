@@ -6,11 +6,14 @@ import type { ISprint, IUserPublic } from '@devflow/types';
 import { Badge } from '@devflow/ui/components/badge';
 import { Button } from '@devflow/ui/components/button';
 import { SearchBox } from '@devflow/ui/components/search-box';
+import { cn } from '@devflow/ui/lib/cn';
 
-import { useCanMoveIssue } from '../../hooks/use-can-move-issue';
-import { FilterBar, type IssueFilters } from '../shared/filter-bar';
+import { useIssueAccess } from '../../hooks/use-issue-access';
+import type { IssueFilters } from '../../lib/issue-filters';
+import { FilterBar } from '../shared/filter-bar';
+import { BOARD_VIEWS, ViewSwitch } from '../shared/view-switch';
 
-interface Props {
+interface BoardHeaderProps {
   activeSprint: ISprint | null;
   members: IUserPublic[];
   projectId: string;
@@ -34,8 +37,8 @@ export function BoardHeader({
   onCreateIssue,
   view,
   onViewChange,
-}: Props) {
-  const { canCreateIssue } = useCanMoveIssue();
+}: BoardHeaderProps) {
+  const { canCreateIssue } = useIssueAccess();
 
   return (
     <div className="flex shrink-0 items-center justify-between border-b border-border-default px-6 py-3">
@@ -59,31 +62,16 @@ export function BoardHeader({
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        <div className="flex items-center overflow-hidden rounded-[4px] border border-border-default">
-          <button
-            onClick={() => onViewChange('board')}
-            className={`h-7 px-2.5 text-[12px] transition-colors ${
-              view === 'board'
-                ? 'bg-bg-active text-text-primary'
-                : 'text-text-muted hover:text-text-primary'
-            }`}
-          >
-            Board
-          </button>
-          <button
-            onClick={() => onViewChange('list')}
-            className={`h-7 px-2.5 text-[12px] transition-colors ${
-              view === 'list'
-                ? 'bg-bg-active text-text-primary'
-                : 'text-text-muted hover:text-text-primary'
-            }`}
-          >
-            List
-          </button>
-        </div>
+        <ViewSwitch options={BOARD_VIEWS} value={view} onChange={onViewChange} />
 
-        <Button variant="ghost" size="sm" onClick={onRefresh} disabled={isRefreshing}>
-          <RotateCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onRefresh}
+          disabled={isRefreshing}
+          aria-label="Refresh"
+        >
+          <RotateCw className={cn('h-3.5 w-3.5', isRefreshing && 'animate-spin')} />
         </Button>
 
         {canCreateIssue && (

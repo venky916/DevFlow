@@ -14,111 +14,111 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 
-import type { IIssueWithRelations, IssueStatus } from '@devflow/types';
+import type { BoardColumns, BoardStatus, IIssueCard } from '@devflow/types';
 
 import { useMoveIssue } from '../../hooks/use-board';
-import { getFractionalPosition } from '../../lib/fractional-position';
-import { useBoardStore } from '../../stores/board.store';
-import { IssueCard } from './issue-card';
+import { BOARD_STATUSES, findColumn } from '../../lib/board-utils';
+import { getDropPosition } from '../../lib/fractional-position';
+import { IssueCardBody } from './issue-card';
 import { KanbanColumn } from './kanban-column';
 
-const STATUSES: IssueStatus[] = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'];
+const isStatus = (id: string): id is BoardStatus => BOARD_STATUSES.includes(id as BoardStatus);
 
-interface Props {
-  projectId: string;
+interface KanbanBoardProps {
+  columns: BoardColumns; // from the server (React Query)
   onIssueClick: (issueId: string) => void;
 }
 
-export function KanbanBoard({ projectId, onIssueClick }: Props) {
-  const columns = useBoardStore((s) => s.columns);
-  const setColumns = useBoardStore((s) => s.setColumns);
+export function KanbanBoard({ columns: serverColumns, onIssueClick }: KanbanBoardProps) {
   const { mutate: moveIssue } = useMoveIssue();
 
-  const [activeIssue, setActiveIssue] = useState<IIssueWithRelations | null>(null);
+  // While a card is being dragged, the columns are a temporary copy that follows the pointer.
+  // After the drop it is cleared and the React Query data (already updated) is shown again.
+  const [dragColumns, setDragColumns] = useState<BoardColumns | null>(null);
+  const [activeIssue, setActiveIssue] = useState<IIssueCard | null>(null);
+  const columns = dragColumns ?? serverColumns;
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
-  function findColumnOfIssue(issueId: string): IssueStatus | null {
-    return STATUSES.find((s) => columns[s]?.some((i) => i.id === issueId)) ?? null;
-  }
-
   const handleDragStart = (event: DragStartEvent) => {
-    const issueId = event.active.id as string;
-    const fromStatus = findColumnOfIssue(issueId);
-    if (!fromStatus) return;
-    setActiveIssue(columns[fromStatus].find((i) => i.id === issueId) ?? null);
+    const issueId = String(event.active.id);
+    const from = findColumn(columns, issueId);
+    if (!from) return;
+    setActiveIssue(columns[from].find((i) => i.id === issueId) ?? null);
   };
 
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
     if (!over) return;
 
-    const issueId = active.id as string;
-    const overId = over.id as string;
+    const issueId = String(active.id);
+    const overId = String(over.id);
     if (issueId === overId) return;
 
-    const fromStatus = findColumnOfIssue(issueId);
-    if (!fromStatus) return;
+    const from = findColumn(columns, issueId);
+    const to = isStatus(overId) ? overId : findColumn(columns, overId);
+    if (!from || !to) return;
 
-    const toStatus = STATUSES.includes(overId as IssueStatus)
-      ? (overId as IssueStatus)
-      : findColumnOfIssue(overId);
-    if (!toStatus) return;
-
-    if (fromStatus === toStatus) {
-      // same-column reorder — keep local array order in sync during drag
-      // so handleDragEnd computes neighbors against the ACTUAL drop position,
-      // not the card's original index
-      const col = columns[fromStatus];
-      const oldIndex = col.findIndex((i) => i.id === issueId);
-      const newIndex = col.findIndex((i) => i.id === overId);
+    // same column: keep the order in sync while dragging, so the drop is computed from the real position
+    if (from === to) {
+      const column = columns[from];
+      const oldIndex = column.findIndex((i) => i.id === issueId);
+      const newIndex = column.findIndex((i) => i.id === overId);
       if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
-      setColumns({
+      setDragColumns({
         ...columns,
-        [fromStatus]: arrayMove(col, oldIndex, newIndex),
+        [from]: arrayMove(column, oldIndex, newIndex),
       });
       return;
     }
 
-    const fromCol = [...columns[fromStatus]];
-    const toCol = [...columns[toStatus]];
-    const issueIndex = fromCol.findIndex((i) => i.id === issueId);
-    const [movedIssue] = fromCol.splice(issueIndex, 1);
+    const moved = columns[from].find((i) => i.id === issueId);
+    if (!moved) return;
 
-    const overIndex = toCol.findIndex((i) => i.id === overId);
-    if (overIndex >= 0) {
-      toCol.splice(overIndex, 0, movedIssue as IIssueWithRelations);
-    } else {
-      toCol.push(movedIssue as IIssueWithRelations);
-    }
+    const fromColumn = columns[from].filter((i) => i.id !== issueId);
+    const toColumn = [...columns[to]];
+    const overIndex = toColumn.findIndex((i) => i.id === overId);
+    if (overIndex >= 0) toColumn.splice(overIndex, 0, moved);
+    else toColumn.push(moved);
 
-    setColumns({ ...columns, [fromStatus]: fromCol, [toStatus]: toCol });
+    setDragColumns({ ...columns, [from]: fromColumn, [to]: toColumn });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
     setActiveIssue(null);
-    if (!over) return;
 
-    const issueId = active.id as string;
-    const overId = over.id as string;
+    const issueId = String(event.active.id);
+    const to = findColumn(columns, issueId); // where the card is now
+    const from = findColumn(serverColumns, issueId); // where it started
 
-    const toStatus = STATUSES.includes(overId as IssueStatus)
-      ? (overId as IssueStatus)
-      : findColumnOfIssue(overId);
-    if (!toStatus) return;
+    // dropped outside the board
+    if (!event.over || !to || !from) {
+      setDragColumns(null);
+      return;
+    }
 
-    const toCol = columns[toStatus];
-    const index = toCol.findIndex((i) => i.id === issueId);
-    if (index === -1) return;
+    const index = columns[to].findIndex((i) => i.id === issueId);
+    const startIndex = serverColumns[from].findIndex((i) => i.id === issueId);
 
-    // destination list already has the dragged item IN it at `index`
-    // (handleDragOver kept it in sync) — pass the list with it removed
-    const listWithoutDragged = toCol.filter((i) => i.id !== issueId);
-    const dropIndex = toCol.findIndex((i) => i.id === issueId);
-    const newPosition = getFractionalPosition(listWithoutDragged, dropIndex);
+    // dropped where it started: nothing to save
+    if (to === from && index === startIndex) {
+      setDragColumns(null);
+      return;
+    }
 
-    moveIssue({ issueId, data: { status: toStatus, position: newPosition } });
+    const others = columns[to].filter((i) => i.id !== issueId);
+    const position = getDropPosition(others, index);
+
+    moveIssue(
+      { issueId, data: { status: to, position } },
+      { onSettled: () => setDragColumns(null) },
+    );
+  };
+
+  // Escape: the card goes back, nothing is saved
+  const handleDragCancel = () => {
+    setActiveIssue(null);
+    setDragColumns(null);
   };
 
   return (
@@ -128,20 +128,19 @@ export function KanbanBoard({ projectId, onIssueClick }: Props) {
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
       <div className="flex h-full gap-4 overflow-x-auto pb-4">
-        {STATUSES.map((status) => (
+        {BOARD_STATUSES.map((status) => (
           <KanbanColumn
             key={status}
             status={status}
-            issues={columns[status] ?? []}
+            issues={columns[status]}
             onIssueClick={onIssueClick}
           />
         ))}
       </div>
-      <DragOverlay>
-        {activeIssue && <IssueCard issue={activeIssue} onClick={() => {}} />}
-      </DragOverlay>
+      <DragOverlay>{activeIssue && <IssueCardBody issue={activeIssue} />}</DragOverlay>
     </DndContext>
   );
 }

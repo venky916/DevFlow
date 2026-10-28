@@ -4,9 +4,10 @@ import { prisma } from '@devflow/db';
 import { createSprintSchema, updateSprintSchema } from '@devflow/validators';
 
 import { ApiError } from '../lib/ApiError';
-import { sendNoContent, sendSuccess } from '../lib/apiResponse';
+import { sendCreated, sendNoContent, sendSuccess } from '../lib/apiResponse';
 import { asyncHandler } from '../lib/asyncHandler';
 import { buildUpdateData } from '../lib/updateBuilder';
+import { sprintEventsService } from '../services/sprint-events.service';
 import { sprintService } from '../services/sprint.service';
 
 // ─── POST /projects/:id/sprints ───────────────────────────────────
@@ -18,13 +19,13 @@ export const createSprint = asyncHandler(async (req: Request, res: Response) => 
     data: {
       name,
       projectId: projectId as string,
-      startDate: startDate ? new Date(startDate) : null,
-      endDate: endDate ? new Date(endDate) : null,
+      startDate: startDate ?? null,
+      endDate: endDate ?? null,
       status: 'PLANNED',
     },
   });
 
-  sendSuccess(res, Sprint, 'Sprint created successfully');
+  sendCreated(res, Sprint, 'Sprint created successfully');
 });
 
 // ─── GET /projects/:id/sprints ────────────────────────────────────
@@ -126,6 +127,13 @@ export const updateSprint = asyncHandler(async (req: Request, res: Response) => 
     throw ApiError.badRequest('Cannot update completed sprint');
   }
 
+  // the schema only compares dates sent together, so compare with the stored ones too
+  const nextStart = startDate === undefined ? sprint.startDate : startDate;
+  const nextEnd = endDate === undefined ? sprint.endDate : endDate;
+  if (nextStart && nextEnd && nextStart >= nextEnd) {
+    throw ApiError.badRequest('End date must be after start date');
+  }
+
   const updated = await prisma.sprint.update({
     where: {
       id: id as string,
@@ -150,27 +158,20 @@ export const deleteSprint = asyncHandler(async (req: Request, res: Response) => 
     throw ApiError.notFound('Sprint not found');
   }
 
-  if (sprint.status === 'ACTIVE') {
-    throw ApiError.badRequest('Cannot delete an active sprint — complete it first');
+  if (sprint.status !== 'PLANNED') {
+    throw ApiError.badRequest('Only a planned sprint can be deleted');
   }
 
   //move any issues back to backlog before deleting
-  await prisma.issue.updateMany({
-    where: {
-      sprintId: id as string,
-      status: { not: 'DONE' },
-    },
-    data: {
-      sprintId: null,
-      status: 'BACKLOG',
-    },
-  });
+  await prisma.$transaction([
+    prisma.issue.updateMany({
+      where: { sprintId: id as string, status: { not: 'DONE' } },
+      data: { sprintId: null, status: 'BACKLOG' },
+    }),
+    prisma.sprint.delete({ where: { id: id as string } }),
+  ]);
 
-  await prisma.sprint.delete({
-    where: {
-      id: id as string,
-    },
-  });
+  await sprintEventsService.invalidateBoardCache(sprint.projectId, id as string);
 
   sendNoContent(res);
 });

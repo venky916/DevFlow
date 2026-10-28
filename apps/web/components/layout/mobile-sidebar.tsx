@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import Link from "next/link";
-import { X } from "lucide-react";
+import { useEffect } from 'react';
+import Link from 'next/link';
+import { X } from 'lucide-react';
 
-import { cn } from "@devflow/ui/lib/cn";
+import { cn } from '@devflow/ui/lib/cn';
 
-import { ROUTES } from "../../constants/routes";
-import { useUIStore } from "../../stores/ui.store";
-import { Logo } from "../shared/logo";
-import { SidebarContent } from "./sidebar-content";
+import { ROUTES } from '../../constants/routes';
+import { useUIStore } from '../../stores/ui.store';
+import { Logo } from '../shared/logo';
+import { SidebarContent } from './sidebar-content';
 
 export function MobileSidebar() {
   const mobileDrawerOpen = useUIStore((state) => state.mobileDrawerOpen);
@@ -19,11 +19,11 @@ export function MobileSidebar() {
     if (!mobileDrawerOpen) return;
 
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeMobileDrawer();
+      if (event.key === 'Escape') closeMobileDrawer();
     };
 
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
   }, [mobileDrawerOpen, closeMobileDrawer]);
 
   return (
@@ -38,8 +38,8 @@ export function MobileSidebar() {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r border-border-default bg-bg-sidebar transition-transform duration-200 ease-out",
-          mobileDrawerOpen ? "translate-x-0" : "-translate-x-full",
+          'fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r border-border-default bg-bg-sidebar transition-transform duration-200 ease-out',
+          mobileDrawerOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-border-default pr-2">

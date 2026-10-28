@@ -1,31 +1,26 @@
-"use client";
+'use client';
 
-import { ShieldCheck, X } from "lucide-react";
+import { ShieldCheck, X } from 'lucide-react';
 
-import type { ProjectRole } from "@devflow/types";
-import { Avatar } from "@devflow/ui/components/avatar";
-import { Select } from "@devflow/ui/components/select";
-import { Spinner } from "@devflow/ui/components/spinner";
+import type { ProjectRole } from '@devflow/types';
+import { Avatar } from '@devflow/ui/components/avatar';
+import { Select } from '@devflow/ui/components/select';
+import { Spinner } from '@devflow/ui/components/spinner';
 
 import {
   useProjectMembers,
   useRemoveProjectMember,
   useUpdateProjectMemberRole,
-} from "../../../hooks/use-projects";
-import { displayName, PROJECT_ROLE_OPTIONS } from "../../../lib/roles";
-import { useAuthStore } from "../../../stores/auth.store";
-import {PageError} from "../../shared/page-error";
-import { RoleBadge } from "../../shared/role-badge";
-import { SectionHeading } from "../../shared/section-heading";
+} from '../../../hooks/use-projects';
+import { displayName, PROJECT_ROLE_OPTIONS } from '../../../lib/roles';
+import { useAuthStore } from '../../../stores/auth.store';
+import { PageError } from '../../shared/page-error';
+import { RoleBadge } from '../../shared/role-badge';
+import { SectionHeading } from '../../shared/section-heading';
 
 export function MembersTab({ projectId }: { projectId: string }) {
   const currentUserId = useAuthStore((s) => s.user?.id);
-  const {
-    data: members,
-    isLoading,
-    isError,
-    refetch,
-  } = useProjectMembers(projectId);
+  const { data: members, isLoading, isError, refetch } = useProjectMembers(projectId);
   const {
     mutate: updateRole,
     isPending: updatingRole,
@@ -41,9 +36,7 @@ export function MembersTab({ projectId }: { projectId: string }) {
     );
   }
   if (isError || !members) {
-    return (
-      <PageError message="Couldn't load members" onRetry={() => refetch()} />
-    );
+    return <PageError message="Couldn't load members" onRetry={() => refetch()} />;
   }
 
   return (
@@ -57,8 +50,7 @@ export function MembersTab({ projectId }: { projectId: string }) {
           const isMe = member.userId === currentUserId;
           // a workspace admin's access comes from the workspace, so it isn't edited here
           const canManage = !isMe && !member.isWorkspaceAdmin;
-          const isUpdating =
-            updatingRole && variables?.userId === member.userId;
+          const isUpdating = updatingRole && variables?.userId === member.userId;
 
           return (
             <div
@@ -72,21 +64,13 @@ export function MembersTab({ projectId }: { projectId: string }) {
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <p className="truncate text-body text-text-primary">
-                    {displayName(member.user)}
-                  </p>
-                  {isMe && (
-                    <span className="shrink-0 font-mono text-2xs text-text-muted">
-                      you
-                    </span>
-                  )}
-                  {(member.role === "LEAD" || member.isWorkspaceAdmin) && (
+                  <p className="truncate text-body text-text-primary">{displayName(member.user)}</p>
+                  {isMe && <span className="shrink-0 font-mono text-2xs text-text-muted">you</span>}
+                  {(member.role === 'LEAD' || member.isWorkspaceAdmin) && (
                     <ShieldCheck className="size-3 shrink-0 text-success-text" />
                   )}
                 </div>
-                <p className="truncate text-2xs text-text-muted">
-                  {member.user.email}
-                </p>
+                <p className="truncate text-2xs text-text-muted">{member.user.email}</p>
               </div>
 
               <div className="shrink-0">
@@ -105,9 +89,7 @@ export function MembersTab({ projectId }: { projectId: string }) {
                     />
                   </div>
                 ) : (
-                  <RoleBadge
-                    role={member.isWorkspaceAdmin ? "ADMIN" : member.role}
-                  />
+                  <RoleBadge role={member.isWorkspaceAdmin ? 'ADMIN' : member.role} />
                 )}
               </div>
 

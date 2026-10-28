@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import type { IApiResponse, IUser, IAcceptedInvite } from '@devflow/types';
+import type { IAcceptedInvite, IApiResponse, IUser } from '@devflow/types';
 import type { ForgotPasswordInput, SignInInput, SignUpInput } from '@devflow/validators';
 
 import { ROUTES } from '../constants/routes';

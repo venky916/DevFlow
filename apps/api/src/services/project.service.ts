@@ -2,10 +2,10 @@
 import { ProjectRole } from '@devflow/types';
 
 import { ApiError } from '../lib/ApiError';
+import { CacheKeys, deleteCache } from '../lib/cache';
 import { projectRepository } from '../repositories/project.repository';
 import { activityService } from './activity.service';
 import { notificationService } from './notification.service';
-import { CacheKeys, deleteCache } from '../lib/cache';
 
 export const projectService = {
   async addMember(projectId: string, requesterId: string, targetUserId: string, role: ProjectRole) {

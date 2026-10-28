@@ -1,16 +1,10 @@
-import Link from "next/link";
-import { FolderKanban, Users, Zap } from "lucide-react";
+import Link from 'next/link';
+import { FolderKanban, Users, Zap } from 'lucide-react';
 
-import { IProjectWithMembers } from "@devflow/types";
-import { DEFAULT_PROJECT_COLOR } from "@devflow/ui/components/color-picker";
+import { IProjectSummary } from '@devflow/types';
+import { DEFAULT_PROJECT_COLOR } from '@devflow/ui/components/color-picker';
 
-export function ProjectCard({
-  project,
-  href,
-}: {
-  project: IProjectWithMembers;
-  href: string;
-}) {
+export function ProjectCard({ project, href }: { project: IProjectSummary; href: string }) {
   return (
     <Link
       href={href}
@@ -23,20 +17,14 @@ export function ProjectCard({
           style={{ backgroundColor: project.color ?? DEFAULT_PROJECT_COLOR }}
         />
         <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="truncate text-[13px] font-medium text-text-primary">
-            {project.name}
-          </span>
-          <span className="truncate font-mono text-[11px] text-text-muted">
-            {project.slug}
-          </span>
+          <span className="truncate text-[13px] font-medium text-text-primary">{project.name}</span>
+          <span className="truncate font-mono text-[11px] text-text-muted">{project.slug}</span>
         </div>
       </div>
 
       {/* Description */}
       {project.description && (
-        <p className="line-clamp-2 text-[12px] text-text-muted">
-          {project.description}
-        </p>
+        <p className="line-clamp-2 text-[12px] text-text-muted">{project.description}</p>
       )}
 
       {/* Footer */}

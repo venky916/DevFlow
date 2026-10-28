@@ -36,6 +36,7 @@ export const PROJECT_PERMISSIONS = {
 
   CREATE_ISSUE: ['LEAD', 'DEVELOPER'],
   MOVE_ISSUE_TO_SPRINT: ['LEAD'],
+  ASSIGN_ANY_ISSUE: ['LEAD'], // a developer can only assign issues to themselves
   UPDATE_DUE_DATE: ['LEAD'],
   DELETE_ISSUE: ['LEAD'],
   CREATE_SUB_ISSUE: ['LEAD'],

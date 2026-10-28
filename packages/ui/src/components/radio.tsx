@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import * as RadixRadio from "@radix-ui/react-radio-group";
-import { cn } from "../lib/cn";
+import * as RadixRadio from '@radix-ui/react-radio-group';
+
+import { cn } from '../lib/cn';
 
 export interface RadioOption {
   label: string;
@@ -16,24 +17,18 @@ interface RadioGroupProps {
   className?: string;
 }
 
-export function RadioGroup({
-  options,
-  value,
-  onValueChange,
-  label,
-  className,
-}: RadioGroupProps) {
+export function RadioGroup({ options, value, onValueChange, label, className }: RadioGroupProps) {
   return (
     <div className="flex flex-col gap-2">
       {label && (
-        <label className="text-[11px] uppercase tracking-[0.03em] text-text-muted font-mono">
+        <label className="font-mono text-[11px] tracking-[0.03em] text-text-muted uppercase">
           {label}
         </label>
       )}
       <RadixRadio.Root
         value={value}
         onValueChange={onValueChange}
-        className={cn("flex flex-col gap-2", className)}
+        className={cn('flex flex-col gap-2', className)}
       >
         {options.map((opt) => (
           <div key={opt.value} className="flex items-center gap-2">
@@ -41,17 +36,14 @@ export function RadioGroup({
               value={opt.value}
               id={opt.value}
               className={cn(
-                "h-4 w-4 rounded-full border border-border-emphasis bg-bg-surface",
-                "focus:outline-none focus:border-accent",
-                "data-[state=checked]:border-accent",
+                'h-4 w-4 rounded-full border border-border-emphasis bg-bg-surface',
+                'focus:border-accent focus:outline-none',
+                'data-[state=checked]:border-accent',
               )}
             >
-              <RadixRadio.Indicator className="flex items-center justify-center w-full h-full relative after:content-[''] after:block after:w-2 after:h-2 after:rounded-full after:bg-accent" />
+              <RadixRadio.Indicator className="relative flex h-full w-full items-center justify-center after:block after:h-2 after:w-2 after:rounded-full after:bg-accent after:content-['']" />
             </RadixRadio.Item>
-            <label
-              htmlFor={opt.value}
-              className="text-sm text-text-secondary cursor-pointer"
-            >
+            <label htmlFor={opt.value} className="cursor-pointer text-sm text-text-secondary">
               {opt.label}
             </label>
           </div>

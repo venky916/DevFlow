@@ -5,10 +5,14 @@
   "tasks": {
     "format:check": {},
     "lint": {},
-    "check-types": {},
+    "check-types": { "dependsOn": ["^build"] },
+    "test": { "dependsOn": ["^build"] },
+    "@devflow/db#build": { "outputs": ["src/generated/**"] },
+    "@devflow/db#check-types": { "dependsOn": ["build"] },
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "env": ["NEXT_PUBLIC_*"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
     "dev": {

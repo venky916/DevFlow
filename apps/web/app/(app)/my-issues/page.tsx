@@ -1,4 +1,4 @@
-import { MyIssuesPage } from '../../../components/issue/my-issues-page';
+import { MyIssuesPage } from '../../../components/my-issues/my-issues-page';
 
 export const metadata = {
   title: 'My Issues — DevFlow',

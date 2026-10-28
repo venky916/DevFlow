@@ -1,18 +1,19 @@
-"use client";
+'use client';
 
-import * as Popover from "@radix-ui/react-popover";
-import { DayPicker } from "react-day-picker";
+import * as Popover from '@radix-ui/react-popover';
 import {
   CalendarIcon,
-  Clock,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
-  ChevronDown,
+  Clock,
   X,
-} from "lucide-react";
-import { useState, useCallback } from "react";
-import { cn } from "../lib/cn";
+} from 'lucide-react';
+import { useCallback, useState } from 'react';
+import { DayPicker } from 'react-day-picker';
+
+import { cn } from '../lib/cn';
 
 // ─── types ────────────────────────────────────────────────────────
 // RHF stores Date object
@@ -32,15 +33,15 @@ interface DateTimePickerProps {
 }
 
 function pad(n: number) {
-  return String(n).padStart(2, "0");
+  return String(n).padStart(2, '0');
 }
 
 function formatDisplay(date: Date): string {
   return (
-    date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
+    date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
     }) + ` · ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())} UTC`
   );
 }
@@ -51,7 +52,7 @@ export function DateTimePicker({
   onChange,
   label,
   error,
-  placeholder = "Pick date & time",
+  placeholder = 'Pick date & time',
   disabled,
   minDate,
   maxDate,
@@ -93,9 +94,9 @@ export function DateTimePicker({
   };
 
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
+    <div className={cn('flex flex-col gap-2', className)}>
       {label && (
-        <label className="text-[11px] uppercase tracking-[0.03em] text-text-muted font-mono">
+        <label className="font-mono text-[11px] tracking-[0.03em] text-text-muted uppercase">
           {label}
         </label>
       )}
@@ -105,15 +106,15 @@ export function DateTimePicker({
           <button
             disabled={disabled}
             className={cn(
-              "flex h-9 w-full items-center justify-between rounded-[4px] border border-border-emphasis bg-bg-overlay px-3 text-sm transition-colors",
-              "focus:outline-none focus:border-accent",
-              "disabled:opacity-50 disabled:cursor-not-allowed",
-              value ? "text-text-primary" : "text-text-disabled",
-              error && "border-danger-text",
+              'flex h-9 w-full items-center justify-between rounded-[4px] border border-border-emphasis bg-bg-overlay px-3 text-sm transition-colors',
+              'focus:border-accent focus:outline-none',
+              'disabled:cursor-not-allowed disabled:opacity-50',
+              value ? 'text-text-primary' : 'text-text-disabled',
+              error && 'border-danger-text',
             )}
           >
             <span className="flex items-center gap-2">
-              <CalendarIcon className="h-3.5 w-3.5 text-text-muted shrink-0" />
+              <CalendarIcon className="h-3.5 w-3.5 shrink-0 text-text-muted" />
               {value ? formatDisplay(value) : placeholder}
             </span>
             {value && (
@@ -126,12 +127,12 @@ export function DateTimePicker({
                   onChange(null);
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
+                  if (e.key === 'Enter' || e.key === ' ') {
                     e.stopPropagation();
                     onChange(null);
                   }
                 }}
-                className="text-text-muted hover:text-text-primary transition-colors"
+                className="text-text-muted transition-colors hover:text-text-primary"
               >
                 <X className="h-3.5 w-3.5" />
               </span>
@@ -144,9 +145,9 @@ export function DateTimePicker({
             align="start"
             sideOffset={6}
             className={cn(
-              "z-50 rounded-[4px] border border-border-emphasis bg-bg-surface shadow-lg",
-              "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
-              "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+              'z-50 rounded-[4px] border border-border-emphasis bg-bg-surface shadow-lg',
+              'data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',
+              'data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95',
             )}
           >
             {/* ── calendar ─────────────────────────────── */}
@@ -160,39 +161,38 @@ export function DateTimePicker({
               ]}
               showOutsideDays
               classNames={{
-                root: "p-3 pb-0",
-                months: "flex flex-col",
-                month: "space-y-3",
-                month_caption: "flex items-center justify-between px-1 mb-1",
-                caption_label: "text-sm font-medium text-text-primary",
-                nav: "flex items-center gap-1",
+                root: 'p-3 pb-0',
+                months: 'flex flex-col',
+                month: 'space-y-3',
+                month_caption: 'flex items-center justify-between px-1 mb-1',
+                caption_label: 'text-sm font-medium text-text-primary',
+                nav: 'flex items-center gap-1',
                 button_previous: cn(
-                  "h-7 w-7 flex items-center justify-center rounded-[4px] border border-border-emphasis",
-                  "text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors",
+                  'h-7 w-7 flex items-center justify-center rounded-[4px] border border-border-emphasis',
+                  'text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors',
                 ),
                 button_next: cn(
-                  "h-7 w-7 flex items-center justify-center rounded-[4px] border border-border-emphasis",
-                  "text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors",
+                  'h-7 w-7 flex items-center justify-center rounded-[4px] border border-border-emphasis',
+                  'text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors',
                 ),
-                month_grid: "w-full border-collapse",
-                weekdays: "flex",
-                weekday:
-                  "w-9 text-[11px] text-text-muted font-mono text-center pb-1",
-                week: "flex mt-1",
-                day: "p-0",
+                month_grid: 'w-full border-collapse',
+                weekdays: 'flex',
+                weekday: 'w-9 text-[11px] text-text-muted font-mono text-center pb-1',
+                week: 'flex mt-1',
+                day: 'p-0',
                 day_button: cn(
-                  "h-9 w-9 text-sm text-text-secondary rounded-[4px] transition-colors",
-                  "hover:bg-bg-hover hover:text-text-primary",
-                  "focus:outline-none focus:bg-bg-hover",
+                  'h-9 w-9 text-sm text-text-secondary rounded-[4px] transition-colors',
+                  'hover:bg-bg-hover hover:text-text-primary',
+                  'focus:outline-none focus:bg-bg-hover',
                 ),
-                selected: "!bg-accent !text-white rounded-[4px]",
-                today: "text-accent font-medium",
-                outside: "text-text-disabled opacity-50",
-                disabled: "text-text-disabled opacity-30 cursor-not-allowed",
+                selected: '!bg-accent !text-white rounded-[4px]',
+                today: 'text-accent font-medium',
+                outside: 'text-text-disabled opacity-50',
+                disabled: 'text-text-disabled opacity-30 cursor-not-allowed',
               }}
               components={{
                 Chevron: ({ orientation }) =>
-                  orientation === "left" ? (
+                  orientation === 'left' ? (
                     <ChevronLeft className="h-3.5 w-3.5" />
                   ) : (
                     <ChevronRight className="h-3.5 w-3.5" />
@@ -201,9 +201,9 @@ export function DateTimePicker({
             />
 
             {/* ── time picker ──────────────────────────── */}
-            <div className="border-t border-border-emphasis mx-3 mt-3 pt-3 pb-3">
+            <div className="mx-3 mt-3 border-t border-border-emphasis pt-3 pb-3">
               <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-[11px] text-text-muted font-mono uppercase tracking-wider">
+                <span className="flex items-center gap-1.5 font-mono text-[11px] tracking-wider text-text-muted uppercase">
                   <Clock className="h-3 w-3" />
                   Time (UTC)
                 </span>
@@ -214,39 +214,37 @@ export function DateTimePicker({
                   <div className="flex flex-col items-center">
                     <button
                       onClick={() => changeHour(1)}
-                      className="h-6 w-6 flex items-center justify-center rounded-[3px] hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
+                      className="flex h-6 w-6 items-center justify-center rounded-[3px] text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary"
                     >
                       <ChevronUp className="h-3.5 w-3.5" />
                     </button>
-                    <span className="text-sm font-mono font-medium text-text-primary w-8 text-center select-none">
+                    <span className="w-8 text-center font-mono text-sm font-medium text-text-primary select-none">
                       {pad(hour)}
                     </span>
                     <button
                       onClick={() => changeHour(-1)}
-                      className="h-6 w-6 flex items-center justify-center rounded-[3px] hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
+                      className="flex h-6 w-6 items-center justify-center rounded-[3px] text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary"
                     >
                       <ChevronDown className="h-3.5 w-3.5" />
                     </button>
                   </div>
 
-                  <span className="text-text-muted font-mono text-sm pb-px">
-                    :
-                  </span>
+                  <span className="pb-px font-mono text-sm text-text-muted">:</span>
 
                   {/* minute */}
                   <div className="flex flex-col items-center">
                     <button
                       onClick={() => changeMinute(1)}
-                      className="h-6 w-6 flex items-center justify-center rounded-[3px] hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
+                      className="flex h-6 w-6 items-center justify-center rounded-[3px] text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary"
                     >
                       <ChevronUp className="h-3.5 w-3.5" />
                     </button>
-                    <span className="text-sm font-mono font-medium text-text-primary w-8 text-center select-none">
+                    <span className="w-8 text-center font-mono text-sm font-medium text-text-primary select-none">
                       {pad(minute)}
                     </span>
                     <button
                       onClick={() => changeMinute(-1)}
-                      className="h-6 w-6 flex items-center justify-center rounded-[3px] hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
+                      className="flex h-6 w-6 items-center justify-center rounded-[3px] text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary"
                     >
                       <ChevronDown className="h-3.5 w-3.5" />
                     </button>

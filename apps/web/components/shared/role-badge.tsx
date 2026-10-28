@@ -1,18 +1,17 @@
-import { Badge } from "@devflow/ui/components/badge";
-
-import type { ProjectRole, WorkspaceRole } from "@devflow/types";
+import type { ProjectRole, WorkspaceRole } from '@devflow/types';
+import { Badge } from '@devflow/ui/components/badge';
 
 type Role = WorkspaceRole | ProjectRole;
 
 const ROLE_CONFIG: Record<
   Role,
-  { label: string; variant: "success" | "info" | "medium" | "neutral" }
+  { label: string; variant: 'success' | 'info' | 'medium' | 'neutral' }
 > = {
-  ADMIN: { label: "Admin", variant: "success" },
-  MEMBER: { label: "Member", variant: "neutral" },
-  LEAD: { label: "Lead", variant: "info" },
-  DEVELOPER: { label: "Developer", variant: "medium" },
-  VIEWER: { label: "Viewer", variant: "neutral" },
+  ADMIN: { label: 'Admin', variant: 'success' },
+  MEMBER: { label: 'Member', variant: 'neutral' },
+  LEAD: { label: 'Lead', variant: 'info' },
+  DEVELOPER: { label: 'Developer', variant: 'medium' },
+  VIEWER: { label: 'Viewer', variant: 'neutral' },
 };
 
 export function RoleBadge({ role }: { role: Role | null }) {

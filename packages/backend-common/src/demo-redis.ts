@@ -6,4 +6,3 @@
 // // one connection can't do both commands + subscribe
 // export const publisher = new Redis(process.env.REDIS_URL!);
 // export const subscriber = new Redis(process.env.REDIS_URL!);
-

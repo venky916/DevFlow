@@ -12,18 +12,18 @@ Reference modules (copy their shape): **auth**, **workspace**, **project** (sett
 
 ## 1. Where code lives
 
-| Folder | What goes here | Must NOT contain |
-|---|---|---|
-| `app/` | `page.tsx`, layouts, metadata only | logic, hooks, API calls |
-| `components/{domain}/` | JSX and styling for one feature (`auth/`, `workspace/`, `projects/`, `inbox/`, `layout/`) | `toast`, `router`, API calls, `try/catch`, `useQuery`, `useMutation` |
-| `components/shared/` | Pieces used by 2+ features: `PageContainer`, `PageHeading`, `EmptyState`, `StatCard`, `BarRow`, `BarTrack`, `PanelTitle`, `SectionHeading`, `RoleBadge`, `WorkspaceLogo`, `ProjectDot`, `Logo`, `PageLoading`, `PageError` | feature-specific code |
-| `hooks/use-{domain}.ts` | ALL hooks for that domain in one file | JSX |
-| `lib/` | Plain functions: Firebase, axios, `format-date`, `slugify`, `upload`, `permissions`, `roles`, `redirect`, `auth-errors` | React, hooks |
-| `stores/` | Zustand stores (`auth.store`, `ui.store`) | |
-| `constants/` | Static values, e.g. `routes.ts` | |
-| `packages/ui` | Generic UI (Button, Input, Select, Spinner, Dropdown). No DevFlow logic | routes, auth, hooks |
-| `packages/validators` | Zod schemas and `*Input` types, shared with the API | React |
-| `packages/types` | Entity and API types shared with the API | form types |
+| Folder                  | What goes here                                                                                                                                                                                                             | Must NOT contain                                                     |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `app/`                  | `page.tsx`, layouts, metadata only                                                                                                                                                                                         | logic, hooks, API calls                                              |
+| `components/{domain}/`  | JSX and styling for one feature (`auth/`, `workspace/`, `projects/`, `inbox/`, `layout/`)                                                                                                                                  | `toast`, `router`, API calls, `try/catch`, `useQuery`, `useMutation` |
+| `components/shared/`    | Pieces used by 2+ features: `PageContainer`, `PageHeading`, `EmptyState`, `StatCard`, `BarRow`, `BarTrack`, `PanelTitle`, `SectionHeading`, `RoleBadge`, `WorkspaceLogo`, `ProjectDot`, `Logo`, `PageLoading`, `PageError` | feature-specific code                                                |
+| `hooks/use-{domain}.ts` | ALL hooks for that domain in one file                                                                                                                                                                                      | JSX                                                                  |
+| `lib/`                  | Plain functions: Firebase, axios, `format-date`, `slugify`, `upload`, `permissions`, `roles`, `redirect`, `auth-errors`                                                                                                    | React, hooks                                                         |
+| `stores/`               | Zustand stores (`auth.store`, `ui.store`)                                                                                                                                                                                  |                                                                      |
+| `constants/`            | Static values, e.g. `routes.ts`                                                                                                                                                                                            |                                                                      |
+| `packages/ui`           | Generic UI (Button, Input, Select, Spinner, Dropdown). No DevFlow logic                                                                                                                                                    | routes, auth, hooks                                                  |
+| `packages/validators`   | Zod schemas and `*Input` types, shared with the API                                                                                                                                                                        | React                                                                |
+| `packages/types`        | Entity and API types shared with the API                                                                                                                                                                                   | form types                                                           |
 
 Dependencies only point down: `app` → `components` → `hooks` → `lib` → `constants` / `packages`.
 A `lib/` file never imports a hook or a component.
@@ -66,13 +66,13 @@ Split only if the piece has **its own state** or is **used in several places**. 
 
 Name by intent, not by storage vendor. "Presigned", "B2", "R2" and "S3" appear only inside `packages/storage`.
 
-| Step | Name |
-|---|---|
-| Ask the API for a one-time upload link | `useRequestUploadUrl` |
-| Send the file to storage (plain function, `lib/upload.ts`) | `uploadFileToStorage` |
-| Request link + send file, for images | `useUploadImage(folder)` returns `{ uploadImage, isUploading }` |
-| Save the URL on the workspace / user | `useUpdateWorkspaceLogo`, `useUpdateAvatar` |
-| Upload + save together | `useUploadWorkspaceLogo`, `useUploadAvatar` |
+| Step                                                       | Name                                                            |
+| ---------------------------------------------------------- | --------------------------------------------------------------- |
+| Ask the API for a one-time upload link                     | `useRequestUploadUrl`                                           |
+| Send the file to storage (plain function, `lib/upload.ts`) | `uploadFileToStorage`                                           |
+| Request link + send file, for images                       | `useUploadImage(folder)` returns `{ uploadImage, isUploading }` |
+| Save the URL on the workspace / user                       | `useUpdateWorkspaceLogo`, `useUpdateAvatar`                     |
+| Upload + save together                                     | `useUploadWorkspaceLogo`, `useUploadAvatar`                     |
 
 `uploadImage` returns `string | null`. It shows its own error toast and returns `null` on failure, so callers write `if (url) ...` and never `try/catch`.
 
@@ -147,16 +147,16 @@ A refactor changes structure, not appearance. Keep existing sizes, spacing, weig
 - Prefer Tailwind's spacing scale over arbitrary values. Where a size has no token, an arbitrary value is acceptable and is listed for a later cleanup pass (see Part 4).
 - Type scale:
 
-| Old | Use |
-|---|---|
-| `text-[11px]` | `text-2xs` (11px) |
-| `text-[12px]` | `text-xs` (12px) |
-| `text-[13px]` | `text-body` (13px) |
-| `text-[16px]`, `text-[18px]` | `text-lg`, `text-xl` |
-| `text-[24px]` | `text-2xl` |
+| Old                                                 | Use                                          |
+| --------------------------------------------------- | -------------------------------------------- |
+| `text-[11px]`                                       | `text-2xs` (11px)                            |
+| `text-[12px]`                                       | `text-xs` (12px)                             |
+| `text-[13px]`                                       | `text-body` (13px)                           |
+| `text-[16px]`, `text-[18px]`                        | `text-lg`, `text-xl`                         |
+| `text-[24px]`                                       | `text-2xl`                                   |
 | `rounded-[4px]` / `rounded-[5px]` / `rounded-[6px]` | `rounded-base` / `rounded-md` / `rounded-md` |
-| `h-4 w-4` | `size-4` |
-| `max-h-[240px]`, `w-[130px]` | `max-h-60`, `w-32` |
+| `h-4 w-4`                                           | `size-4`                                     |
+| `max-h-[240px]`, `w-[130px]`                        | `max-h-60`, `w-32`                           |
 
 - Weights: 400 body, 500 labels/buttons/nav, 600 headings and emphasis. Avoid 700+ in app UI.
 - Inline `style` is allowed only for runtime data that Tailwind cannot generate: project colors from the database, bar widths, dynamic `size` props. For theme colors in inline style use `var(--color-...)`.
@@ -223,23 +223,23 @@ A refactor changes structure, not appearance. Keep existing sizes, spacing, weig
 
 ## 12. Workspace and project endpoints
 
-| Endpoint | Purpose |
-|---|---|
-| `GET /workspaces/summary` | Lean list for the workspaces page and the switcher. Built from the caller's memberships. |
-| `GET /workspaces/by-slug/:slug` | One workspace + my role. Used by the guard and every workspace page. |
-| `GET /workspaces/:id` | Heavy detail with members. Known gap (Part 4). |
-| `GET /workspaces/:id/projects/summary` | Lean project list with `currentUserAccess`. |
-| `GET /projects/by-slug/:workspaceSlug/:projectSlug` | One project + my access. Used by the project guard and every project page. |
-| `GET /projects/:id` | Heavy detail: members (with `isWorkspaceAdmin`) and sprints. |
-| `GET /projects/:id/members` | Members, each with `isWorkspaceAdmin`. |
-| `GET /projects/:id/available-members` | Workspace members not yet in the project. LEAD or workspace admin. |
-| `GET /projects/:id/activities?cursor&limit` | Project activity, newest first, paged. |
-| `DELETE /projects/:id` | Workspace admin of the project's own workspace only. |
-| `PUT /workspaces/:id/members/:uid`, `PUT /projects/:id/members/:uid` | Role change. |
-| `GET /notifications?cursor&limit` | Paged, unread first. No `unreadCount` in the response. |
-| `PATCH /notifications/:id/read`, `PATCH /notifications/read-all`, `DELETE /notifications/:id`, `DELETE /notifications` | All return 204. |
-| `GET /users/me/counts` | `{ unreadNotifications, myOpenIssues }`. The only source of the badge numbers. |
-| `GET /search?q=` | Global search, results filtered by what the caller can open. |
+| Endpoint                                                                                                               | Purpose                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `GET /workspaces/summary`                                                                                              | Lean list for the workspaces page and the switcher. Built from the caller's memberships. |
+| `GET /workspaces/by-slug/:slug`                                                                                        | One workspace + my role. Used by the guard and every workspace page.                     |
+| `GET /workspaces/:id`                                                                                                  | Heavy detail with members. Known gap (Part 4).                                           |
+| `GET /workspaces/:id/projects/summary`                                                                                 | Lean project list with `currentUserAccess`.                                              |
+| `GET /projects/by-slug/:workspaceSlug/:projectSlug`                                                                    | One project + my access. Used by the project guard and every project page.               |
+| `GET /projects/:id`                                                                                                    | Heavy detail: members (with `isWorkspaceAdmin`) and sprints.                             |
+| `GET /projects/:id/members`                                                                                            | Members, each with `isWorkspaceAdmin`.                                                   |
+| `GET /projects/:id/available-members`                                                                                  | Workspace members not yet in the project. LEAD or workspace admin.                       |
+| `GET /projects/:id/activities?cursor&limit`                                                                            | Project activity, newest first, paged.                                                   |
+| `DELETE /projects/:id`                                                                                                 | Workspace admin of the project's own workspace only.                                     |
+| `PUT /workspaces/:id/members/:uid`, `PUT /projects/:id/members/:uid`                                                   | Role change.                                                                             |
+| `GET /notifications?cursor&limit`                                                                                      | Paged, unread first. No `unreadCount` in the response.                                   |
+| `PATCH /notifications/:id/read`, `PATCH /notifications/read-all`, `DELETE /notifications/:id`, `DELETE /notifications` | All return 204.                                                                          |
+| `GET /users/me/counts`                                                                                                 | `{ unreadNotifications, myOpenIssues }`. The only source of the badge numbers.           |
+| `GET /search?q=`                                                                                                       | Global search, results filtered by what the caller can open.                             |
 
 - **Project slugs are unique per workspace** (`@@unique([workspaceId, slug])`). Workspace slugs are globally unique.
 - **Reserved slugs:** `RESERVED_WORKSPACE_SLUGS` and `RESERVED_PROJECT_SLUGS` list top-level routes and static folders. Add a name whenever a static route is added under `app/` or `app/(app)/[workspaceSlug]/`.

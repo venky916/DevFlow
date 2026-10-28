@@ -38,14 +38,13 @@ export const sprintService = {
   async completeSprint(sprintId: string, userId: string) {
     const sprint = await sprintRepository.findByIdWithIssues(sprintId);
     if (!sprint) throw ApiError.notFound('Sprint not found');
-    if (sprint.status === 'COMPLETED') throw ApiError.badRequest('Sprint is already completed');
+    if (sprint.status !== 'ACTIVE') {
+      throw ApiError.badRequest('Only an active sprint can be completed');
+    }
 
-    await sprintRepository.complete(sprintId, new Date());
+    const { doneCount, incompleteCount } = await sprintRepository.complete(sprintId, new Date());
 
     await sprintEventsService.invalidateBoardCache(sprint.projectId, sprintId);
-
-    const doneCount = sprint.issues.filter((i) => i.status === 'DONE').length;
-    const incompleteCount = sprint.issues.filter((i) => i.status !== 'DONE').length;
 
     await activityService.logSprintCompleted(
       sprintId,

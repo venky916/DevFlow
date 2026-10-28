@@ -1,30 +1,27 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { FolderKanban, Plus } from "lucide-react";
+import { useState } from 'react';
+import { FolderKanban, Plus } from 'lucide-react';
 
-import type { IProjectWithMembers, IWorkspaceSummary } from "@devflow/types";
-import { Button } from "@devflow/ui/components/button";
+import type { IProjectSummary, IWorkspaceSummary } from '@devflow/types';
+import { Button } from '@devflow/ui/components/button';
 
-import { ROUTES } from "../../constants/routes";
-import { canWorkspace } from "../../lib/permissions";
-import { CreateProjectModal } from "../projects/create-project-modal";
-import { ProjectCard } from "./project-card";
-import { EmptyState } from "../shared/empty-state";
-import { PageContainer } from "../shared/page-container";
-import { PageHeading } from "../shared/page-heading";
+import { ROUTES } from '../../constants/routes';
+import { canWorkspace } from '../../lib/permissions';
+import { CreateProjectModal } from '../projects/create-project-modal';
+import { EmptyState } from '../shared/empty-state';
+import { PageContainer } from '../shared/page-container';
+import { PageHeading } from '../shared/page-heading';
+import { ProjectCard } from './project-card';
 
 interface WorkspaceHomeProps {
   workspace: IWorkspaceSummary;
-  projects: IProjectWithMembers[];
+  projects: IProjectSummary[];
 }
 
 export function WorkspaceHome({ workspace, projects }: WorkspaceHomeProps) {
   const [showModal, setShowModal] = useState(false);
-  const canCreateProject = canWorkspace(
-    workspace.currentUserWorkspaceRole,
-    "CREATE_PROJECT",
-  );
+  const canCreateProject = canWorkspace(workspace.currentUserWorkspaceRole, 'CREATE_PROJECT');
 
   const newProjectButton = canCreateProject && (
     <Button size="sm" onClick={() => setShowModal(true)}>
@@ -47,11 +44,7 @@ export function WorkspaceHome({ workspace, projects }: WorkspaceHomeProps) {
           message="No projects yet"
           action={
             canCreateProject && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setShowModal(true)}
-              >
+              <Button variant="secondary" size="sm" onClick={() => setShowModal(true)}>
                 Create your first project
               </Button>
             )
@@ -74,7 +67,6 @@ export function WorkspaceHome({ workspace, projects }: WorkspaceHomeProps) {
           open={showModal}
           onClose={() => setShowModal(false)}
           workspaceId={workspace.id}
-          workspaceSlug={workspace.slug}
         />
       )}
     </PageContainer>

@@ -15,7 +15,6 @@ import {
   attachIssueProject,
   requireProjectMember,
   requireProjectRole,
-  requireWorkspaceMember,
   requireWorkspaceRole,
 } from '../../middlewares/permission.middleware';
 

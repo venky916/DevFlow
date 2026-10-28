@@ -8,10 +8,11 @@ import {
   verifyPasswordResetCode,
 } from 'firebase/auth';
 
+import type { IApiResponse, IUser } from '@devflow/types';
+
 import { useAuthStore } from '../stores/auth.store';
 import { api } from './axios';
 import { auth, githubProvider, googleProvider } from './firebase';
-import type { IApiResponse, IUser } from '@devflow/types';
 
 // after firebase signin → get user from our backend
 async function syncWithBackend(): Promise<IUser> {

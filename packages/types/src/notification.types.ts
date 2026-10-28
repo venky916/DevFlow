@@ -1,25 +1,25 @@
 export const NotificationType = {
-    ISSUE_ASSIGNED: 'ISSUE_ASSIGNED',
-    ISSUE_COMMENTED: 'ISSUE_COMMENTED',
-    SPRINT_STARTED: 'SPRINT_STARTED',
-    SPRINT_COMPLETED: 'SPRINT_COMPLETED',
-    WORKSPACE_INVITED: 'WORKSPACE_INVITED',
-    PROJECT_ADDED: 'PROJECT_ADDED',
-    MENTION: 'MENTION',
-    PASSWORD_RESET: 'PASSWORD_RESET',
-    OTHER: 'OTHER',
+  ISSUE_ASSIGNED: 'ISSUE_ASSIGNED',
+  ISSUE_COMMENTED: 'ISSUE_COMMENTED',
+  SPRINT_STARTED: 'SPRINT_STARTED',
+  SPRINT_COMPLETED: 'SPRINT_COMPLETED',
+  WORKSPACE_INVITED: 'WORKSPACE_INVITED',
+  PROJECT_ADDED: 'PROJECT_ADDED',
+  MENTION: 'MENTION',
+  PASSWORD_RESET: 'PASSWORD_RESET',
+  OTHER: 'OTHER',
 } as const;
 
 export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType];
 
 export interface INotification {
-    id: string;
-    content: string;
-    type: NotificationType;
-    link: string | null;
-    isRead: boolean;
-    triggeredBy: string | null;
-    userId: string;
-    createdAt: string; // was Date
-    updatedAt: string;
+  id: string;
+  content: string;
+  type: NotificationType;
+  link: string | null;
+  isRead: boolean;
+  triggeredBy: string | null;
+  userId: string;
+  createdAt: string; // was Date
+  updatedAt: string;
 }

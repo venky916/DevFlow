@@ -1,64 +1,159 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+'use client';
 
-import type { IActivityLog, IIssueWithRelations, IProjectMember, ISprint } from '@devflow/types';
-import type { CreateIssueInput, UpdateIssueInput } from '@devflow/validators';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from '@tanstack/react-query';
+import { toast } from 'sonner';
 
-import type { IssueFilters } from '../components/shared/filter-bar';
+import type {
+  IActivityLog,
+  IApiResponse,
+  ICursorPaginatedData,
+  IIssue,
+  IIssueDetail,
+  IIssueSearchResult,
+} from '@devflow/types';
+import type { CreateIssueInput, CreateSubIssueInput, UpdateIssueInput } from '@devflow/validators';
+
 import { api } from '../lib/axios';
+import type { IssueFilters } from '../lib/issue-filters';
+import { showError } from '../lib/show-error';
+import { projectKeys } from './use-projects';
 
-export function useCreateIssue(projectId: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (data: CreateIssueInput) => {
-      const res = await api.post(`/projects/${projectId}/issues`, data);
-      return res.data.data as IIssueWithRelations;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['backlog-grouped', projectId] });
-      qc.invalidateQueries({ queryKey: ['board', projectId] });
-      qc.invalidateQueries({ queryKey: ['issue-list', projectId] });
-    },
-  });
+// ─── Query keys ───────────────────────────────────────────────
+// Every issue screen's key starts with 'issues', so one invalidate refreshes all of them.
+export const issueKeys = {
+  all: ['issues'] as const,
+  detail: (issueId: string) => [...issueKeys.all, 'detail', issueId] as const,
+  activities: (issueId: string) => [...issueKeys.all, 'activities', issueId] as const,
+  board: (projectId: string, filters: IssueFilters) =>
+    [...issueKeys.all, 'board', projectId, filters] as const,
+  list: (projectId: string, params: object) =>
+    [...issueKeys.all, 'list', projectId, params] as const,
+  search: (projectId: string, query: string, excludeId?: string, mode?: string) =>
+    [...issueKeys.all, 'search', projectId, query, excludeId, mode] as const,
+  isBoard: (key: readonly unknown[]) => key[0] === 'issues' && key[1] === 'board',
+  backlog: (projectId: string, filters: IssueFilters) =>
+    [...issueKeys.all, 'backlog', projectId, filters] as const,
+  isBacklog: (key: readonly unknown[]) => key[0] === 'issues' && key[1] === 'backlog',
+  myBoard: (filters: IssueFilters) => [...issueKeys.all, 'my', 'board', filters] as const,
+  myList: (params: object) => [...issueKeys.all, 'my', 'list', params] as const,
+  myProjects: () => [...issueKeys.all, 'my', 'projects'] as const,
+};
+
+// Any issue change can show up on the board, the list, the backlog, my issues and an open issue
+// panel. Only queries that are on screen refetch, the rest are just marked stale.
+export function refreshIssueViews(qc: QueryClient) {
+  qc.invalidateQueries({ queryKey: issueKeys.all });
 }
 
+export function useRefreshIssues() {
+  const qc = useQueryClient();
+  return () => refreshIssueViews(qc);
+}
+
+// ─── One issue: fetch ─────────────────────────────────────────
 export function useIssueById(issueId: string) {
-  return useQuery<IIssueWithRelations>({
-    queryKey: ['issue', issueId],
+  return useQuery({
+    queryKey: issueKeys.detail(issueId),
     queryFn: async () => {
-      const res = await api.get(`/issues/${issueId}`);
+      const res = await api.get<IApiResponse<IIssueDetail>>(`/issues/${issueId}`);
       return res.data.data;
     },
     enabled: !!issueId,
   });
 }
 
-export function useUpdateIssue(issueId: string, projectId: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (data: UpdateIssueInput) => {
-      const res = await api.patch(`/issues/${issueId}`, data);
-      return res.data.data as IIssueWithRelations;
+export function useSearchProjectIssues(
+  projectId: string,
+  query: string,
+  options?: { excludeId?: string; mode?: 'child'; enabled?: boolean },
+) {
+  return useQuery({
+    queryKey: issueKeys.search(projectId, query, options?.excludeId, options?.mode),
+    queryFn: async () => {
+      const res = await api.get<IApiResponse<IIssueSearchResult[]>>(
+        `/projects/${projectId}/issues/search`,
+        { params: { q: query || undefined, excludeId: options?.excludeId, mode: options?.mode } },
+      );
+      return res.data.data;
     },
-    onSuccess: async () => {
-      await qc.refetchQueries({ queryKey: ['activities', issueId] });
-      qc.invalidateQueries({ queryKey: ['issue', issueId] });
-      qc.invalidateQueries({ queryKey: ['board', projectId] });
-      qc.invalidateQueries({ queryKey: ['issue-list', projectId] });
-      qc.invalidateQueries({ queryKey: ['backlog-grouped', projectId] });
-    },
+    enabled: !!projectId && (options?.enabled ?? true),
   });
 }
 
-export function useDeleteIssue(projectId: string) {
+// ─── One issue: activity feed (read-only, paged) ──────────────
+export function useIssueActivities(issueId: string, limit = 10) {
+  return useInfiniteQuery({
+    queryKey: issueKeys.activities(issueId),
+    queryFn: async ({ pageParam }) => {
+      const res = await api.get<IApiResponse<ICursorPaginatedData<IActivityLog>>>(
+        `/issues/${issueId}/activities`,
+        { params: { limit, cursor: pageParam } },
+      );
+      return res.data.data;
+    },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.meta.nextCursor ?? undefined,
+    enabled: !!issueId,
+  });
+}
+
+// ─── One issue: change ────────────────────────────────────────
+export function useCreateIssue(projectId: string) {
   const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: CreateIssueInput) => {
+      const res = await api.post<IApiResponse<IIssue>>(`/projects/${projectId}/issues`, input);
+      return res.data.data;
+    },
+    onSuccess: () => {
+      refreshIssueViews(qc);
+      qc.invalidateQueries({ queryKey: projectKeys.all }); // issue counts on the project overview
+      toast.success('Issue created!');
+    },
+    onError: (err) => showError(err, 'Failed to create issue'),
+  });
+}
+
+// `_projectId` is kept so existing callers still compile. Remove it in the cleanup pass.
+export function useUpdateIssue(issueId: string, _projectId?: string) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: UpdateIssueInput) => {
+      const res = await api.patch<IApiResponse<IIssue>>(`/issues/${issueId}`, input);
+      return res.data.data;
+    },
+    onSuccess: async () => {
+      // the activity feed shows the new line right away
+      await qc.refetchQueries({ queryKey: issueKeys.activities(issueId) });
+      refreshIssueViews(qc);
+    },
+    onError: (err) => showError(err, 'Failed to update issue'),
+  });
+}
+
+// `_projectId` is kept so existing callers still compile. Remove it in the cleanup pass.
+export function useDeleteIssue(_projectId?: string) {
+  const qc = useQueryClient();
+
   return useMutation({
     mutationFn: async (issueId: string) => {
       await api.delete(`/issues/${issueId}`);
     },
-    onSuccess: async () => {
-      await qc.refetchQueries({ queryKey: ['board', projectId] });
-      qc.invalidateQueries({ queryKey: ['backlog-grouped', projectId] });
+    onSuccess: (_data, issueId) => {
+      qc.removeQueries({ queryKey: issueKeys.detail(issueId) }); // a refetch would return 404
+      refreshIssueViews(qc);
+      qc.invalidateQueries({ queryKey: projectKeys.all });
+      toast.success('Issue deleted');
     },
+    onError: (err) => showError(err, 'Failed to delete issue'),
   });
 }
 
@@ -69,174 +164,62 @@ export function useDuplicateIssue(projectId: string) {
     mutationFn: async (
       issue: Pick<CreateIssueInput, 'title' | 'description' | 'type' | 'priority' | 'labelIds'>,
     ) => {
-      const payload: CreateIssueInput = {
+      const res = await api.post<IApiResponse<IIssue>>(`/projects/${projectId}/issues`, {
         ...issue,
         title: `${issue.title} (copy)`,
-      };
-
-      const res = await api.post(`/projects/${projectId}/issues`, payload);
-      return res.data.data as { id: string };
-    },
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['backlog-grouped', projectId] });
-      qc.invalidateQueries({ queryKey: ['board', projectId] });
-      qc.invalidateQueries({ queryKey: ['issue-list', projectId] });
-      return data.id;
-    },
-  });
-}
-
-export function useProjectSprints(projectId: string) {
-  return useQuery<ISprint[]>({
-    queryKey: ['sprints', projectId],
-    queryFn: async () => {
-      const res = await api.get(`/projects/${projectId}/sprints`);
-      return res.data.data;
-    },
-    enabled: !!projectId,
-  });
-}
-
-export function useProjectMembers(projectId: string) {
-  return useQuery<IProjectMember[]>({
-    queryKey: ['project-members', projectId],
-    queryFn: async () => {
-      const res = await api.get(`/projects/${projectId}/members`);
-      return res.data.data;
-    },
-    enabled: !!projectId,
-  });
-}
-
-interface ActivityPage {
-  items: IActivityLog[]; // whatever your Activity type is
-  meta: { nextCursor: string | null; hasMore: boolean };
-}
-
-export function useIssueActivities(issueId: string, limit = 10) {
-  return useInfiniteQuery({
-    queryKey: ['activities', issueId],
-    queryFn: async ({ pageParam }: { pageParam?: string }) => {
-      const res = await api.get(`/issues/${issueId}/activities`, {
-        params: { limit, ...(pageParam ? { cursor: pageParam } : {}) },
       });
-      return res.data.data as ActivityPage;
-    },
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.meta.hasMore ? (lastPage.meta.nextCursor ?? undefined) : undefined,
-    enabled: !!issueId,
-  });
-}
-
-export function useCreateSubIssue(parentId: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (data: CreateIssueInput) => {
-      const res = await api.post(`/issues/${parentId}/children`, data);
-      return res.data.data as IIssueWithRelations;
+      return res.data.data;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['issue', parentId] });
+      refreshIssueViews(qc);
+      qc.invalidateQueries({ queryKey: projectKeys.all });
+      toast.success('Issue duplicated');
     },
+    onError: (err) => showError(err, 'Failed to duplicate issue'),
+  });
+}
+
+// ─── Sub-issues ───────────────────────────────────────────────
+// A sub-issue changes the parent's status and shows on the board, so every view refreshes.
+export function useCreateSubIssue(parentId: string) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: CreateSubIssueInput) => {
+      const res = await api.post<IApiResponse<IIssue>>(`/issues/${parentId}/children`, input);
+      return res.data.data;
+    },
+    onSuccess: () => refreshIssueViews(qc),
+    onError: (err) => showError(err, 'Failed to create sub-issue'),
   });
 }
 
 export function useAttachChildIssue(parentId: string) {
   const qc = useQueryClient();
+
   return useMutation({
     mutationFn: async (issueId: string) => {
-      const res = await api.post(`/issues/${parentId}/children/attach`, { issueId });
-      return res.data.data as IIssueWithRelations;
+      const res = await api.post<IApiResponse<IIssue>>(`/issues/${parentId}/children/attach`, {
+        issueId,
+      });
+      return res.data.data;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['issue', parentId] });
-    },
+    onSuccess: () => refreshIssueViews(qc),
+    onError: (err) => showError(err, 'Failed to attach issue'),
   });
 }
 
 export function useDetachChildIssue(parentId: string) {
   const qc = useQueryClient();
+
   return useMutation({
     mutationFn: async (childId: string) => {
-      const res = await api.delete(`/issues/${parentId}/children/${childId}`);
-      return res.data.data;
+      await api.delete(`/issues/${parentId}/children/${childId}`);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['issue', parentId] });
+      refreshIssueViews(qc);
+      toast.success('Sub-issue detached');
     },
-  });
-}
-
-export interface IIssueSearchResult {
-  id: string;
-  title: string;
-  status: string;
-  type: string;
-  priority: string;
-}
-
-export function useSearchProjectIssues(
-  projectId: string,
-  query: string,
-  options?: { excludeId?: string; mode?: 'child'; enabled?: boolean },
-) {
-  return useQuery<IIssueSearchResult[]>({
-    queryKey: ['issue-search', projectId, query, options?.excludeId, options?.mode],
-    queryFn: async () => {
-      const res = await api.get(`/projects/${projectId}/issues/search`, {
-        params: { q: query || undefined, excludeId: options?.excludeId, mode: options?.mode },
-      });
-      return res.data.data;
-    },
-    enabled: !!projectId && (options?.enabled ?? true),
-  });
-}
-
-export interface PaginatedResponse<T> {
-  items: T[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    hasMore: boolean;
-  };
-}
-
-export interface IssueListParams extends IssueFilters {
-  page?: number;
-  limit?: number;
-  sortBy?: 'position' | 'priority' | 'dueDate' | 'createdAt' | 'updatedAt' | 'title' | 'status';
-  sortOrder?: 'asc' | 'desc';
-}
-
-export function useIssueList(projectId: string, params: IssueListParams = {}) {
-  const { page = 1, limit = 25, sortBy = 'position', sortOrder = 'asc', ...filters } = params;
-
-  return useQuery<PaginatedResponse<IIssueWithRelations>>({
-    // page/limit/sort in the key too — every distinct combo caches separately,
-    // matches how useBoard keys on filters
-    queryKey: ['issue-list', projectId, filters, page, limit, sortBy, sortOrder],
-    queryFn: async () => {
-      const res = await api.get(`/projects/${projectId}/issues/list`, {
-        params: {
-          assigneeId: filters.assigneeId,
-          labelId: filters.labelId,
-          priority: filters.priority,
-          type: filters.type,
-          dueDateFrom: filters.dueDateFrom,
-          dueDateTo: filters.dueDateTo,
-          noDueDate: filters.noDueDate,
-          q: filters.q,
-          page,
-          limit,
-          sortBy,
-          sortOrder,
-        },
-      });
-      return res.data.data;
-    },
-    enabled: !!projectId,
-    placeholderData: (prev) => prev, // keep old page's rows visible while next page loads — avoids table flicker
+    onError: (err) => showError(err, 'Failed to detach sub-issue'),
   });
 }

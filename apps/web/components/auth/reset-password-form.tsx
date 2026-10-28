@@ -1,27 +1,23 @@
-"use client";
+'use client';
 
-import { useSearchParams } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useSearchParams } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 
-import { Button } from "@devflow/ui/components/button";
-import { Input } from "@devflow/ui/components/input";
-import { Spinner } from "@devflow/ui/components/spinner";
-import {
-  resetPasswordSchema,
-  type ResetPasswordInput,
-} from "@devflow/validators";
+import { Button } from '@devflow/ui/components/button';
+import { Input } from '@devflow/ui/components/input';
+import { Spinner } from '@devflow/ui/components/spinner';
+import { resetPasswordSchema, type ResetPasswordInput } from '@devflow/validators';
 
-import { ROUTES } from "../../constants/routes";
-import { useResetPassword, useVerifyResetCode } from "../../hooks/use-auth";
-import { AuthHeader } from "./auth-header";
-import { AuthStatus } from "./auth-status";
-import { PasswordRequirements } from "./password-requirements";
+import { ROUTES } from '../../constants/routes';
+import { useResetPassword, useVerifyResetCode } from '../../hooks/use-auth';
+import { AuthHeader } from './auth-header';
+import { AuthStatus } from './auth-status';
+import { PasswordRequirements } from './password-requirements';
 
 export function ResetPasswordForm() {
-  const oobCode = useSearchParams().get("oobCode");
-  const { isPending: isChecking, isError: isInvalid } =
-    useVerifyResetCode(oobCode);
+  const oobCode = useSearchParams().get('oobCode');
+  const { isPending: isChecking, isError: isInvalid } = useVerifyResetCode(oobCode);
   const { mutate: resetPassword, isPending } = useResetPassword();
 
   const {
@@ -38,7 +34,7 @@ export function ResetPasswordForm() {
       <AuthStatus
         title="Link expired"
         description="This reset link is invalid or has expired."
-        action={{ label: "Request a new link", href: ROUTES.forgotPassword }}
+        action={{ label: 'Request a new link', href: ROUTES.forgotPassword }}
       />
     );
   }
@@ -57,9 +53,7 @@ export function ResetPasswordForm() {
       <AuthHeader title="Set a new password" />
 
       <form
-        onSubmit={handleSubmit((data) =>
-          resetPassword({ oobCode, password: data.password }),
-        )}
+        onSubmit={handleSubmit((data) => resetPassword({ oobCode, password: data.password }))}
         className="flex flex-col gap-4"
       >
         <div className="flex flex-col gap-2">
@@ -68,7 +62,7 @@ export function ResetPasswordForm() {
             type="password"
             placeholder="••••••••"
             error={errors.password?.message}
-            {...register("password")}
+            {...register('password')}
           />
           <PasswordRequirements control={control} name="password" />
         </div>
@@ -77,7 +71,7 @@ export function ResetPasswordForm() {
           type="password"
           placeholder="••••••••"
           error={errors.confirmPassword?.message}
-          {...register("confirmPassword")}
+          {...register('confirmPassword')}
         />
         <Button type="submit" size="xl" loading={isPending} className="w-full">
           Update password

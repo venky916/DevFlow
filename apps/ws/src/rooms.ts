@@ -4,7 +4,7 @@ import { ServerEvent } from '@devflow/types';
 
 import { AuthenticatedWebSocket } from './types/socket.types';
 
-const rooms = new Map<String, Set<AuthenticatedWebSocket>>();
+const rooms = new Map<string, Set<AuthenticatedWebSocket>>();
 // rooms = {
 // "room-1" → { socket1, socket2, socket3 },
 // "room-2" → { socket4, socket5 }

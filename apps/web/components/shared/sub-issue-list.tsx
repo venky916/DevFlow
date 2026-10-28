@@ -1,51 +1,45 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Loader2, Plus, Search, X } from 'lucide-react';
-import { toast } from 'sonner';
+import { Plus, Search, X } from 'lucide-react';
 
-import type { IIssueWithRelations, IssueStatus } from '@devflow/types';
+import type { IIssueDetail } from '@devflow/types';
 import { Avatar } from '@devflow/ui/components/avatar';
 import { Badge } from '@devflow/ui/components/badge';
+import { Spinner } from '@devflow/ui/components/spinner';
 
+import { useDebouncedValue } from '../../hooks/use-debounced-value';
+import { useIssueAccess } from '../../hooks/use-issue-access';
 import {
   useAttachChildIssue,
   useCreateSubIssue,
   useDetachChildIssue,
   useSearchProjectIssues,
 } from '../../hooks/use-issues';
-import { usePermissions } from '../../hooks/use-permissions';
 import { getStatusVariant, STATUS_LABELS } from '../../lib/issue-constants';
-import { canProject } from '../../lib/permissions';
 
-interface Props {
-  issue: IIssueWithRelations;
+interface SubIssueListProps {
+  issue: IIssueDetail;
   projectId: string;
+  projectContext: { workspaceSlug: string; projectSlug: string };
   onNavigate: (issueId: string) => void;
 }
 
-export function SubIssueList({ issue, projectId, onNavigate }: Props) {
-  const { access } = usePermissions();
-  const canCreateSubIssue = canProject(access, 'CREATE_SUB_ISSUE');
-  const canAttachChild = canProject(access, 'ATTACH_CHILD_ISSUE');
-  const canDetachChild = canProject(access, 'DETACH_CHILD_ISSUE');
+export function SubIssueList({ issue, projectId, projectContext, onNavigate }: SubIssueListProps) {
+  const { canCreateSubIssue, canAttachChild, canDetachChild } = useIssueAccess(projectContext);
 
-  const { mutateAsync: createSubIssue, isPending: creating } = useCreateSubIssue(issue.id);
-  const { mutateAsync: attachChild, isPending: attaching } = useAttachChildIssue(issue.id);
-  const { mutateAsync: detachChild } = useDetachChildIssue(issue.id);
+  const { mutate: createSubIssue, isPending: creating } = useCreateSubIssue(issue.id);
+  const { mutate: attachChild, isPending: attaching } = useAttachChildIssue(issue.id);
+  const { mutate: detachChild } = useDetachChildIssue(issue.id);
 
   const [addTitle, setAddTitle] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query, 250);
   const searchRef = useRef<HTMLDivElement>(null);
 
+  // a sub-issue can't have sub-issues of its own
   const isEligibleParent = !issue.parentId;
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedQuery(query), 250);
-    return () => clearTimeout(t);
-  }, [query]);
 
   useEffect(() => {
     const onClickOutside = (e: MouseEvent) => {
@@ -69,40 +63,25 @@ export function SubIssueList({ issue, projectId, onNavigate }: Props) {
 
   if (!isEligibleParent) return null;
 
-  const handleAdd = async () => {
-    if (!addTitle.trim()) return;
-    try {
-      await createSubIssue({ title: addTitle.trim() });
-      setAddTitle('');
-    } catch {
-      toast.error('Failed to create sub-issue');
-    }
+  const handleAdd = () => {
+    const title = addTitle.trim();
+    if (!title) return;
+    createSubIssue({ title }, { onSuccess: () => setAddTitle('') });
   };
 
-  const handleAttach = async (issueId: string) => {
-    try {
-      await attachChild(issueId);
-      setQuery('');
-      setSearchOpen(false);
-    } catch {
-      toast.error('Failed to attach issue');
-    }
+  const handleAttach = (childId: string) => {
+    attachChild(childId, {
+      onSuccess: () => {
+        setQuery('');
+        setSearchOpen(false);
+      },
+    });
   };
 
-  const handleDetach = async (childId: string) => {
-    try {
-      await detachChild(childId);
-    } catch {
-      toast.error('Failed to detach sub-issue');
-    }
-  };
-
-  const children = issue.children ?? [];
+  const children = issue.children;
   const total = children.length;
-  const doneCount = children.filter((c: any) => c.status === 'DONE').length;
+  const doneCount = children.filter((c) => c.status === 'DONE').length;
   const progress = total > 0 ? (doneCount / total) * 100 : 0;
-
-  console.log('SubIssueList render', { total, doneCount, progress, children });
 
   return (
     <div className="flex flex-col gap-2">
@@ -116,7 +95,7 @@ export function SubIssueList({ issue, projectId, onNavigate }: Props) {
             <span className="font-mono text-[11px] text-text-muted">
               {doneCount}/{total}
             </span>
-            <div className="bg-bg-surface-hover h-[3px] w-16 overflow-hidden rounded-full">
+            <div className="h-[3px] w-16 overflow-hidden rounded-full bg-bg-hover">
               <div
                 className="h-full rounded-full bg-success-text transition-all"
                 style={{ width: `${progress}%` }}
@@ -126,27 +105,29 @@ export function SubIssueList({ issue, projectId, onNavigate }: Props) {
         )}
       </div>
 
-      {children.length > 0 && (
+      {total > 0 && (
         <div className="flex flex-col gap-1 overflow-hidden rounded-[6px] border border-border-default">
-          {children.map((child: any) => (
+          {children.map((child) => (
             <div
               key={child.id}
-              className="hover:bg-bg-surface-hover group flex items-center gap-2 px-3 py-2 transition-colors"
+              className="group flex items-center gap-2 px-3 py-2 transition-colors hover:bg-bg-hover"
             >
               <button
+                type="button"
                 onClick={() => onNavigate(child.id)}
                 className="flex min-w-0 flex-1 items-center gap-2 text-left"
               >
-                <Badge variant={getStatusVariant(child.status as IssueStatus)}>
-                  {STATUS_LABELS[child.status as IssueStatus]}
+                <Badge variant={getStatusVariant(child.status)}>
+                  {STATUS_LABELS[child.status]}
                 </Badge>
                 <span className="truncate text-[13px] text-text-primary">{child.title}</span>
               </button>
               {child.assignee && <Avatar name={child.assignee.name ?? '?'} size="sm" />}
               {canDetachChild && (
                 <button
-                  onClick={() => handleDetach(child.id)}
-                  className="hover:text-status-danger-text text-text-muted opacity-0 transition-colors group-hover:opacity-100"
+                  type="button"
+                  onClick={() => detachChild(child.id)}
+                  className="text-text-muted opacity-0 transition-colors group-hover:opacity-100 hover:text-danger-text focus-visible:opacity-100"
                   aria-label="Remove sub-issue"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -173,9 +154,7 @@ export function SubIssueList({ issue, projectId, onNavigate }: Props) {
                     setSearchOpen(true);
                   }}
                 />
-                {(searching || attaching) && (
-                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-text-muted" />
-                )}
+                {(searching || attaching) && <Spinner size="sm" />}
               </div>
 
               {searchOpen && (
@@ -185,13 +164,14 @@ export function SubIssueList({ issue, projectId, onNavigate }: Props) {
                       {searching ? 'Searching...' : 'No eligible issues found'}
                     </p>
                   ) : (
-                    results.map((r) => (
+                    results.map((result) => (
                       <button
-                        key={r.id}
-                        onClick={() => handleAttach(r.id)}
-                        className="hover:bg-bg-surface-hover w-full px-3 py-2 text-left text-[13px] text-text-primary transition-colors"
+                        type="button"
+                        key={result.id}
+                        onClick={() => handleAttach(result.id)}
+                        className="w-full px-3 py-2 text-left text-[13px] text-text-primary transition-colors hover:bg-bg-hover"
                       >
-                        {r.title}
+                        {result.title}
                       </button>
                     ))
                   )}

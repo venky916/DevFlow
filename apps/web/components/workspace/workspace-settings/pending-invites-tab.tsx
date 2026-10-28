@@ -1,25 +1,17 @@
-"use client";
+'use client';
 
-import { Clock, Trash2 } from "lucide-react";
+import { Clock, Trash2 } from 'lucide-react';
 
-import { Spinner } from "@devflow/ui/components/spinner";
+import { Spinner } from '@devflow/ui/components/spinner';
 
-import {
-  useCancelInvite,
-  useWorkspaceInvites,
-} from "../../../hooks/use-workspaces";
-import { formatTimeAgo } from "../../../lib/format-date";
-import {PageError} from "../../shared/page-error";
-import { RoleBadge } from "../../shared/role-badge";
-import { SectionHeading } from "../../shared/section-heading";
+import { useCancelInvite, useWorkspaceInvites } from '../../../hooks/use-workspaces';
+import { formatTimeAgo } from '../../../lib/format-date';
+import { PageError } from '../../shared/page-error';
+import { RoleBadge } from '../../shared/role-badge';
+import { SectionHeading } from '../../shared/section-heading';
 
 export function PendingInvitesTab({ workspaceId }: { workspaceId: string }) {
-  const {
-    data: invites,
-    isLoading,
-    isError,
-    refetch,
-  } = useWorkspaceInvites(workspaceId);
+  const { data: invites, isLoading, isError, refetch } = useWorkspaceInvites(workspaceId);
   const { mutate: cancelInvite } = useCancelInvite(workspaceId);
 
   if (isLoading) {
@@ -30,9 +22,7 @@ export function PendingInvitesTab({ workspaceId }: { workspaceId: string }) {
     );
   }
   if (isError || !invites) {
-    return (
-      <PageError message="Couldn't load invites" onRetry={() => refetch()} />
-    );
+    return <PageError message="Couldn't load invites" onRetry={() => refetch()} />;
   }
 
   return (
@@ -60,9 +50,7 @@ export function PendingInvitesTab({ workspaceId }: { workspaceId: string }) {
               </div>
 
               <div className="min-w-0 flex-1">
-                <p className="truncate text-body text-text-primary">
-                  {invite.email}
-                </p>
+                <p className="truncate text-body text-text-primary">{invite.email}</p>
                 <div className="mt-0.5 flex flex-wrap items-center gap-2">
                   <RoleBadge role={invite.role} />
                   <span className="text-2xs text-text-muted">

@@ -7,6 +7,7 @@ import { ApiError } from '../lib/ApiError';
 import { ResolvedAccess } from './permission.middleware';
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       user?: {

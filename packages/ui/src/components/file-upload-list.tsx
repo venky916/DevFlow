@@ -1,11 +1,13 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useDropzone } from "react-dropzone";
-import { Upload } from "lucide-react";
-import { FileUploadField } from "./file-upload-field";
-import type { PendingAttachment } from "@devflow/types";
-import { AttachmentPreviewModal } from "./attachment-preview-modal";
+import { Upload } from 'lucide-react';
+import { useState } from 'react';
+import { useDropzone } from 'react-dropzone';
+
+import type { PendingAttachment } from '@devflow/types';
+
+import { AttachmentPreviewModal } from './attachment-preview-modal';
+import { FileUploadField } from './file-upload-field';
 
 interface FileUploadListProps {
   items: PendingAttachment[];
@@ -30,9 +32,7 @@ export function FileUploadList({
   });
 
   const previewItem = items.find((i) => i.id === previewId);
-  const previewItemCanDelete = previewItem
-    ? (canDeleteItem?.(previewItem) ?? true)
-    : false;
+  const previewItemCanDelete = previewItem ? (canDeleteItem?.(previewItem) ?? true) : false;
 
   return (
     <div className="flex flex-col gap-3">
@@ -43,7 +43,7 @@ export function FileUploadList({
               fileName: item.localName,
               fileSize: item.localSize,
               mimeType: item.localMimeType,
-              url: "",
+              url: '',
             };
             return (
               <FileUploadField
@@ -53,7 +53,7 @@ export function FileUploadList({
                 errorMessage={item.errorMessage}
                 file={fileInfo}
                 onSelect={() => {}}
-                onRemove={() => onRemove(item.id)}
+                onRemove={(canDeleteItem?.(item) ?? true) ? () => onRemove(item.id) : undefined}
                 onPreview={() => setPreviewId(item.id)}
               />
             );
@@ -64,17 +64,17 @@ export function FileUploadList({
       {!readOnly && (
         <div
           {...getRootProps()}
-          className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-[4px] border border-dashed transition-colors cursor-pointer ${
+          className={`flex w-full cursor-pointer items-center gap-2.5 rounded-[4px] border border-dashed px-3.5 py-2.5 transition-colors ${
             isDragActive
-              ? "border-accent bg-accent-subtle"
-              : "border-border-emphasis bg-bg-surface hover:border-border-strong hover:bg-bg-hover"
+              ? 'border-accent bg-accent-subtle'
+              : 'border-border-emphasis bg-bg-surface hover:border-border-strong hover:bg-bg-hover'
           }`}
         >
           <input {...getInputProps()} />
-          <Upload className="h-4 w-4 text-text-muted shrink-0" />
+          <Upload className="h-4 w-4 shrink-0 text-text-muted" />
           <span className="text-[13px] text-text-secondary">
             {isDragActive ? (
-              "Drop files here"
+              'Drop files here'
             ) : (
               <>
                 Drop files or <span className="text-accent">browse</span>
@@ -88,9 +88,7 @@ export function FileUploadList({
         open={!!previewItem}
         onClose={() => setPreviewId(null)}
         file={previewItem?.file ?? null}
-        onDownload={
-          previewItem && onDownload ? () => onDownload(previewItem) : undefined
-        }
+        onDownload={previewItem && onDownload ? () => onDownload(previewItem) : undefined}
         onDelete={() => {
           if (previewId) onRemove(previewId);
           setPreviewId(null);

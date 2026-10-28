@@ -4,15 +4,17 @@ import tippy, { Instance as TippyInstance } from 'tippy.js';
 
 import { MentionList, type MentionListRef } from '@devflow/ui/components/mention-list';
 
-import { useProjectMembers } from './use-project-settings';
+import { displayName } from '../lib/roles';
+import { useProjectMembers } from './use-projects';
 
 export function useMentionSuggestion(projectId: string) {
   const { data: members } = useProjectMembers(projectId);
   const membersRef = useRef<{ id: string; label: string }[]>([]);
 
-  membersRef.current = (members ?? []).map((m: any) => ({
-    id: m.user?.id ?? m.userId,
-    label: m.user?.name ?? 'Unknown',
+  // project members only: the server ignores anyone else
+  membersRef.current = (members ?? []).map((m) => ({
+    id: m.userId,
+    label: displayName(m.user),
   }));
 
   return {
@@ -23,7 +25,7 @@ export function useMentionSuggestion(projectId: string) {
 
     render: () => {
       let component: ReactRenderer<MentionListRef>;
-      let popup: TippyInstance[] = []; // ← starts as an empty array, never undefined
+      let popup: TippyInstance[] = [];
 
       return {
         onStart: (props: any) => {

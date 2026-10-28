@@ -1,32 +1,27 @@
-"use client";
+'use client';
 
-import { X } from "lucide-react";
+import { X } from 'lucide-react';
 
-import type { WorkspaceRole } from "@devflow/types";
-import { Avatar } from "@devflow/ui/components/avatar";
-import { Select } from "@devflow/ui/components/select";
-import { Spinner } from "@devflow/ui/components/spinner";
+import type { WorkspaceRole } from '@devflow/types';
+import { Avatar } from '@devflow/ui/components/avatar';
+import { Select } from '@devflow/ui/components/select';
+import { Spinner } from '@devflow/ui/components/spinner';
 
 import {
   useRemoveMember,
   useUpdateMemberRole,
   useWorkspaceMembers,
-} from "../../../hooks/use-workspaces";
-import { formatTimeAgo } from "../../../lib/format-date";
-import { displayName, WORKSPACE_ROLE_OPTIONS } from "../../../lib/roles";
-import { useAuthStore } from "../../../stores/auth.store";
-import {PageError} from "../../shared/page-error";
-import { SectionHeading } from "../../shared/section-heading";
-import { RoleBadge } from "../../shared/role-badge";
+} from '../../../hooks/use-workspaces';
+import { formatTimeAgo } from '../../../lib/format-date';
+import { displayName, WORKSPACE_ROLE_OPTIONS } from '../../../lib/roles';
+import { useAuthStore } from '../../../stores/auth.store';
+import { PageError } from '../../shared/page-error';
+import { RoleBadge } from '../../shared/role-badge';
+import { SectionHeading } from '../../shared/section-heading';
 
 export function MembersTab({ workspaceId }: { workspaceId: string }) {
   const currentUserId = useAuthStore((s) => s.user?.id);
-  const {
-    data: members,
-    isLoading,
-    isError,
-    refetch,
-  } = useWorkspaceMembers(workspaceId);
+  const { data: members, isLoading, isError, refetch } = useWorkspaceMembers(workspaceId);
   const {
     mutate: updateRole,
     isPending: updatingRole,
@@ -42,9 +37,7 @@ export function MembersTab({ workspaceId }: { workspaceId: string }) {
     );
   }
   if (isError || !members) {
-    return (
-      <PageError message="Couldn't load members" onRetry={() => refetch()} />
-    );
+    return <PageError message="Couldn't load members" onRetry={() => refetch()} />;
   }
 
   return (
@@ -56,8 +49,7 @@ export function MembersTab({ workspaceId }: { workspaceId: string }) {
       <div className="flex flex-col gap-2">
         {members.map((member) => {
           const isMe = member.userId === currentUserId;
-          const isUpdating =
-            updatingRole && variables?.userId === member.userId;
+          const isUpdating = updatingRole && variables?.userId === member.userId;
 
           return (
             <div
@@ -72,20 +64,12 @@ export function MembersTab({ workspaceId }: { workspaceId: string }) {
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <p className="truncate text-body text-text-primary">
-                    {displayName(member.user)}
-                  </p>
-                  {isMe && (
-                    <span className="shrink-0 font-mono text-2xs text-text-muted">
-                      you
-                    </span>
-                  )}
+                  <p className="truncate text-body text-text-primary">{displayName(member.user)}</p>
+                  {isMe && <span className="shrink-0 font-mono text-2xs text-text-muted">you</span>}
                 </div>
                 <p className="truncate text-2xs text-text-muted">
                   {member.user.email}
-                  <span className="ml-1.5">
-                    · joined {formatTimeAgo(member.joinedAt)}
-                  </span>
+                  <span className="ml-1.5">· joined {formatTimeAgo(member.joinedAt)}</span>
                 </p>
               </div>
 

@@ -4,6 +4,7 @@ node_modules
 # Build outputs
 dist
 build
+.next
 
 # Turbo
 .turbo
@@ -14,6 +15,7 @@ package-lock.json
 
 # Prisma generated
 packages/db/src/generated
+**/generated
 
 # Env files
 .env

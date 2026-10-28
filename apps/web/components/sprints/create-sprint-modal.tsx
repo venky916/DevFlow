@@ -1,30 +1,28 @@
-"use client";
+'use client';
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
-import { Controller, useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Controller, useForm } from 'react-hook-form';
 
-import { Button } from "@devflow/ui/components/button";
-import { DatePicker } from "@devflow/ui/components/date-picker";
-import { Input } from "@devflow/ui/components/input";
-import { Modal } from "@devflow/ui/components/modal";
+import { Button } from '@devflow/ui/components/button';
+import { DatePicker } from '@devflow/ui/components/date-picker';
+import { Input } from '@devflow/ui/components/input';
+import { Modal } from '@devflow/ui/components/modal';
 import {
   createSprintSchema,
   type CreateSprintInput,
   type CreateSprintOutput,
-} from "@devflow/validators";
+} from '@devflow/validators';
 
-import { useCreateSprint } from "../../hooks/use-sprints";
+import { useCreateSprint } from '../../hooks/use-sprints';
 
-interface Props {
+interface CreateSprintModalProps {
   open: boolean;
   onClose: () => void;
   projectId: string;
 }
 
-export function CreateSprintModal({ open, onClose, projectId }: Props) {
-  const { mutateAsync, isPending } = useCreateSprint(projectId);
+export function CreateSprintModal({ open, onClose, projectId }: CreateSprintModalProps) {
+  const { mutate: createSprint, isPending } = useCreateSprint(projectId);
 
   const {
     register,
@@ -32,34 +30,31 @@ export function CreateSprintModal({ open, onClose, projectId }: Props) {
     control,
     reset,
     formState: { errors },
-  } = useForm<CreateSprintInput, any, CreateSprintOutput>({
+  } = useForm<CreateSprintInput, unknown, CreateSprintOutput>({
     resolver: zodResolver(createSprintSchema),
   });
 
-  const onSubmit = async (data: CreateSprintOutput) => {
-    try {
-      await mutateAsync(data);
-      toast.success("Sprint created!");
-      reset();
-      onClose();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message ?? "Failed to create sprint");
-    }
+  const handleClose = () => {
+    reset();
+    onClose();
   };
 
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       title="Create sprint"
       description="Plan your next sprint with a name and dates."
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      <form
+        onSubmit={handleSubmit((data) => createSprint(data, { onSuccess: handleClose }))}
+        className="flex flex-col gap-4"
+      >
         <Input
           label="Sprint name"
           placeholder="Sprint 1"
           error={errors.name?.message}
-          {...register("name")}
+          {...register('name')}
         />
         <div className="grid grid-cols-2 gap-3">
           <Controller
@@ -88,15 +83,11 @@ export function CreateSprintModal({ open, onClose, projectId }: Props) {
           />
         </div>
         <div className="mt-2 flex justify-end gap-2">
-          <Button variant="ghost" onClick={onClose}>
+          <Button type="button" variant="ghost" onClick={handleClose}>
             Cancel
           </Button>
-          <Button variant="primary" type="submit" disabled={isPending}>
-            {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              "Create sprint"
-            )}
+          <Button type="submit" loading={isPending}>
+            Create sprint
           </Button>
         </div>
       </form>

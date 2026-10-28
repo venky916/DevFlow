@@ -44,7 +44,6 @@ async function getWorkspaceAdminIds(projectId: string): Promise<Set<string>> {
 const withAdminFlag = <T extends { userId: string }>(members: T[], adminIds: Set<string>) =>
   members.map((m) => ({ ...m, isWorkspaceAdmin: adminIds.has(m.userId) }));
 
-
 // ─── POST /workspaces/:workspaceId/projects ───────────────────────
 export const createProject = asyncHandler(async (req: Request, res: Response) => {
   const { workspaceId } = req.params;
@@ -183,7 +182,6 @@ export const getProjectSummaries = asyncHandler(async (req: Request, res: Respon
 // ─── GET /projects/:id ────────────────────────────────────────────
 export const getProjectById = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const userId = req.user!.id;
 
   const project = await prisma.project.findUnique({
     where: {
@@ -354,7 +352,11 @@ export const getProjectMembers = asyncHandler(async (req: Request, res: Response
   const cached = await getCache(cacheKey);
 
   if (cached) {
-    sendSuccess(res, withAdminFlag(cached as { userId: string }[], adminIds), 'Members fetched successfully');
+    sendSuccess(
+      res,
+      withAdminFlag(cached as { userId: string }[], adminIds),
+      'Members fetched successfully',
+    );
     return;
   }
 
@@ -576,7 +578,7 @@ export const deleteLabel = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // IssueLabel rows clean up automatically via onDelete: Cascade
-  const deleted = await prisma.label.delete({
+  await prisma.label.delete({
     where: {
       id: labelId as string,
     },

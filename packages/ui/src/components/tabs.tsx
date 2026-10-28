@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import * as RadixTabs from "@radix-ui/react-tabs";
-import { cn } from "../lib/cn";
+import * as RadixTabs from '@radix-ui/react-tabs';
+
+import { cn } from '../lib/cn';
 
 interface Tab {
   label: string;
@@ -17,19 +18,13 @@ interface TabsProps {
   onValueChange?: (value: string) => void;
 }
 
-export function Tabs({
-  tabs,
-  defaultValue,
-  className,
-  value,
-  onValueChange,
-}: TabsProps) {
+export function Tabs({ tabs, defaultValue, className, value, onValueChange }: TabsProps) {
   return (
     <RadixTabs.Root
       defaultValue={defaultValue ?? tabs[0]?.value}
       value={value}
       onValueChange={onValueChange}
-      className={cn("flex flex-col gap-0", className)}
+      className={cn('flex flex-col gap-0', className)}
     >
       <RadixTabs.List className="flex border-b border-border-default">
         {tabs.map((tab) => (
@@ -37,10 +32,10 @@ export function Tabs({
             key={tab.value}
             value={tab.value}
             className={cn(
-              "px-4 py-2 text-[13px] text-text-muted transition-colors",
-              "border-b-2 border-transparent -mb-px",
-              "hover:text-text-primary",
-              "data-[state=active]:text-text-primary data-[state=active]:border-accent",
+              'px-4 py-2 text-[13px] text-text-muted transition-colors',
+              '-mb-px border-b-2 border-transparent',
+              'hover:text-text-primary',
+              'data-[state=active]:border-accent data-[state=active]:text-text-primary',
             )}
           >
             {tab.label}

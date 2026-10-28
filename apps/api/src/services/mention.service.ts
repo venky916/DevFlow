@@ -1,5 +1,5 @@
 // services/mention.service.ts
-import { extractMentions, getPlainText } from '@devflow/validators';
+import { extractMentions, type TiptapContent } from '@devflow/validators';
 
 import { commentRepository } from '../repositories/comment.repository';
 import { notificationService } from './notification.service';
@@ -11,69 +11,78 @@ interface IssueContext {
   assigneeId: string | null;
 }
 
+// People mentioned in a comment who may be notified: project members only, never the commenter
+async function mentionableIds(
+  content: TiptapContent,
+  projectId: string,
+  commenterId: string,
+): Promise<string[]> {
+  const mentions = extractMentions(content);
+  if (mentions.length === 0) return [];
+
+  const projectMembers = await commentRepository.findProjectMemberIds(projectId);
+  const memberIds = new Set(projectMembers.map((m) => m.userId));
+  return mentions.map((m) => m.id).filter((id) => id !== commenterId && memberIds.has(id));
+}
+
 export const mentionService = {
   async processCommentNotifications(
-    content: any,
+    content: TiptapContent,
     issue: IssueContext,
     issueId: string,
     commenterId: string,
     commenterName: string,
   ) {
-    const mentions = extractMentions(content);
-    const commentRecipients = [issue.creatorId, issue.assigneeId].filter(Boolean) as string[];
+    const mentionedIds = new Set(await mentionableIds(content, issue.projectId, commenterId));
 
-    if (mentions.length > 0) {
-      const projectMembers = await commentRepository.findProjectMemberIds(issue.projectId);
-      const memberIds = new Set(projectMembers.map((m) => m.userId));
-      const validMentions = mentions.filter((m) => m.id !== commenterId && memberIds.has(m.id));
+    for (const userId of mentionedIds) {
+      await notificationService.notifyMention(
+        userId,
+        commenterName,
+        issue.title,
+        issueId,
+        commenterId,
+      );
+    }
 
-      for (const mention of validMentions) {
-        await notificationService.notifyMention(
-          mention.id,
-          commenterName,
-          issue.title,
-          issueId,
-          commenterId,
-        );
-      }
+    // the creator and the assignee hear about the comment, unless they were just mentioned
+    const recipients = new Set(
+      [issue.creatorId, issue.assigneeId].filter((id): id is string => !!id),
+    );
+    for (const recipientId of recipients) {
+      if (recipientId === commenterId || mentionedIds.has(recipientId)) continue;
+      await notificationService.notifyIssueCommented(
+        recipientId,
+        commenterName,
+        issue.title,
+        issueId,
+        commenterId,
+      );
+    }
+  },
 
-      const mentionedSet = new Set(validMentions.map((m) => m.id));
-      for (const recipientId of commentRecipients) {
-        if (recipientId === commenterId || mentionedSet.has(recipientId)) continue;
-        await notificationService.notifyIssueCommented(
-          recipientId,
-          commenterName,
-          issue.title,
-          issueId,
-          commenterId,
-        );
-      }
-    } else {
-      for (const recipientId of commentRecipients) {
-        if (recipientId === commenterId) continue;
-        await notificationService.notifyIssueCommented(
-          recipientId,
-          commenterName,
-          issue.title,
-          issueId,
-          commenterId,
-        );
+  // an edited comment only notifies people who were NOT already mentioned before the edit
+  async notifyNewMentions(
+    content: TiptapContent,
+    previousContent: TiptapContent,
+    issue: { projectId: string; title: string },
+    issueId: string,
+    commenterId: string,
+    commenterName: string,
+  ) {
+    const before = new Set(extractMentions(previousContent).map((m) => m.id));
+    const newIds = (await mentionableIds(content, issue.projectId, commenterId)).filter(
+      (id) => !before.has(id),
+    );
 
-        if (recipientId === issue.creatorId) {
-          const creator = await commentRepository.findUserWithEmail(issue.creatorId);
-          if (creator) {
-            await notificationService.sendCommentEmail(
-              creator.email,
-              issue.title,
-              commenterName,
-              getPlainText(content),
-              creator.name,
-              issue.projectId,
-              issueId,
-            );
-          }
-        }
-      }
+    for (const userId of newIds) {
+      await notificationService.notifyMention(
+        userId,
+        commenterName,
+        issue.title,
+        issueId,
+        commenterId,
+      );
     }
   },
 };

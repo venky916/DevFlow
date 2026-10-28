@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import Link from 'next/link';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 
-import { Button } from "@devflow/ui/components/button";
-import { Input } from "@devflow/ui/components/input";
-import { signInSchema, type SignInInput } from "@devflow/validators";
+import { Button } from '@devflow/ui/components/button';
+import { Input } from '@devflow/ui/components/input';
+import { signInSchema, type SignInInput } from '@devflow/validators';
 
-import { ROUTES } from "../../constants/routes";
-import { useAuthRedirect, useSignIn } from "../../hooks/use-auth";
-import { AuthDivider } from "./auth-divider";
-import { AuthFooterLink } from "./auth-footer-link";
-import { AuthHeader } from "./auth-header";
-import { OAuthButtons } from "./oauth-buttons";
+import { ROUTES } from '../../constants/routes';
+import { useAuthRedirect, useSignIn } from '../../hooks/use-auth';
+import { AuthDivider } from './auth-divider';
+import { AuthFooterLink } from './auth-footer-link';
+import { AuthHeader } from './auth-header';
+import { OAuthButtons } from './oauth-buttons';
 
 export function SignInForm() {
   const { redirectQuery } = useAuthRedirect();
@@ -27,30 +27,24 @@ export function SignInForm() {
 
   return (
     <div className="flex flex-col gap-8">
-      <AuthHeader
-        title="Sign in to DevFlow"
-        description="Welcome back. Let's get you moving."
-      />
+      <AuthHeader title="Sign in to DevFlow" description="Welcome back. Let's get you moving." />
       <OAuthButtons successMessage="Welcome back!" />
       <AuthDivider />
 
-      <form
-        onSubmit={handleSubmit((data) => signIn(data))}
-        className="flex flex-col gap-4"
-      >
+      <form onSubmit={handleSubmit((data) => signIn(data))} className="flex flex-col gap-4">
         <Input
           label="Email"
           type="email"
           placeholder="you@example.com"
           error={errors.email?.message}
-          {...register("email")}
+          {...register('email')}
         />
         <Input
           label="Password"
           type="password"
           placeholder="••••••••"
           error={errors.password?.message}
-          {...register("password")}
+          {...register('password')}
         />
         <Link
           href={ROUTES.forgotPassword}

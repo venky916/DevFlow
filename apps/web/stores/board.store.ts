@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 
-import type { IIssueWithRelations, ISprint, IssueStatus } from '@devflow/types';
+import type { IIssueDetail, ISprint, IssueStatus } from '@devflow/types';
 
-type BoardColumns = Record<IssueStatus, IIssueWithRelations[]>;
+type BoardColumns = Record<IssueStatus, IIssueDetail[]>;
 
 interface BoardState {
   columns: BoardColumns;

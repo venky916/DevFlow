@@ -1,29 +1,24 @@
-# docker/ws.Dockerfile
-FROM node:20-slim AS base
-RUN npm install -g pnpm turbo
+FROM node:22-slim AS base
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+RUN npm install -g pnpm@9.0.0 turbo@2.9.8
 
 FROM base AS pruner
 WORKDIR /app
 COPY . .
-RUN turbo prune ws --docker
+RUN turbo prune ws-server --docker
 
 FROM base AS installer
 WORKDIR /app
 COPY --from=pruner /app/out/json/ .
 RUN pnpm install --frozen-lockfile
 COPY --from=pruner /app/out/full/ .
-ARG DATABASE_URL
-ARG DIRECT_URL
-ENV DATABASE_URL=$DATABASE_URL
-ENV DIRECT_URL=$DIRECT_URL
-
-RUN echo "DATABASE_URL=$DATABASE_URL" > packages/db/.env && \
-    echo "DIRECT_URL=$DIRECT_URL" >> packages/db/.env
-    
-RUN pnpm turbo run build --filter=ws
+RUN DIRECT_URL="postgresql://build:build@localhost:5432/build" pnpm --filter @devflow/db run build
 
 FROM base AS runner
+ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=installer /app .
+USER node
+WORKDIR /app/apps/ws
 EXPOSE 4001
-CMD ["node", "apps/ws/dist/index.js"]
+CMD ["node", "--import", "tsx", "src/index.ts"]

@@ -1,14 +1,11 @@
-"use client";
+'use client';
 
-import { useParams } from "next/navigation";
+import { useParams } from 'next/navigation';
 
-import { Avatar } from "@devflow/ui/components/avatar";
-import { Badge } from "@devflow/ui/components/badge";
+import { Avatar } from '@devflow/ui/components/avatar';
+import { Badge } from '@devflow/ui/components/badge';
 
-import {
-  useProjectAnalytics,
-  useRequireProjectAccess,
-} from "../../hooks/use-projects";
+import { useProjectAnalytics, useRequireProjectAccess } from '../../hooks/use-projects';
 import {
   STATUS_COLORS,
   STATUS_LABELS,
@@ -16,16 +13,16 @@ import {
   TYPE_COLORS,
   TYPE_LABELS,
   TYPE_ORDER,
-} from "../../lib/issue-constants";
-import { displayName } from "../../lib/roles";
-import { BarRow } from "../shared/bar-row";
-import { BarTrack } from "../shared/bar-track";
-import { PageContainer } from "../shared/page-container";
-import {PageError} from "../shared/page-error";
-import { PageHeading } from "../shared/page-heading";
-import {PageLoading} from "../shared/page-loading";
-import { PanelTitle } from "../shared/panel-title";
-import { StatCard } from "../shared/stat-card";
+} from '../../lib/issue-constants';
+import { displayName } from '../../lib/roles';
+import { BarRow } from '../shared/bar-row';
+import { BarTrack } from '../shared/bar-track';
+import { PageContainer } from '../shared/page-container';
+import { PageError } from '../shared/page-error';
+import { PageHeading } from '../shared/page-heading';
+import { PageLoading } from '../shared/page-loading';
+import { PanelTitle } from '../shared/panel-title';
+import { StatCard } from '../shared/stat-card';
 
 export function ProjectAnalytics() {
   const { workspaceSlug, projectSlug } = useParams<{
@@ -35,7 +32,7 @@ export function ProjectAnalytics() {
   const { project, isAllowed } = useRequireProjectAccess(
     workspaceSlug,
     projectSlug,
-    "VIEW_PROJECT_ANALYTICS",
+    'VIEW_PROJECT_ANALYTICS',
   );
   // only fetches once the role check passes, so a non-lead never sends the request
   const {
@@ -43,31 +40,18 @@ export function ProjectAnalytics() {
     isLoading,
     isError,
     refetch,
-  } = useProjectAnalytics(isAllowed && project ? project.id : "");
+  } = useProjectAnalytics(isAllowed && project ? project.id : '');
 
   if (!project || !isAllowed || isLoading) return <PageLoading />;
   if (isError || !analytics) {
-    return (
-      <PageError message="Couldn't load analytics" onRetry={() => refetch()} />
-    );
+    return <PageError message="Couldn't load analytics" onRetry={() => refetch()} />;
   }
 
-  const totalIssues = Object.values(analytics.issuesByStatus).reduce(
-    (a, b) => a + b,
-    0,
-  );
-  const activeSprint = analytics.sprintVelocity.find(
-    (s) => s.status === "ACTIVE",
-  );
-  const maxStatusCount = Math.max(
-    ...Object.values(analytics.issuesByStatus),
-    1,
-  );
+  const totalIssues = Object.values(analytics.issuesByStatus).reduce((a, b) => a + b, 0);
+  const activeSprint = analytics.sprintVelocity.find((s) => s.status === 'ACTIVE');
+  const maxStatusCount = Math.max(...Object.values(analytics.issuesByStatus), 1);
   const maxTypeCount = Math.max(...Object.values(analytics.issuesByType), 1);
-  const maxAssigneeCount = Math.max(
-    ...analytics.issuesByAssignee.map((a) => a.count),
-    1,
-  );
+  const maxAssigneeCount = Math.max(...analytics.issuesByAssignee.map((a) => a.count), 1);
 
   return (
     <PageContainer className="mx-0">
@@ -75,19 +59,13 @@ export function ProjectAnalytics() {
 
       <div className="grid grid-cols-4 gap-3">
         <StatCard label="Total Issues" value={totalIssues} />
-        <StatCard
-          label="In Progress"
-          value={analytics.issuesByStatus.IN_PROGRESS}
-        />
+        <StatCard label="In Progress" value={analytics.issuesByStatus.IN_PROGRESS} />
         <StatCard
           label="Overdue"
           value={analytics.overdueCount}
-          tone={analytics.overdueCount > 0 ? "danger" : "default"}
+          tone={analytics.overdueCount > 0 ? 'danger' : 'default'}
         />
-        <StatCard
-          label="Done This Sprint"
-          value={activeSprint?.doneCount ?? "—"}
-        />
+        <StatCard label="Done This Sprint" value={activeSprint?.doneCount ?? '—'} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -140,22 +118,15 @@ export function ProjectAnalytics() {
             {analytics.sprintVelocity.map((sprint) => (
               <div key={sprint.sprintId} className="flex flex-col gap-1.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-body text-text-primary">
-                    {sprint.name}
-                  </span>
-                  {sprint.status === "ACTIVE" && (
-                    <Badge variant="success">Active</Badge>
-                  )}
+                  <span className="text-body text-text-primary">{sprint.name}</span>
+                  {sprint.status === 'ACTIVE' && <Badge variant="success">Active</Badge>}
                   <span className="ml-auto font-mono text-xs text-text-muted">
-                    {sprint.doneCount} / {sprint.totalCount} —{" "}
-                    {sprint.percentage}%
+                    {sprint.doneCount} / {sprint.totalCount} — {sprint.percentage}%
                   </span>
                 </div>
                 <BarTrack
                   percent={sprint.percentage}
-                  fillClassName={
-                    sprint.status === "ACTIVE" ? "bg-accent" : "bg-text-muted"
-                  }
+                  fillClassName={sprint.status === 'ACTIVE' ? 'bg-accent' : 'bg-text-muted'}
                   className="w-full"
                 />
               </div>
@@ -171,22 +142,16 @@ export function ProjectAnalytics() {
         ) : (
           <div className="flex flex-col gap-3">
             {analytics.issuesByAssignee.map((assignee) => {
-              const name = displayName(assignee.user ?? { name: "Unassigned" });
+              const name = displayName(assignee.user ?? { name: 'Unassigned' });
               return (
-                <div
-                  key={assignee.user?.id ?? "unassigned"}
-                  className="flex items-center gap-3"
-                >
+                <div key={assignee.user?.id ?? 'unassigned'} className="flex items-center gap-3">
                   <Avatar name={name} size="sm" />
                   <div className="flex w-36 shrink-0 flex-col">
                     <span className="text-body text-text-primary">{name}</span>
                     <span className="text-2xs text-text-muted">
                       {assignee.count} issues
                       {assignee.overdueCount > 0 && (
-                        <span className="text-danger-text">
-                          {" "}
-                          · {assignee.overdueCount} overdue
-                        </span>
+                        <span className="text-danger-text"> · {assignee.overdueCount} overdue</span>
                       )}
                     </span>
                   </div>

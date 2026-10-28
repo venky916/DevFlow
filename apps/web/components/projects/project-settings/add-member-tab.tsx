@@ -1,40 +1,28 @@
-"use client";
+'use client';
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 
-import type { ProjectRole } from "@devflow/types";
-import { Button } from "@devflow/ui/components/button";
-import { Select } from "@devflow/ui/components/select";
-import { Spinner } from "@devflow/ui/components/spinner";
-import {
-  addProjectMemberSchema,
-  type AddProjectMemberInput,
-} from "@devflow/validators";
+import type { ProjectRole } from '@devflow/types';
+import { Button } from '@devflow/ui/components/button';
+import { Select } from '@devflow/ui/components/select';
+import { Spinner } from '@devflow/ui/components/spinner';
+import { addProjectMemberSchema, type AddProjectMemberInput } from '@devflow/validators';
 
-import {
-  useAddProjectMember,
-  useAvailableProjectMembers,
-} from "../../../hooks/use-projects";
-import { displayName, PROJECT_ROLE_OPTIONS } from "../../../lib/roles";
-import {PageError} from "../../shared/page-error";
-import { SectionHeading } from "../../shared/section-heading";
+import { useAddProjectMember, useAvailableProjectMembers } from '../../../hooks/use-projects';
+import { displayName, PROJECT_ROLE_OPTIONS } from '../../../lib/roles';
+import { PageError } from '../../shared/page-error';
+import { SectionHeading } from '../../shared/section-heading';
 
 export function AddMemberTab({ projectId }: { projectId: string }) {
-  const {
-    data: available,
-    isLoading,
-    isError,
-    refetch,
-  } = useAvailableProjectMembers(projectId);
+  const { data: available, isLoading, isError, refetch } = useAvailableProjectMembers(projectId);
   const { mutate: addMember, isPending } = useAddProjectMember(projectId);
 
-  const { handleSubmit, setValue, watch, reset } =
-    useForm<AddProjectMemberInput>({
-      resolver: zodResolver(addProjectMemberSchema),
-      defaultValues: { userId: "", role: "DEVELOPER" },
-    });
-  const userId = watch("userId");
+  const { handleSubmit, setValue, watch, reset } = useForm<AddProjectMemberInput>({
+    resolver: zodResolver(addProjectMemberSchema),
+    defaultValues: { userId: '', role: 'DEVELOPER' },
+  });
+  const userId = watch('userId');
 
   if (isLoading) {
     return (
@@ -44,9 +32,7 @@ export function AddMemberTab({ projectId }: { projectId: string }) {
     );
   }
   if (isError || !available) {
-    return (
-      <PageError message="Couldn't load members" onRetry={() => refetch()} />
-    );
+    return <PageError message="Couldn't load members" onRetry={() => refetch()} />;
   }
 
   const memberOptions = available.map((m) => ({
@@ -66,9 +52,7 @@ export function AddMemberTab({ projectId }: { projectId: string }) {
         </p>
       ) : (
         <form
-          onSubmit={handleSubmit((data) =>
-            addMember(data, { onSuccess: () => reset() }),
-          )}
+          onSubmit={handleSubmit((data) => addMember(data, { onSuccess: () => reset() }))}
           className="flex flex-col gap-3"
         >
           <Select
@@ -76,21 +60,16 @@ export function AddMemberTab({ projectId }: { projectId: string }) {
             placeholder="Select a member..."
             options={memberOptions}
             value={userId}
-            onValueChange={(value) => setValue("userId", value)}
+            onValueChange={(value) => setValue('userId', value)}
           />
           <Select
             label="Role"
             options={PROJECT_ROLE_OPTIONS}
-            value={watch("role")}
-            onValueChange={(role) => setValue("role", role as ProjectRole)}
+            value={watch('role')}
+            onValueChange={(role) => setValue('role', role as ProjectRole)}
           />
           <div>
-            <Button
-              type="submit"
-              size="sm"
-              loading={isPending}
-              disabled={!userId}
-            >
+            <Button type="submit" size="sm" loading={isPending} disabled={!userId}>
               Add to project
             </Button>
           </div>

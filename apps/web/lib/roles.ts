@@ -11,9 +11,6 @@ export const PROJECT_ROLE_OPTIONS = [
   { label: 'Viewer', value: 'VIEWER' },
 ];
 
-export function displayName(user?: { name?: string | null; email?: string | null }) {
-  if (!user) return 'Unknown';
-  if (user.name) return user.name;
-  if (user.email) return user.email.split('@')[0];
-  return 'Unknown';
+export function displayName(user?: { name?: string | null; email?: string | null } | null): string {
+  return user?.name || user?.email || 'Unknown';
 }

@@ -3,31 +3,29 @@
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 
-import type { IIssueWithRelations, IssueStatus } from '@devflow/types';
+import type { BoardStatus, IIssueCard } from '@devflow/types';
 import { cn } from '@devflow/ui/lib/cn';
 
 import { IssueCard } from './issue-card';
 
-const COLUMN_LABELS: Record<IssueStatus, string> = {
-  BACKLOG: 'Backlog',
+const COLUMN_LABELS: Record<BoardStatus, string> = {
   TODO: 'Todo',
   IN_PROGRESS: 'In Progress',
   IN_REVIEW: 'In Review',
   DONE: 'Done',
 };
 
-interface Props {
-  status: IssueStatus;
-  issues: IIssueWithRelations[];
+interface KanbanColumnProps {
+  status: BoardStatus;
+  issues: IIssueCard[];
   onIssueClick: (issueId: string) => void;
 }
 
-export function KanbanColumn({ status, issues, onIssueClick }: Props) {
+export function KanbanColumn({ status, issues, onIssueClick }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   return (
     <div className="flex min-w-[240px] flex-1 flex-col gap-2">
-      {/* Column header */}
       <div className="flex items-center justify-between px-1">
         <span className="font-mono text-[11px] tracking-[0.04em] text-text-muted uppercase">
           {COLUMN_LABELS[status]}
@@ -35,7 +33,6 @@ export function KanbanColumn({ status, issues, onIssueClick }: Props) {
         <span className="font-mono text-[11px] text-text-disabled">{issues.length}</span>
       </div>
 
-      {/* Cards */}
       <div
         ref={setNodeRef}
         className={cn(

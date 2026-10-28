@@ -1,17 +1,16 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { ArrowLeft, Menu, Search } from "lucide-react";
+import Link from 'next/link';
+import { ArrowLeft, Menu, Search } from 'lucide-react';
 
-import { usePageHeader } from "../../hooks/use-page-header";
+import { usePageHeader } from '../../hooks/use-page-header';
 
 interface PageHeaderProps {
   pageTitle?: string;
 }
 
 export function PageHeader({ pageTitle }: PageHeaderProps) {
-  const { crumbs, backHref, showBack, openSearch, toggleMobileDrawer } =
-    usePageHeader(pageTitle);
+  const { crumbs, backHref, showBack, openSearch, toggleMobileDrawer } = usePageHeader(pageTitle);
 
   return (
     <div className="flex h-9.5 shrink-0 items-center justify-between border-b border-border-default px-5">
@@ -33,20 +32,11 @@ export function PageHeader({ pageTitle }: PageHeaderProps) {
             <ArrowLeft className="size-3.5" />
           </Link>
         )}
-        <nav
-          aria-label="Breadcrumb"
-          className="flex items-center gap-1.5 font-mono text-xs"
-        >
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 font-mono text-xs">
           {crumbs.map((crumb, i) => (
             <span key={`${crumb}-${i}`} className="flex items-center gap-1.5">
               {i > 0 && <span className="text-text-muted">/</span>}
-              <span
-                className={
-                  i === crumbs.length - 1
-                    ? "text-text-secondary"
-                    : "text-text-muted"
-                }
-              >
+              <span className={i === crumbs.length - 1 ? 'text-text-secondary' : 'text-text-muted'}>
                 {crumb}
               </span>
             </span>

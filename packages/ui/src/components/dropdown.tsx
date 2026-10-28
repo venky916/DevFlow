@@ -1,18 +1,19 @@
-"use client";
+'use client';
 
-import { useRef, useEffect } from "react";
-import { cn } from "../lib/cn";
+import { useEffect, useRef } from 'react';
+
+import { cn } from '../lib/cn';
 
 // ─── DropdownMenu ─────────────────────────────────────────────────
 export function DropdownMenu({
   open,
   onClose,
-  anchor = "bottom",
+  anchor = 'bottom',
   children,
 }: {
   open: boolean;
   onClose: () => void;
-  anchor?: "bottom" | "top";
+  anchor?: 'bottom' | 'top';
   children: React.ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -22,8 +23,8 @@ export function DropdownMenu({
     function handler(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
     }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, [open, onClose]);
 
   if (!open) return null;
@@ -32,8 +33,8 @@ export function DropdownMenu({
     <div
       ref={ref}
       className={cn(
-        "absolute left-2 z-50 w-[184px] bg-bg-surface border border-border-default rounded-[4px] py-1 shadow-lg",
-        anchor === "bottom" ? "top-full mt-1" : "bottom-full mb-1",
+        'absolute left-2 z-50 w-[184px] rounded-[4px] border border-border-default bg-bg-surface py-1 shadow-lg',
+        anchor === 'bottom' ? 'top-full mt-1' : 'bottom-full mb-1',
       )}
     >
       {children}
@@ -57,8 +58,8 @@ export function IssueActionsDropdown({
     function handler(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
     }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, [open, onClose]);
 
   if (!open) return null;
@@ -66,7 +67,7 @@ export function IssueActionsDropdown({
   return (
     <div
       ref={ref}
-      className="absolute top-full right-0 mt-1 z-50 w-[184px] bg-bg-surface border border-border-default rounded-[4px] py-1 shadow-lg"
+      className="absolute top-full right-0 z-50 mt-1 w-[184px] rounded-[4px] border border-border-default bg-bg-surface py-1 shadow-lg"
     >
       {children}
     </div>
@@ -89,10 +90,10 @@ export function DropdownItem({
     <button
       onClick={onClick}
       className={cn(
-        "flex items-center gap-2 w-full px-3 py-1.5 text-[13px] transition-colors",
+        'flex w-full items-center gap-2 px-3 py-1.5 text-[13px] transition-colors',
         danger
-          ? "text-danger-text hover:bg-bg-hover"
-          : "text-text-secondary hover:bg-bg-hover hover:text-text-primary",
+          ? 'text-danger-text hover:bg-bg-hover'
+          : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary',
       )}
     >
       {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
@@ -103,13 +104,13 @@ export function DropdownItem({
 
 // ─── DropdownDivider ──────────────────────────────────────────────
 export function DropdownDivider() {
-  return <div className="h-px bg-border-default mx-2 my-1" />;
+  return <div className="mx-2 my-1 h-px bg-border-default" />;
 }
 
 // ─── DropdownLabel ────────────────────────────────────────────────
 export function DropdownLabel({ label }: { label: string }) {
   return (
-    <p className="text-[10px] text-text-muted uppercase tracking-[0.06em] font-mono px-3 py-1.5">
+    <p className="px-3 py-1.5 font-mono text-[10px] tracking-[0.06em] text-text-muted uppercase">
       {label}
     </p>
   );

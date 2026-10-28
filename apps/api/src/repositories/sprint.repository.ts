@@ -33,14 +33,20 @@ export const sprintRepository = {
 
   async complete(sprintId: string, endDate: Date) {
     return prisma.$transaction(async (tx) => {
-      await tx.issue.updateMany({
+      // unfinished issues go back to the backlog; the count comes from the same statement
+      const { count: incompleteCount } = await tx.issue.updateMany({
         where: { sprintId, status: { not: 'DONE' } },
         data: { status: 'BACKLOG', sprintId: null },
       });
-      return tx.sprint.update({
+      // what is still in the sprint now is exactly the finished work
+      const doneCount = await tx.issue.count({ where: { sprintId } });
+
+      await tx.sprint.update({
         where: { id: sprintId },
         data: { status: 'COMPLETED', endDate },
       });
+
+      return { doneCount, incompleteCount };
     });
   },
 

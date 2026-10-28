@@ -1,8 +1,8 @@
-import Link from "next/link";
+import Link from 'next/link';
 
-import { ROUTES } from "../../constants/routes";
-import { Logo } from "../shared/logo";
-import { SidebarContent } from "./sidebar-content";
+import { ROUTES } from '../../constants/routes';
+import { Logo } from '../shared/logo';
+import { SidebarContent } from './sidebar-content';
 
 export function DesktopSidebar() {
   return (

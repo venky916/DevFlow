@@ -5,10 +5,13 @@ import { Calendar, ChevronDown, X } from 'lucide-react';
 
 import type { IUserPublic } from '@devflow/types';
 
-import { useProjectSprints } from '../../hooks/use-issues';
-
-import { PRIORITY_OPTIONS, TYPE_OPTIONS } from '../../lib/issue-constants';
 import { useProjectLabels } from '../../hooks/use-projects';
+import { useSprints } from '../../hooks/use-sprints';
+import { PRIORITY_OPTIONS, TYPE_OPTIONS } from '../../lib/issue-constants';
+import type { DueDatePreset, IssueFilters } from '../../lib/issue-filters';
+
+// other files still import these from here
+export type { DueDatePreset, IssueFilters };
 
 export type FilterField =
   | 'assignee'
@@ -18,21 +21,6 @@ export type FilterField =
   | 'dueDate'
   | 'project'
   | 'sprint';
-export type DueDatePreset = 'overdue' | 'today' | 'this_week' | 'no_due_date' | 'custom';
-
-export interface IssueFilters {
-  assigneeId?: string;
-  labelId?: string;
-  priority?: string;
-  type?: string;
-  dueDateFrom?: string;
-  dueDateTo?: string;
-  noDueDate?: boolean;
-  dueDatePreset?: DueDatePreset; // UI-only — not sent to the API directly
-  projectId?: string;
-  sprintId?: string;
-  q?: string; // ← new
-}
 
 interface Props {
   fields: FilterField[];
@@ -90,6 +78,7 @@ function FilterDropdown({
   return (
     <div ref={ref} className="relative">
       <button
+        type="button"
         onClick={() => setOpen((v) => !v)}
         className={`flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-[12px] transition-colors ${
           activeLabel
@@ -114,12 +103,13 @@ function FilterDropdown({
         <div className="absolute z-10 mt-1 min-w-[140px] rounded-[4px] border border-border-default bg-bg-surface py-1 shadow-lg">
           {options.map((o) => (
             <button
+              type="button"
               key={o.value}
               onClick={() => {
                 onSelect(o.value);
                 setOpen(false);
               }}
-              className="hover:bg-bg-surface-hover w-full px-3 py-1.5 text-left text-[12px] text-text-primary transition-colors"
+              className="w-full px-3 py-1.5 text-left text-[12px] text-text-primary transition-colors hover:bg-bg-hover"
             >
               {o.label}
             </button>
@@ -196,7 +186,7 @@ function DueDateFilter({
       });
       setOpen(false);
     } else {
-      // custom — keep popover open so the date inputs below can be used
+      // custom: keep the popover open so the date inputs below can be used
       onChange({ ...filters, dueDatePreset: preset, noDueDate: undefined });
     }
   };
@@ -213,6 +203,7 @@ function DueDateFilter({
   return (
     <div ref={ref} className="relative">
       <button
+        type="button"
         onClick={() => setOpen((v) => !v)}
         className={`flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-[12px] transition-colors ${
           activeLabel
@@ -236,9 +227,10 @@ function DueDateFilter({
         <div className="absolute z-10 mt-1 min-w-[180px] rounded-[4px] border border-border-default bg-bg-surface py-1 shadow-lg">
           {DUE_DATE_PRESETS.map((p) => (
             <button
+              type="button"
               key={p.value}
               onClick={() => applyPreset(p.value)}
-              className="hover:bg-bg-surface-hover w-full px-3 py-1.5 text-left text-[12px] text-text-primary transition-colors"
+              className="w-full px-3 py-1.5 text-left text-[12px] text-text-primary transition-colors hover:bg-bg-hover"
             >
               {p.label}
             </button>
@@ -293,16 +285,16 @@ export function FilterBar({
   // sprint options depend on WHICHEVER project is currently selected in
   // the filters themselves (My Issues context), not a fixed projectId prop
   const needsSprints = fields.includes('sprint') && !!filters.projectId;
-  const { data: sprints } = useProjectSprints(needsSprints ? filters.projectId! : '');
+  const { data: sprints } = useSprints(needsSprints ? filters.projectId! : '');
   const sprintOptions = sprints?.map((s) => ({ label: s.name, value: s.id })) ?? [];
 
   const memberOptions = members?.map((m) => ({ label: m.name ?? m.email, value: m.id })) ?? [];
-  const labelOptions = labels?.map((l: any) => ({ label: l.name, value: l.id })) ?? [];
+  const labelOptions = labels?.map((l) => ({ label: l.name, value: l.id })) ?? [];
 
   const set = (key: keyof IssueFilters) => (value: string | undefined) =>
     onChange({ ...filters, [key]: value });
 
-  // picking a new project invalidates any sprint already selected —
+  // picking a new project invalidates any sprint already selected:
   // a sprintId from the old project means nothing under the new one
   const setProject = (value: string | undefined) =>
     onChange({ ...filters, projectId: value, sprintId: undefined });
@@ -364,6 +356,7 @@ export function FilterBar({
       {fields.includes('dueDate') && <DueDateFilter filters={filters} onChange={onChange} />}
       {hasFilters && (
         <button
+          type="button"
           onClick={() => onChange({})}
           className="text-[11px] text-text-muted transition-colors hover:text-text-primary"
         >

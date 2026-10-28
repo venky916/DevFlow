@@ -1,33 +1,27 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 
-import { Button } from "@devflow/ui/components/button";
-import { ImageUploadButton } from "@devflow/ui/components/image-upload-button";
-import { Input } from "@devflow/ui/components/input";
-import { Modal } from "@devflow/ui/components/modal";
-import {
-  createWorkspaceSchema,
-  type CreateWorkspaceInput,
-} from "@devflow/validators";
+import { Button } from '@devflow/ui/components/button';
+import { ImageUploadButton } from '@devflow/ui/components/image-upload-button';
+import { Input } from '@devflow/ui/components/input';
+import { Modal } from '@devflow/ui/components/modal';
+import { createWorkspaceSchema, type CreateWorkspaceInput } from '@devflow/validators';
 
-import { useCreateWorkspace } from "../../hooks/use-workspaces";
-import { slugify } from "../../lib/slugify";
-import { useUploadImage } from "../../hooks/use-upload";
+import { useUploadImage } from '../../hooks/use-upload';
+import { useCreateWorkspace } from '../../hooks/use-workspaces';
+import { slugify } from '../../lib/slugify';
 
 interface CreateWorkspaceModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-export function CreateWorkspaceModal({
-  open,
-  onClose,
-}: CreateWorkspaceModalProps) {
+export function CreateWorkspaceModal({ open, onClose }: CreateWorkspaceModalProps) {
   const { mutate: createWorkspace, isPending } = useCreateWorkspace();
-  const { uploadImage, isUploading } = useUploadImage("logos");
+  const { uploadImage, isUploading } = useUploadImage('logos');
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -42,7 +36,7 @@ export function CreateWorkspaceModal({
     resolver: zodResolver(createWorkspaceSchema),
   });
 
-  const name = watch("name");
+  const name = watch('name');
 
   const handleClose = () => {
     reset();
@@ -58,7 +52,7 @@ export function CreateWorkspaceModal({
     else setPreviewUrl(null);
   };
 
-  const nameField = register("name");
+  const nameField = register('name');
 
   return (
     <Modal
@@ -69,16 +63,13 @@ export function CreateWorkspaceModal({
     >
       <form
         onSubmit={handleSubmit((data) =>
-          createWorkspace(
-            { ...data, logoUrl: logoUrl ?? undefined },
-            { onSuccess: handleClose },
-          ),
+          createWorkspace({ ...data, logoUrl: logoUrl ?? undefined }, { onSuccess: handleClose }),
         )}
         className="flex flex-col gap-4"
       >
         <ImageUploadButton
           src={previewUrl ?? logoUrl}
-          fallbackLabel={name?.charAt(0).toUpperCase() || "?"}
+          fallbackLabel={name?.charAt(0).toUpperCase() || '?'}
           shape="square"
           size={56}
           isUploading={isUploading}
@@ -91,14 +82,14 @@ export function CreateWorkspaceModal({
           {...nameField}
           onChange={(e) => {
             nameField.onChange(e);
-            setValue("slug", slugify(e.target.value));
+            setValue('slug', slugify(e.target.value));
           }}
         />
         <Input
           label="Slug"
           placeholder="acme-inc"
           error={errors.slug?.message}
-          {...register("slug")}
+          {...register('slug')}
         />
         <div className="mt-2 flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={handleClose}>

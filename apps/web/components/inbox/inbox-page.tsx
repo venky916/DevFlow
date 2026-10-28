@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { Bell, CheckCheck, Trash2 } from "lucide-react";
+import { Bell, CheckCheck, Trash2 } from 'lucide-react';
 
-import type { INotification } from "@devflow/types";
-import { Button } from "@devflow/ui/components/button";
+import type { INotification } from '@devflow/types';
+import { Button } from '@devflow/ui/components/button';
 
 import {
   useClearReadNotifications,
@@ -11,11 +11,11 @@ import {
   useMarkAllAsRead,
   useMarkAsRead,
   useNotifications,
-} from "../../hooks/use-notifications";
-import { useSidebarCounts } from "../../hooks/use-user";
-import {PageError} from "../shared/page-error";
-import {PageLoading} from "../shared/page-loading";
-import { NotificationRow } from "./notification-row";
+} from '../../hooks/use-notifications';
+import { useSidebarCounts } from '../../hooks/use-user';
+import { PageError } from '../shared/page-error';
+import { PageLoading } from '../shared/page-loading';
+import { NotificationRow } from './notification-row';
 
 interface NotificationGroupProps {
   label: string;
@@ -24,20 +24,13 @@ interface NotificationGroupProps {
   onDelete: (id: string) => void;
 }
 
-function NotificationGroup({
-  label,
-  notifications,
-  onRead,
-  onDelete,
-}: NotificationGroupProps) {
+function NotificationGroup({ label, notifications, onRead, onDelete }: NotificationGroupProps) {
   if (notifications.length === 0) return null;
 
   return (
     <>
       <div className="border-b border-border-default bg-bg-app px-5 py-2">
-        <p className="font-mono text-2xs tracking-wider text-text-muted uppercase">
-          {label}
-        </p>
+        <p className="font-mono text-2xs tracking-wider text-text-muted uppercase">{label}</p>
       </div>
       {notifications.map((notification) => (
         <NotificationRow
@@ -67,18 +60,12 @@ export function InboxPage() {
   const { data: counts } = useSidebarCounts();
   const { mutate: markAsRead } = useMarkAsRead();
   const { mutate: markAllAsRead, isPending: markingAll } = useMarkAllAsRead();
-  const { mutate: clearRead, isPending: clearing } =
-    useClearReadNotifications();
+  const { mutate: clearRead, isPending: clearing } = useClearReadNotifications();
   const { mutate: deleteNotification } = useDeleteNotification();
 
   if (feed.isLoading) return <PageLoading />;
   if (feed.isError) {
-    return (
-      <PageError
-        message="Couldn't load your notifications"
-        onRetry={() => feed.refetch()}
-      />
-    );
+    return <PageError message="Couldn't load your notifications" onRetry={() => feed.refetch()} />;
   }
 
   const unread = feed.notifications.filter((n) => !n.isRead);
@@ -100,23 +87,13 @@ export function InboxPage() {
 
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              loading={markingAll}
-              onClick={() => markAllAsRead()}
-            >
+            <Button variant="ghost" size="sm" loading={markingAll} onClick={() => markAllAsRead()}>
               <CheckCheck className="mr-1.5 size-3.5" />
               Mark all read
             </Button>
           )}
           {read.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              loading={clearing}
-              onClick={() => clearRead()}
-            >
+            <Button variant="ghost" size="sm" loading={clearing} onClick={() => clearRead()}>
               <Trash2 className="mr-1.5 size-3.5" />
               Clear read
             </Button>

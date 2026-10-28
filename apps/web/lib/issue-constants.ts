@@ -57,6 +57,8 @@ export const TYPE_OPTIONS = [
 ];
 
 export const STATUS_ORDER: IssueStatus[] = ['BACKLOG', 'TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'];
+// Backlog is not a status you pick: an issue leaves it by moving into a sprint
+export const BOARD_STATUS_OPTIONS = STATUS_OPTIONS.filter((o) => o.value !== 'BACKLOG');
 
 export const STATUS_COLORS: Record<IssueStatus, string> = {
   BACKLOG: '#555555',
@@ -93,17 +95,16 @@ const FIELD_MESSAGES: Record<string, (from: any, to: any) => string> = {
   status: (from, to) =>
     `moved from ${STATUS_LABELS[from as IssueStatus] ?? from} to ${STATUS_LABELS[to as IssueStatus] ?? to}`,
 };
-
-export function activityText(action: string, meta?: Record<string, any>): string[] {
+export function activityText(action: string, meta?: Record<string, any> | null): string[] {
   switch (action) {
     case 'ISSUE_CREATED':
       return [meta?.parentId ? 'created this sub-issue' : 'created this issue'];
 
     case 'ISSUE_UPDATED': {
-      if (meta?.attachedToParent) return ['attached as sub-issue'];
-      if (meta?.detachedFromParent) return ['detached from parent'];
-
       const changes = meta?.changes ?? {};
+      if (changes.attachedToParent) return ['attached as sub-issue'];
+      if (changes.detachedFromParent) return ['detached from parent'];
+
       const lines = Object.entries(changes)
         .map(([field, val]: [string, any]) => {
           if (!val || typeof val !== 'object' || !('to' in val)) return null;
@@ -118,8 +119,8 @@ export function activityText(action: string, meta?: Record<string, any>): string
       return meta?.from === meta?.to
         ? [`reordered to ${STATUS_LABELS[meta?.to as IssueStatus] ?? meta?.to}`]
         : [
-          `moved from ${STATUS_LABELS[meta?.from as IssueStatus] ?? meta?.from} to ${STATUS_LABELS[meta?.to as IssueStatus] ?? meta?.to}`,
-        ];
+            `moved from ${STATUS_LABELS[meta?.from as IssueStatus] ?? meta?.from} to ${STATUS_LABELS[meta?.to as IssueStatus] ?? meta?.to}`,
+          ];
 
     case 'ISSUE_ASSIGNED':
       return ['was assigned this issue'];
@@ -139,6 +140,12 @@ export function activityText(action: string, meta?: Record<string, any>): string
 
     case 'COMMENT_DELETED':
       return ['deleted a comment'];
+
+    case 'ATTACHMENT_ADDED':
+      return [`attached a file: ${meta?.fileName ?? ''}`];
+
+    case 'ATTACHMENT_DELETED':
+      return [`removed a file: ${meta?.fileName ?? ''}`];
 
     case 'SPRINT_CREATED':
       return [`created sprint: ${meta?.sprintName ?? ''}`];

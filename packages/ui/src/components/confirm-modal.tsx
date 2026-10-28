@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { createPortal } from "react-dom";
-import { AlertTriangle } from "lucide-react";
-import { cn } from "../lib/cn";
-import { Button } from "./button";
+import { AlertTriangle } from 'lucide-react';
+import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
+
+import { cn } from '../lib/cn';
+import { Button } from './button';
 
 interface ConfirmModalProps {
   open: boolean;
@@ -14,7 +15,7 @@ interface ConfirmModalProps {
   description: string;
   confirmLabel?: string;
   isLoading?: boolean;
-  variant?: "danger" | "warning";
+  variant?: 'danger' | 'warning';
 }
 
 export function ConfirmModal({
@@ -23,16 +24,16 @@ export function ConfirmModal({
   onConfirm,
   title,
   description,
-  confirmLabel = "Confirm",
+  confirmLabel = 'Confirm',
   isLoading = false,
-  variant = "danger",
+  variant = 'danger',
 }: ConfirmModalProps) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === 'Escape') onClose();
     };
-    if (open) document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
+    if (open) document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
   if (!open) return null;
@@ -46,50 +47,34 @@ export function ConfirmModal({
         <div className="flex gap-4">
           <div
             className={cn(
-              "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-              variant === "danger" ? "bg-danger-text/10" : "bg-warning/10",
+              'flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
+              variant === 'danger' ? 'bg-danger-text/10' : 'bg-warning/10',
             )}
           >
             <AlertTriangle
-              className={cn(
-                "h-4 w-4",
-                variant === "danger" ? "text-danger-text" : "text-warning",
-              )}
+              className={cn('h-4 w-4', variant === 'danger' ? 'text-danger-text' : 'text-warning')}
             />
           </div>
 
           <div className="flex flex-col gap-1">
-            <h2 className="text-[14px] font-medium text-text-primary">
-              {title}
-            </h2>
-            <p className="text-[13px] text-text-muted leading-relaxed">
-              {description}
-            </p>
+            <h2 className="text-[14px] font-medium text-text-primary">{title}</h2>
+            <p className="text-[13px] leading-relaxed text-text-muted">{description}</p>
           </div>
         </div>
 
         <div className="mt-5 flex justify-end gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            disabled={isLoading}
-          >
+          <Button variant="ghost" size="sm" onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
           <Button
-            variant={variant === "danger" ? "danger" : "primary"}
+            variant={variant === 'danger' ? 'danger' : 'primary'}
             size="sm"
             onClick={onConfirm}
             disabled={isLoading}
           >
             {isLoading ? (
               <span className="flex items-center gap-1.5">
-                <svg
-                  className="h-3.5 w-3.5 animate-spin"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                >
+                <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
                   <circle
                     className="opacity-25"
                     cx="12"

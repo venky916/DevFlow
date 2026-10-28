@@ -1,16 +1,12 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import {
-  Download,
-  ExternalLink,
-  Trash2,
-  FileText,
-  Loader2,
-} from "lucide-react";
-import { Modal } from "./modal";
-import { Button } from "./button";
-import type { UploadedFileInfo } from "@devflow/types";
+import { Download, ExternalLink, FileText, Loader2, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+
+import type { UploadedFileInfo } from '@devflow/types';
+
+import { Button } from './button';
+import { Modal } from './modal';
 
 interface AttachmentPreviewModalProps {
   open: boolean;
@@ -41,10 +37,10 @@ export function AttachmentPreviewModal({
 
   if (!file) return null;
 
-  const isImage = file.mimeType.startsWith("image/");
+  const isImage = file.mimeType.startsWith('image/');
 
   const handleOpen = () => {
-    window.open(file.url, "_blank", "noopener,noreferrer");
+    window.open(file.url, '_blank', 'noopener,noreferrer');
   };
 
   const handleDownload = async () => {
@@ -70,10 +66,10 @@ export function AttachmentPreviewModal({
           <img
             src={file.url}
             alt={file.fileName}
-            className="w-full max-h-[380px] object-contain rounded-[4px] bg-bg-overlay"
+            className="max-h-[380px] w-full rounded-[4px] bg-bg-overlay object-contain"
           />
         ) : (
-          <div className="w-full h-[160px] flex flex-col items-center justify-center gap-2 rounded-[4px] bg-bg-overlay">
+          <div className="flex h-[160px] w-full flex-col items-center justify-center gap-2 rounded-[4px] bg-bg-overlay">
             <FileText className="h-8 w-8 text-text-muted" />
             <span className="text-[12px] text-text-muted">
               Preview not available for this file type
@@ -81,7 +77,7 @@ export function AttachmentPreviewModal({
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-2 pt-3 border-t border-border-default">
+        <div className="flex items-center justify-between gap-2 border-t border-border-default pt-3">
           <div className="flex items-center">
             {canDelete && onDelete && (
               <Button
@@ -89,7 +85,7 @@ export function AttachmentPreviewModal({
                 size="sm"
                 onClick={onDelete}
                 disabled={isDeleting}
-                className="flex items-center gap-1.5 text-danger-text hover:bg-danger-subtle"
+                className="hover:bg-danger-subtle flex items-center gap-1.5 text-danger-text"
               >
                 {isDeleting ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />

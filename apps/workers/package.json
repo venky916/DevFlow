@@ -1,7 +1,7 @@
 {
-  "name": "@devflow/workers",
+  "name": "workers",
   "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc -b",
@@ -10,13 +10,9 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc --noEmit"
+    "check-types": "tsc --noEmit"
   },
-  "keywords": [],
-  "prettier": "@devflow/config/prettier",
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "prettier": "@devflow/config/prettier.js",
   "dependencies": {
     "@devflow/backend-common": "workspace:*",
     "@devflow/db": "workspace:*",
@@ -30,11 +26,9 @@
   },
   "devDependencies": {
     "@devflow/config": "workspace:*",
-    "@repo/eslint-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
     "@types/node": "^25.7.0",
     "@types/nodemailer": "^8.0.0",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.3"
+    "typescript": "5.9.2"
   }
 }

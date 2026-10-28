@@ -1,24 +1,24 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
+import { useState } from 'react';
+import { Check, Pencil, Plus, Trash2, X } from 'lucide-react';
 
-import type { IProjectLabel } from "@devflow/types";
-import { cn } from "@devflow/ui/lib/cn";
-import { Button } from "@devflow/ui/components/button";
-import { ColorDot } from "@devflow/ui/components/color-dot";
-import { DEFAULT_PROJECT_COLOR } from "@devflow/ui/components/color-picker";
-import { ConfirmModal } from "@devflow/ui/components/confirm-modal";
-import { Spinner } from "@devflow/ui/components/spinner";
+import type { IProjectLabel } from '@devflow/types';
+import { Button } from '@devflow/ui/components/button';
+import { ColorDot } from '@devflow/ui/components/color-dot';
+import { DEFAULT_PROJECT_COLOR } from '@devflow/ui/components/color-picker';
+import { ConfirmModal } from '@devflow/ui/components/confirm-modal';
+import { Spinner } from '@devflow/ui/components/spinner';
+import { cn } from '@devflow/ui/lib/cn';
 
 import {
   useCreateLabel,
   useDeleteLabel,
   useProjectLabels,
   useUpdateLabel,
-} from "../../../hooks/use-projects";
-import {PageError} from "../../shared/page-error";
-import { SectionHeading } from "../../shared/section-heading";
+} from '../../../hooks/use-projects';
+import { PageError } from '../../shared/page-error';
+import { SectionHeading } from '../../shared/section-heading';
 
 interface EditState {
   name: string;
@@ -26,25 +26,19 @@ interface EditState {
 }
 
 export function LabelsTab({ projectId }: { projectId: string }) {
-  const {
-    data: labels,
-    isLoading,
-    isError,
-    refetch,
-  } = useProjectLabels(projectId);
-  const { mutate: createLabel, isPending: isCreating } =
-    useCreateLabel(projectId);
+  const { data: labels, isLoading, isError, refetch } = useProjectLabels(projectId);
+  const { mutate: createLabel, isPending: isCreating } = useCreateLabel(projectId);
   const { mutate: updateLabel } = useUpdateLabel(projectId);
   const { mutate: deleteLabel } = useDeleteLabel(projectId);
 
   const [showCreate, setShowCreate] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newColor, setNewColor] = useState(DEFAULT_PROJECT_COLOR);
+  const [newName, setNewName] = useState('');
+  const [newColor, setNewColor] = useState<string>('#38BDF8');
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editState, setEditState] = useState<EditState>({
-    name: "",
-    color: "",
+    name: '',
+    color: '',
   });
 
   const [deletingLabel, setDeletingLabel] = useState<{
@@ -59,7 +53,7 @@ export function LabelsTab({ projectId }: { projectId: string }) {
       { name, color: newColor },
       {
         onSuccess: () => {
-          setNewName("");
+          setNewName('');
           setNewColor(DEFAULT_PROJECT_COLOR);
           setShowCreate(false);
         },
@@ -94,24 +88,15 @@ export function LabelsTab({ projectId }: { projectId: string }) {
     );
   }
   if (isError || !labels) {
-    return (
-      <PageError message="Couldn't load labels" onRetry={() => refetch()} />
-    );
+    return <PageError message="Couldn't load labels" onRetry={() => refetch()} />;
   }
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-start justify-between">
-        <SectionHeading
-          title="Labels"
-          description="Used to categorize issues."
-        />
+        <SectionHeading title="Labels" description="Used to categorize issues." />
         {!showCreate && (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setShowCreate(true)}
-          >
+          <Button variant="secondary" size="sm" onClick={() => setShowCreate(true)}>
             <Plus className="mr-1.5 size-3.5" />
             New label
           </Button>
@@ -132,8 +117,8 @@ export function LabelsTab({ projectId }: { projectId: string }) {
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleCreate();
-                  if (e.key === "Escape") setShowCreate(false);
+                  if (e.key === 'Enter') handleCreate();
+                  if (e.key === 'Escape') setShowCreate(false);
                 }}
                 placeholder="Label name..."
                 className="h-7 flex-1 bg-transparent px-1.5 text-body text-text-primary outline-none placeholder:text-text-muted"
@@ -162,8 +147,8 @@ export function LabelsTab({ projectId }: { projectId: string }) {
             <div
               key={label.id}
               className={cn(
-                "group flex items-center gap-3 px-3 py-2",
-                (i > 0 || showCreate) && "border-t border-border-default",
+                'group flex items-center gap-3 px-3 py-2',
+                (i > 0 || showCreate) && 'border-t border-border-default',
               )}
             >
               {editingId === label.id ? (
@@ -175,12 +160,10 @@ export function LabelsTab({ projectId }: { projectId: string }) {
                   <input
                     autoFocus
                     value={editState.name}
-                    onChange={(e) =>
-                      setEditState((s) => ({ ...s, name: e.target.value }))
-                    }
+                    onChange={(e) => setEditState((s) => ({ ...s, name: e.target.value }))}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") handleUpdate(label.id);
-                      if (e.key === "Escape") setEditingId(null);
+                      if (e.key === 'Enter') handleUpdate(label.id);
+                      if (e.key === 'Escape') setEditingId(null);
                     }}
                     className="h-7 flex-1 bg-transparent px-1.5 text-body text-text-primary outline-none"
                   />
@@ -207,9 +190,7 @@ export function LabelsTab({ projectId }: { projectId: string }) {
                     className="size-2 shrink-0 rounded-full"
                     style={{ backgroundColor: label.color }}
                   />
-                  <span className="flex-1 text-body text-text-primary">
-                    {label.name}
-                  </span>
+                  <span className="flex-1 text-body text-text-primary">{label.name}</span>
                   <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                     <button
                       type="button"
@@ -221,9 +202,7 @@ export function LabelsTab({ projectId }: { projectId: string }) {
                     </button>
                     <button
                       type="button"
-                      onClick={() =>
-                        setDeletingLabel({ id: label.id, name: label.name })
-                      }
+                      onClick={() => setDeletingLabel({ id: label.id, name: label.name })}
                       className="flex size-6 items-center justify-center rounded-sm text-text-muted transition-colors hover:bg-danger-bg hover:text-danger-text"
                       aria-label="Delete label"
                     >

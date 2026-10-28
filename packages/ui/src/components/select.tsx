@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
-import { useId } from "react";
-import * as RadixSelect from "@radix-ui/react-select";
-import { Check, ChevronDown } from "lucide-react";
-import { cn } from "../lib/cn";
+import * as RadixSelect from '@radix-ui/react-select';
+import { Check, ChevronDown } from 'lucide-react';
+import { useId } from 'react';
+
+import { cn } from '../lib/cn';
 
 export interface SelectOption {
   label: string;
@@ -24,7 +25,7 @@ export function Select({
   options,
   value,
   onValueChange,
-  placeholder = "Select...",
+  placeholder = 'Select...',
   label,
   disabled,
   className,
@@ -34,25 +35,18 @@ export function Select({
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label
-          htmlFor={id}
-          className="font-mono text-2xs tracking-wide text-text-muted uppercase"
-        >
+        <label htmlFor={id} className="font-mono text-2xs tracking-wide text-text-muted uppercase">
           {label}
         </label>
       )}
-      <RadixSelect.Root
-        value={value}
-        onValueChange={onValueChange}
-        disabled={disabled}
-      >
+      <RadixSelect.Root value={value} onValueChange={onValueChange} disabled={disabled}>
         <RadixSelect.Trigger
           id={id}
           className={cn(
-            "flex h-8 w-full items-center justify-between rounded-base border border-border-emphasis bg-bg-surface px-3 text-sm text-text-primary",
-            "focus:border-accent focus:outline-none",
-            "disabled:cursor-not-allowed disabled:opacity-50",
-            "data-[placeholder]:text-text-disabled",
+            'flex h-8 w-full items-center justify-between rounded-base border border-border-emphasis bg-bg-surface px-3 text-sm text-text-primary',
+            'focus:border-accent focus:outline-none',
+            'disabled:cursor-not-allowed disabled:opacity-50',
+            'data-[placeholder]:text-text-disabled',
             className,
           )}
         >
@@ -77,10 +71,10 @@ export function Select({
                     key={opt.value}
                     value={opt.value}
                     className={cn(
-                      "relative flex cursor-pointer items-center rounded-sm py-1.5 pr-3 pl-7 text-sm text-text-secondary outline-none select-none",
-                      "hover:bg-bg-hover hover:text-text-primary",
-                      "data-[highlighted]:bg-bg-hover data-[highlighted]:text-text-primary",
-                      "data-[state=checked]:text-text-primary",
+                      'relative flex cursor-pointer items-center rounded-sm py-1.5 pr-3 pl-7 text-sm text-text-secondary outline-none select-none',
+                      'hover:bg-bg-hover hover:text-text-primary',
+                      'data-[highlighted]:bg-bg-hover data-[highlighted]:text-text-primary',
+                      'data-[state=checked]:text-text-primary',
                     )}
                   >
                     <RadixSelect.ItemIndicator className="absolute left-2 flex items-center justify-center">

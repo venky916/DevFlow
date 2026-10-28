@@ -2,18 +2,19 @@
 
 import { ArrowUp } from 'lucide-react';
 
-import type { IIssueWithRelations } from '@devflow/types';
+import type { IIssueDetail } from '@devflow/types';
 
-interface Props {
-  issue: IIssueWithRelations;
+interface ParentLinkProps {
+  issue: IIssueDetail;
   onNavigate: (issueId: string) => void;
 }
 
-export function ParentLink({ issue, onNavigate }: Props) {
+export function ParentLink({ issue, onNavigate }: ParentLinkProps) {
   if (!issue.parent) return null;
 
   return (
     <button
+      type="button"
       onClick={() => onNavigate(issue.parent!.id)}
       className="flex w-fit items-center gap-1.5 text-[12px] text-text-muted transition-colors hover:text-text-primary"
     >
