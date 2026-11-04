@@ -1,0 +1,7 @@
+devflow-api.duckdns.org {
+    reverse_proxy api:4000
+}
+
+devflow-ws.duckdns.org {
+    reverse_proxy ws:4001
+}

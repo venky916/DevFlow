@@ -1,0 +1,62 @@
+x-logging: &logging
+  driver: json-file
+  options: { max-size: '10m', max-file: '3' }
+
+services:
+  redis-cache:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    logging: *logging
+
+  redis-queue:
+    image: redis:7-alpine
+    command: redis-server --maxmemory-policy noeviction --appendonly yes
+    volumes: [redis-queue-data:/data]
+    restart: unless-stopped
+    logging: *logging
+
+  redis-pubsub:
+    image: redis:7-alpine
+    command: redis-server --maxmemory-policy noeviction
+    restart: unless-stopped
+    logging: *logging
+
+  api:
+    image: venkateshmaliga/devflow-api:${TAG:-latest}
+    env_file: apps/api/.env
+    ports: ['127.0.0.1:4000:4000']
+    depends_on: [redis-cache, redis-queue, redis-pubsub]
+    restart: unless-stopped
+    logging: *logging
+
+  ws:
+    image: venkateshmaliga/devflow-ws:${TAG:-latest}
+    env_file: apps/ws/.env
+    ports: ['127.0.0.1:4001:4001']
+    depends_on: [redis-pubsub]
+    restart: unless-stopped
+    logging: *logging
+
+  workers:
+    image: venkateshmaliga/devflow-workers:${TAG:-latest}
+    env_file: apps/workers/.env
+    depends_on: [redis-queue, redis-pubsub]
+    restart: unless-stopped
+    logging: *logging
+
+  caddy:
+    image: caddy:2
+    ports: ['80:80', '443:443']
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on: [api, ws]
+    restart: unless-stopped
+    logging: *logging
+
+volumes:
+  redis-queue-data:
+  caddy-data:
+  caddy-config:

@@ -16,6 +16,7 @@ services:
     ports: ["6382:6379"]
 
   api:
+    image: venkateshmaliga/devflow-api:${TAG:-latest}
     build:
       context: .
       dockerfile: docker/api.Dockerfile
@@ -24,6 +25,7 @@ services:
     depends_on: [redis-cache, redis-queue, redis-pubsub]
 
   ws:
+    image: venkateshmaliga/devflow-ws:${TAG:-latest}
     build:
       context: .
       dockerfile: docker/ws.Dockerfile
@@ -32,6 +34,7 @@ services:
     depends_on: [redis-pubsub]
 
   workers:
+    image: venkateshmaliga/devflow-workers:${TAG:-latest}
     build:
       context: .
       dockerfile: docker/workers.Dockerfile

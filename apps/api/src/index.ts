@@ -16,7 +16,7 @@ app.use(express.json());
 app.use(requestLogger);
 
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
 });
 
 app.use('/api/v1', v1Routes);
