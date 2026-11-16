@@ -8,9 +8,9 @@ import { UserEvents } from '@devflow/types';
 async function notificationFunction(job: Job<NotificationJobData>) {
   const { userId, type, content, link, triggeredBy } = job.data;
 
-  logger.info({ jobId: job.id, type }, 'Processing notification job');
+  logger.debug({ jobId: job.id, type }, 'Processing notification job');
 
-  // Step 1 — write to DB (persists for offline users)
+  // Step 1: write to the database (persists for offline users)
   const notification = await prisma.notification.create({
     data: {
       userId,
@@ -22,10 +22,7 @@ async function notificationFunction(job: Job<NotificationJobData>) {
     },
   });
 
-  logger.info({ jobId: job.id, type }, 'Notification written');
-
-  // Step 2 — broadcast via Redis pub/sub → WS server picks it up
-  // WS server sends it live if user is connected
+  // Step 2: broadcast through Redis pub/sub. The ws server sends it live if the user is connected.
   await publisher.publish(
     `user:${userId}`,
     JSON.stringify({
@@ -40,7 +37,6 @@ async function notificationFunction(job: Job<NotificationJobData>) {
       },
     }),
   );
-  logger.info({ jobId: job.id, userId }, 'Notification sent');
 }
 
 export const notificationWorker = new Worker<NotificationJobData>(
@@ -52,17 +48,17 @@ export const notificationWorker = new Worker<NotificationJobData>(
 (async () => {
   try {
     await notificationWorker.waitUntilReady();
-    logger.info('✅ Notification worker connected to Redis');
-  } catch (error) {
-    logger.error({ error }, '❌ Activity worker FAILED to connect to Redis');
+    logger.info('Notification worker connected to Redis');
+  } catch (err) {
+    logger.error({ err }, 'Notification worker could not connect to Redis');
     process.exit(1);
   }
 })();
 
 notificationWorker.on('completed', (job) => {
-  logger.info({ jobId: job.id }, 'Notification job completed');
+  logger.info({ jobId: job.id, type: job.data.type }, 'Notification job completed');
 });
 
-notificationWorker.on('failed', (job, error) => {
-  logger.error({ jobId: job?.id, error }, 'Notification job failed');
+notificationWorker.on('failed', (job, err) => {
+  logger.error({ jobId: job?.id, err }, 'Notification job failed');
 });

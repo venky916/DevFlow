@@ -6,6 +6,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import type { BoardStatus, IIssueCard } from '@devflow/types';
 import { cn } from '@devflow/ui/lib/cn';
 
+import type { RemoteDrag } from '../../hooks/events/use-board-drags';
 import { IssueCard } from './issue-card';
 
 const COLUMN_LABELS: Record<BoardStatus, string> = {
@@ -19,9 +20,11 @@ interface KanbanColumnProps {
   status: BoardStatus;
   issues: IIssueCard[];
   onIssueClick: (issueId: string) => void;
+  // the cards other people are holding right now
+  remoteDrags?: Record<string, RemoteDrag>;
 }
 
-export function KanbanColumn({ status, issues, onIssueClick }: KanbanColumnProps) {
+export function KanbanColumn({ status, issues, onIssueClick, remoteDrags }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   return (
@@ -42,7 +45,12 @@ export function KanbanColumn({ status, issues, onIssueClick }: KanbanColumnProps
       >
         <SortableContext items={issues.map((i) => i.id)} strategy={verticalListSortingStrategy}>
           {issues.map((issue) => (
-            <IssueCard key={issue.id} issue={issue} onClick={onIssueClick} />
+            <IssueCard
+              key={issue.id}
+              issue={issue}
+              onClick={onIssueClick}
+              movedBy={remoteDrags?.[issue.id]}
+            />
           ))}
         </SortableContext>
       </div>

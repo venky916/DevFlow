@@ -32,6 +32,7 @@ export const authenticateWS = async (ws: WebSocket, req: IncomingMessage) => {
     });
 
     if (!user) {
+      logger.warn({ firebaseUid: decoded.uid }, 'WS user not found');
       ws.send(
         JSON.stringify({
           type: 'ERROR',
@@ -47,12 +48,19 @@ export const authenticateWS = async (ws: WebSocket, req: IncomingMessage) => {
     authWs.userId = user.id;
     authWs.email = user.email ?? '';
     authWs.name = user.name ?? null;
-
-    logger.info(`User authenticated: ${decoded.email} `);
+    authWs.avatarUrl = user.avatarUrl ?? null;
 
     return true;
   } catch (error) {
-    logger.error({ error }, 'WS auth failed');
+    // an expired or invalid token is the client's problem, so this is a warning, not an error.
+    // The token itself is never logged.
+    logger.warn(
+      {
+        code: (error as { code?: string }).code,
+        reason: error instanceof Error ? error.message : String(error),
+      },
+      'WS authentication failed',
+    );
     ws.send(
       JSON.stringify({
         type: 'ERROR',

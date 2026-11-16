@@ -8,6 +8,7 @@ import { CommentBox } from '@devflow/ui/components/comment-box';
 import { ConfirmModal } from '@devflow/ui/components/confirm-modal';
 import { Spinner } from '@devflow/ui/components/spinner';
 
+import { usePresenceAction } from '../../../hooks/events/use-presence-action';
 import {
   useComments,
   useCreateComment,
@@ -44,6 +45,9 @@ export function CommentsSection({ issueId, projectId, projectContext }: Comments
     await updateComment({ commentId, content: json as ITiptapNode });
     setEditingId(null);
   };
+
+  // inside CommentsSection, next to the other hooks
+  const presenceAction = usePresenceAction(issueId);
 
   return (
     <div className="flex flex-col gap-4">
@@ -92,6 +96,8 @@ export function CommentsSection({ issueId, projectId, projectContext }: Comments
           onSubmit={handleCreate}
           placeholder="Add a comment..."
           mentionSuggestion={mentionSuggestion}
+          onTyping={() => presenceAction.report('commenting')}
+          onTypingEnd={presenceAction.stop}
         />
       </div>
 

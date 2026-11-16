@@ -6,6 +6,7 @@ import type { SortingState } from '@tanstack/react-table';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 
 import type { IssueFilters } from '../../lib/issue-filters';
+import { useProjectEvents } from '../events/use-project-events';
 import { useBoard } from '../use-board';
 import { useIssueAccess } from '../use-issue-access';
 import { useIssueFilters } from '../use-issue-filters';
@@ -47,6 +48,7 @@ export function useBoardPage() {
 
   const { data: members } = useProjectMembers(projectId);
   const { data: sprints } = useSprints(projectId);
+  useProjectEvents(projectId);
 
   const changeFilters = (next: IssueFilters) => {
     setFilters(next);

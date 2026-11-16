@@ -5,6 +5,10 @@ export const ClientEvents = {
   JOIN_ISSUE: 'JOIN_ISSUE',
   LEAVE_ISSUE: 'LEAVE_ISSUE',
   CURSOR_MOVE: 'CURSOR_MOVE',
+  CURSOR_LEAVE: 'CURSOR_LEAVE',
+  PRESENCE_ACTION: 'PRESENCE_ACTION',
+  DRAG_START: 'DRAG_START',
+  DRAG_END: 'DRAG_END',
   PING: 'PING',
 } as const;
 
@@ -18,6 +22,8 @@ export const ProjectEvents = {
   SPRINT_COMPLETED: 'SPRINT_COMPLETED',
   CURSOR_MOVE: 'CURSOR_MOVE',
   CURSOR_LEAVE: 'CURSOR_LEAVE',
+  DRAG_START: 'DRAG_START',
+  DRAG_END: 'DRAG_END',
 } as const;
 
 // ─── WebSocket Server → Issue Room ───────────────────────────────
@@ -30,6 +36,10 @@ export const IssueEvents = {
   AI_SUMMARY_FAILED: 'AI_SUMMARY_FAILED',
   ATTACHMENT_ADDED: 'ATTACHMENT_ADDED',
   ATTACHMENT_DELETED: 'ATTACHMENT_DELETED',
+  PRESENCE_STATE: 'PRESENCE_STATE',
+  PRESENCE_JOINED: 'PRESENCE_JOINED',
+  PRESENCE_LEFT: 'PRESENCE_LEFT',
+  PRESENCE_ACTION: 'PRESENCE_ACTION',
 } as const;
 
 // ─── WebSocket Server → Specific User ────────────────────────────

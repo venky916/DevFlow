@@ -2,6 +2,8 @@ import { logger } from '@devflow/backend-common';
 import { prisma } from '@devflow/db';
 import { joinIssueSchema, leaveIssueSchema } from '@devflow/validators';
 
+import { canAccessProject } from '../lib/access';
+import { announceJoin, announceLeave } from '../lib/presence';
 import { subscribeToIssueChannel, unsubscribeFromIssueChannel } from '../lib/redis.subscriber';
 import { roomManager } from '../RoomManager';
 import { AuthenticatedWebSocket } from '../types/socket.types';
@@ -28,16 +30,9 @@ export const handleJoinIssue = async (ws: AuthenticatedWebSocket, payload: { iss
       );
       return;
     }
-    const member = await prisma.projectMember.findUnique({
-      where: {
-        projectId_userId: {
-          projectId: issue.projectId,
-          userId: ws.userId,
-        },
-      },
-    });
 
-    if (!member) {
+    // a project member, or an admin of the project's workspace
+    if (!(await canAccessProject(ws.userId, issue.projectId))) {
       ws.send(
         JSON.stringify({
           type: 'ERROR',
@@ -46,18 +41,20 @@ export const handleJoinIssue = async (ws: AuthenticatedWebSocket, payload: { iss
       );
       return;
     }
+
     const roomId = `issue:${issueId}`;
     roomManager.join(roomId, ws);
     subscribeToIssueChannel(issueId);
-    logger.info(`User ${ws.userId} joined issue room: ${issueId}`);
+    announceJoin(roomId, ws);
+    logger.debug({ userId: ws.userId, issueId }, 'Joined issue room');
     ws.send(
       JSON.stringify({
         type: 'JOINED_ISSUE',
         payload: { issueId },
       }),
     );
-  } catch (error) {
-    logger.error({ error }, 'JOIN_ISSUE failed');
+  } catch (err) {
+    logger.warn({ err, userId: ws.userId }, 'JOIN_ISSUE failed');
     ws.send(JSON.stringify({ type: 'ERROR', message: 'Invalid payload for JOIN_ISSUE' }));
   }
 };
@@ -73,9 +70,10 @@ export const handleLeaveIssue = (ws: AuthenticatedWebSocket, payload: { issueId:
     const roomId = `issue:${issueId}`;
     roomManager.leave(roomId, ws);
     unsubscribeFromIssueChannel(issueId);
-    logger.info(`User ${ws.userId} left issue room: ${issueId}`);
-  } catch (error) {
-    logger.error({ error }, 'LEAVE_ISSUE failed');
+    announceLeave(roomId, ws);
+    logger.debug({ userId: ws.userId, issueId }, 'Left issue room');
+  } catch (err) {
+    logger.warn({ err, userId: ws.userId }, 'LEAVE_ISSUE failed');
     ws.send(JSON.stringify({ type: 'ERROR', message: 'Invalid payload for LEAVE_ISSUE' }));
   }
 };

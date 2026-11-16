@@ -12,6 +12,9 @@ import { Button } from './button';
 interface CommentBoxProps {
   onSubmit: (json: object) => Promise<void> | void;
   onCancel?: () => void;
+  // called as the person types, and when the box becomes empty (for "is typing" hints)
+  onTyping?: () => void;
+  onTypingEnd?: () => void;
   placeholder?: string;
   initialContent?: object;
   mentionSuggestion?: any;
@@ -21,6 +24,8 @@ interface CommentBoxProps {
 export function CommentBox({
   onSubmit,
   onCancel,
+  onTyping,
+  onTypingEnd,
   placeholder = 'Leave a comment...',
   initialContent,
   mentionSuggestion,
@@ -39,6 +44,11 @@ export function CommentBox({
     ],
     content: initialContent ?? '',
     immediatelyRender: false,
+    onUpdate: ({ editor }) => {
+      // an empty box (for example right after a send) means nobody is typing any more
+      if (editor.isEmpty) onTypingEnd?.();
+      else onTyping?.();
+    },
     editorProps: {
       attributes: {
         class: 'text-[13px] text-white focus:outline-none min-h-[24px]',

@@ -6,14 +6,22 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
   const start = Date.now();
 
   res.on('finish', () => {
-    const duration = Date.now() - start;
-    logger.info({
-      method: req.method,
-      url: req.originalUrl,
-      statusCode: res.statusCode,
-      duration: `${duration}ms`,
-      userId: req.user?.id ?? 'unauthenticated',
-    });
+    // an uptime check calls /health every minute, and would drown the logs
+    if (req.originalUrl === '/health') return;
+
+    const statusCode = res.statusCode;
+    const level = statusCode >= 500 ? 'error' : statusCode >= 400 ? 'warn' : 'info';
+
+    logger[level](
+      {
+        method: req.method,
+        url: req.originalUrl,
+        statusCode,
+        durationMs: Date.now() - start,
+        userId: req.user?.id ?? 'unauthenticated',
+      },
+      'request completed',
+    );
   });
 
   next();

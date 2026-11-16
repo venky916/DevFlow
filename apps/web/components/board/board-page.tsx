@@ -42,7 +42,11 @@ export function BoardPage() {
             <PageError message="Couldn't load issues" onRetry={() => board.refetch()} />
           ) : (
             <div className="h-full px-6 py-4">
-              <KanbanBoard columns={board.data.columns} onIssueClick={page.setIssueId} />
+              <KanbanBoard
+                projectId={project.id}
+                columns={board.data.columns}
+                onIssueClick={page.setIssueId}
+              />
             </div>
           )
         ) : (

@@ -2,6 +2,7 @@
 
 import type { IIssueDetail } from '@devflow/types';
 
+import { usePresenceAction } from '../../../hooks/events/use-presence-action';
 import type { IssueFormState } from '../../../hooks/pages/use-issue-form';
 import { ParentLink } from '../../shared/parent-link';
 import { SubIssueList } from '../../shared/sub-issue-list';
@@ -16,6 +17,13 @@ interface IssueMainInfoProps {
 
 export function IssueMainInfo({ issue, form, projectContext, onNavigate }: IssueMainInfoProps) {
   const { register, save, canEditIssue } = form;
+  const presenceAction = usePresenceAction(issue.id);
+
+  // the hint starts on the first keystroke and ends when the field is left (which also saves)
+  const finishEditing = () => {
+    save();
+    presenceAction.stop();
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -26,7 +34,8 @@ export function IssueMainInfo({ issue, form, projectContext, onNavigate }: Issue
         placeholder="Issue title"
         disabled={!canEditIssue}
         {...register('title')}
-        onBlur={save}
+        onInput={() => presenceAction.report('editing')}
+        onBlur={finishEditing}
       />
 
       <textarea
@@ -34,7 +43,8 @@ export function IssueMainInfo({ issue, form, projectContext, onNavigate }: Issue
         placeholder="Add a description..."
         disabled={!canEditIssue}
         {...register('description')}
-        onBlur={save}
+        onInput={() => presenceAction.report('editing')}
+        onBlur={finishEditing}
       />
 
       <AttachmentsSection issue={issue} projectContext={projectContext} />

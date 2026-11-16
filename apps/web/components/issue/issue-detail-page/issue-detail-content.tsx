@@ -1,12 +1,20 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
+
 import type { IIssueDetail } from '@devflow/types';
 import { Avatar } from '@devflow/ui/components/avatar';
+import { AvatarGroup } from '@devflow/ui/components/avatar-group';
 import { Badge } from '@devflow/ui/components/badge';
 import { Spinner } from '@devflow/ui/components/spinner';
 
+import { useIssueEvents } from '../../../hooks/events/use-issue-events';
+import { useIssuePresence } from '../../../hooks/events/use-issue-presence';
+import { usePresenceAction } from '../../../hooks/events/use-presence-action';
+import { useProjectEvents } from '../../../hooks/events/use-project-events';
 import { useIssueForm } from '../../../hooks/pages/use-issue-form';
 import { getStatusVariant, STATUS_LABELS } from '../../../lib/issue-constants';
+import { describeHints } from '../../../lib/presence-text';
 import { displayName } from '../../../lib/roles';
 import { FieldRow } from '../../shared/field-row';
 import { IssueActionsMenu } from '../../shared/issue-actions-menu';
@@ -36,6 +44,19 @@ export function IssueDetailContent({
     projectSlug: issue.project.slug,
   };
   const form = useIssueForm(issue, issue.project.id, projectContext);
+  useProjectEvents(issue.project.id); // fields, status, deletion
+  useIssueEvents(issue.id); // comments, files, activity. This one joins the issue room.
+  const presence = useIssuePresence(issue.id); // who else is here
+  const hint = describeHints(presence.hints);
+
+  const presenceAction = usePresenceAction(issue.id);
+
+  // the hint ends when a save finishes. A save is what a property change ends with.
+  const wasSaving = useRef(false);
+  useEffect(() => {
+    if (wasSaving.current && !form.isSaving) presenceAction.stop();
+    wasSaving.current = form.isSaving;
+  }, [form.isSaving, presenceAction]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -46,7 +67,13 @@ export function IssueDetailContent({
           </span>
           <Badge variant={getStatusVariant(issue.status)}>{STATUS_LABELS[issue.status]}</Badge>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {hint && (
+            <span aria-live="polite" className="max-w-[280px] truncate text-[11px] text-text-muted">
+              {hint}
+            </span>
+          )}
+          <AvatarGroup users={presence.users} max={3} />
           {form.isSaving && (
             <span className="flex items-center gap-1 text-[11px] text-text-muted">
               <Spinner size="sm" />
@@ -80,7 +107,12 @@ export function IssueDetailContent({
         </div>
 
         <div className="flex w-[400px] shrink-0 flex-col gap-6 overflow-y-auto border-l border-border-default px-4 py-6">
-          <div className="flex flex-col gap-4 rounded-md border border-border-default p-4">
+          <div
+            className="flex flex-col gap-4 rounded-md border border-border-default p-4"
+            // the hint starts when someone presses on a property control (mouse or keyboard)
+            onPointerDownCapture={() => form.canEditIssue && presenceAction.report('editing')}
+            onKeyDownCapture={() => form.canEditIssue && presenceAction.report('editing')}
+          >
             <PanelTitle>Properties</PanelTitle>
             <IssueProperties issue={issue} form={form} />
             <FieldRow label="Created by">

@@ -6,9 +6,9 @@ import { deleteFile } from '@devflow/storage';
 
 async function fileCleanupFunction(job: Job<FileCleanupJobData>) {
   const { fileKey } = job.data;
-  logger.info({ jobId: job.id, fileKey }, 'Processing file cleanup job');
+  logger.debug({ jobId: job.id, fileKey }, 'Processing file cleanup job');
   await deleteFile(fileKey);
-  logger.info({ jobId: job.id, fileKey }, '✅ Orphaned file deleted from B2');
+  logger.info({ jobId: job.id, fileKey }, 'File deleted from storage');
 }
 
 export const fileCleanupWorker = new Worker<FileCleanupJobData>(
@@ -20,24 +20,13 @@ export const fileCleanupWorker = new Worker<FileCleanupJobData>(
 (async () => {
   try {
     await fileCleanupWorker.waitUntilReady();
-    logger.info('✅ File cleanup worker connected to Redis');
-  } catch (error) {
-    logger.error({ error }, '❌ File cleanup worker FAILED to connect to Redis');
+    logger.info('File cleanup worker connected to Redis');
+  } catch (err) {
+    logger.error({ err }, 'File cleanup worker could not connect to Redis');
     process.exit(1);
   }
 })();
 
-fileCleanupWorker.on('completed', (job) => {
-  logger.info({ jobId: job.id }, 'File cleanup job completed');
-});
-
-// fileCleanupWorker.on("failed", (job, error) => {
-//     logger.error({ jobId: job?.id, error }, "File cleanup job failed")
-// })
-
-fileCleanupWorker.on('failed', (job, error) => {
-  logger.error(
-    { jobId: job?.id, error: error?.message ?? String(error) },
-    'File cleanup job failed',
-  );
+fileCleanupWorker.on('failed', (job, err) => {
+  logger.error({ jobId: job?.id, err }, 'File cleanup job failed');
 });

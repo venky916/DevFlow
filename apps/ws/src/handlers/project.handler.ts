@@ -1,10 +1,12 @@
 import { logger } from '@devflow/backend-common';
-import { prisma } from '@devflow/db';
 import { joinProjectSchema, leaveProjectSchema } from '@devflow/validators';
 
+import { canAccessProject } from '../lib/access';
 import { subscribeToProjectChannel, unsubscribeFromProjectChannel } from '../lib/redis.subscriber';
 import { roomManager } from '../RoomManager';
 import { AuthenticatedWebSocket } from '../types/socket.types';
+import { announceProjectLeave } from './cursor.handler';
+import { endActiveDrag } from './drag.handler';
 
 export const handleJoinProject = async (
   ws: AuthenticatedWebSocket,
@@ -16,16 +18,7 @@ export const handleJoinProject = async (
   });
   const { projectId } = validPayload;
 
-  // check membership
-  const member = await prisma.projectMember.findUnique({
-    where: {
-      projectId_userId: {
-        projectId,
-        userId: ws.userId,
-      },
-    },
-  });
-  if (!member) {
+  if (!(await canAccessProject(ws.userId, projectId))) {
     ws.send(
       JSON.stringify({
         type: 'ERROR',
@@ -34,14 +27,12 @@ export const handleJoinProject = async (
     );
     return;
   }
-  const roomId = `project:${projectId}`;
-  // join WS room
-  roomManager.join(roomId, ws);
 
-  // subscribe to project channel
+  const roomId = `project:${projectId}`;
+  roomManager.join(roomId, ws);
   subscribeToProjectChannel(projectId);
 
-  logger.info(`User ${ws.userId} joined project room: ${projectId}`);
+  logger.debug({ userId: ws.userId, projectId }, 'Joined project room');
 
   ws.send(
     JSON.stringify({
@@ -61,11 +52,13 @@ export const handleLeaveProject = (ws: AuthenticatedWebSocket, payload: { projec
     const roomId = `project:${projectId}`;
 
     roomManager.leave(roomId, ws);
+    announceProjectLeave(roomId, ws);
+    endActiveDrag(ws, projectId);
 
     unsubscribeFromProjectChannel(projectId);
-    logger.info(`User ${ws.userId} left project room: ${projectId}`);
-  } catch (error) {
-    logger.error({ error }, 'LEAVE_PROJECT failed');
+    logger.debug({ userId: ws.userId, projectId }, 'Left project room');
+  } catch (err) {
+    logger.warn({ err, userId: ws.userId }, 'LEAVE_PROJECT failed');
     ws.send(JSON.stringify({ type: 'ERROR', message: 'Invalid payload for LEAVE_PROJECT' }));
   }
 };

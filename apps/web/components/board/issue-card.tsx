@@ -12,12 +12,20 @@ import { cn } from '@devflow/ui/lib/cn';
 
 import { useIssueAccess } from '../../hooks/use-issue-access';
 import { PRIORITY_COLORS } from '../../lib/issue-constants';
+import { userColor } from '../../lib/user-color';
+
+// someone else is holding this card right now
+export interface MovedBy {
+  userId: string;
+  name: string;
+}
 
 interface IssueCardBodyProps {
   issue: IIssueCard;
   locked?: boolean;
   lockReason?: string;
   projectLabel?: string;
+  movedBy?: MovedBy;
   onChildClick?: (issueId: string) => void;
 }
 
@@ -27,6 +35,7 @@ export function IssueCardBody({
   locked = false,
   lockReason,
   projectLabel,
+  movedBy,
   onChildClick,
 }: IssueCardBodyProps) {
   const [hovered, setHovered] = useState(false);
@@ -37,11 +46,22 @@ export function IssueCardBody({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={cn(
-        'flex flex-col rounded-[4px] border border-border-default bg-bg-surface p-[10px_12px] transition-colors hover:border-border-emphasis',
+        'relative flex flex-col rounded-[4px] border border-border-default bg-bg-surface p-[10px_12px] transition-colors hover:border-border-emphasis',
         locked ? 'cursor-default' : 'cursor-pointer',
+        movedBy && 'border-dashed',
       )}
+      style={movedBy ? { borderColor: userColor(movedBy.userId) } : undefined}
     >
-      <div className="flex flex-col gap-2">
+      {movedBy && (
+        <span
+          className="pointer-events-none absolute -top-2 left-2 z-10 rounded px-1.5 py-0.5 text-[10px] font-medium whitespace-nowrap text-black"
+          style={{ backgroundColor: userColor(movedBy.userId) }}
+        >
+          {movedBy.name} is moving this
+        </span>
+      )}
+
+      <div className={cn('flex flex-col gap-2', movedBy && 'opacity-50')}>
         <div className="flex items-center gap-1.5">
           {childCount > 0 ? (
             <Layers className="h-3 w-3 shrink-0 text-text-muted" />
@@ -131,9 +151,10 @@ export function IssueCardBody({
 interface IssueCardProps {
   issue: IIssueCard;
   onClick: (issueId: string) => void;
+  movedBy?: MovedBy;
 }
 
-export function IssueCard({ issue, onClick }: IssueCardProps) {
+export function IssueCard({ issue, onClick, movedBy }: IssueCardProps) {
   const { canMove } = useIssueAccess();
 
   // a parent can't be dragged: its status follows its sub-issues
@@ -162,6 +183,7 @@ export function IssueCard({ issue, onClick }: IssueCardProps) {
         lockReason={
           hasSubIssues ? 'Its status follows its sub-issues' : "You can't move this issue"
         }
+        movedBy={movedBy}
         onChildClick={onClick}
       />
     </div>

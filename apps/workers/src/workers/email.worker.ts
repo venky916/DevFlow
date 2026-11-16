@@ -17,8 +17,8 @@ const transporter = nodemailer.createTransport({
 async function emailFunction(job: Job<EmailJobData>) {
   const { to, type } = job.data;
 
-  // the address is personal data, so it is not written to the logs
-  logger.info({ jobId: job.id, type }, 'Processing email job');
+  // the address is personal data, so it is never written to the logs
+  logger.debug({ jobId: job.id, type }, 'Processing email job');
 
   const email = renderEmail(job.data);
   if (!email) {
@@ -35,16 +35,16 @@ async function emailFunction(job: Job<EmailJobData>) {
       html: email.html,
     });
 
-    logger.info({ jobId: job.id, type, messageId: response.messageId }, '✅ Email sent');
+    logger.info({ jobId: job.id, type, messageId: response.messageId }, 'Email sent');
   } catch (error) {
     logger.error(
       {
         jobId: job.id,
         type,
-        error: error instanceof Error ? error.message : String(error),
-        errorCode: error instanceof Error && 'code' in error ? (error as any).code : null,
+        reason: error instanceof Error ? error.message : String(error),
+        code: (error as { code?: string }).code,
       },
-      '❌ Email failed to send',
+      'Email failed to send',
     );
     throw error; // BullMQ will retry
   }
@@ -58,17 +58,18 @@ export const emailWorker = new Worker<EmailJobData>('email-queue', emailFunction
 (async () => {
   try {
     await emailWorker.waitUntilReady();
-    logger.info('✅ Email worker connected to Redis');
-  } catch (error) {
-    logger.error({ error }, '❌ Email worker FAILED to connect to Redis');
+    logger.info('Email worker connected to Redis');
+  } catch (err) {
+    logger.error({ err }, 'Email worker could not connect to Redis');
     process.exit(1);
   }
 })();
 
 emailWorker.on('completed', (job) => {
-  logger.info({ jobId: job.id }, 'Email job completed');
+  logger.debug({ jobId: job.id }, 'Email job completed');
 });
 
-emailWorker.on('failed', (job, error) => {
-  logger.error({ jobId: job?.id, error }, 'Email job failed');
+// the reason was already logged where it failed. This line shows how many tries were used.
+emailWorker.on('failed', (job) => {
+  logger.error({ jobId: job?.id, attempts: job?.attemptsMade }, 'Email job failed');
 });

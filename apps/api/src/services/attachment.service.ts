@@ -2,10 +2,12 @@
 import { prisma } from '@devflow/db';
 import { fileCleanupQueue } from '@devflow/queues';
 import { generatePresignedDownloadUrl } from '@devflow/storage';
+import { IssueEvents } from '@devflow/types';
 import type { SaveAttachmentInput } from '@devflow/validators';
 
 import { ApiError } from '../lib/ApiError';
 import type { IssueActor } from '../lib/issue-rules';
+import { publishToIssue } from '../lib/redis.publisher';
 import { activityService } from './activity.service';
 
 const uploader = { select: { id: true, name: true, avatarUrl: true } };
@@ -36,6 +38,10 @@ export const attachmentService = {
       actor.userId,
       attachment.fileName,
     );
+    await publishToIssue(issueId, {
+      type: IssueEvents.ATTACHMENT_ADDED,
+      payload: { issueId, attachmentId: attachment.id },
+    });
 
     return {
       ...attachment,
@@ -81,6 +87,11 @@ export const attachmentService = {
       actor.userId,
       attachment.fileName,
     );
+
+    await publishToIssue(issueId, {
+      type: IssueEvents.ATTACHMENT_ADDED,
+      payload: { issueId, attachmentId: attachment.id },
+    });
   },
 
   async getDownloadUrl(issueId: string, attachmentId: string) {

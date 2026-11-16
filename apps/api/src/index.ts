@@ -3,6 +3,8 @@ import 'dotenv/config';
 import cors from 'cors';
 import express from 'express';
 
+import { logger } from '@devflow/backend-common';
+
 import { errorMiddleware } from './middlewares/error.middleware';
 import { requestLogger } from './middlewares/requestLogger.middleware';
 import v1Routes from './routes/v1';
@@ -25,5 +27,5 @@ app.use('/api/v1', v1Routes);
 app.use(errorMiddleware);
 
 app.listen(PORT, () => {
-  console.log(`🚀 API running on http://localhost:${PORT}`);
+  logger.info({ port: PORT }, 'API listening');
 });

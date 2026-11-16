@@ -44,7 +44,10 @@ export function useCreateComment(issueId: string) {
       const res = await api.post<IApiResponse<IComment>>(`/issues/${issueId}/comments`, input);
       return res.data.data;
     },
-    onSuccess: (created) => change((list) => [...list, created]),
+    onSuccess: (created) =>
+      change((list) =>
+        list.some((comment) => comment.id === created.id) ? list : [...list, created],
+      ),
     onError: (err) => showError(err, "Couldn't post your comment"),
   });
 }

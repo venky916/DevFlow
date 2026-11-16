@@ -6,13 +6,22 @@ import { WebSocketServer } from 'ws';
 import { logger, subscriber } from '@devflow/backend-common';
 import { ClientEvent } from '@devflow/types';
 
+import {
+  announceProjectLeave,
+  handleCursorLeave,
+  handleCursorMove,
+} from './handlers/cursor.handler';
+import { endActiveDrag, handleDragEnd, handleDragStart } from './handlers/drag.handler';
 import { handleJoinIssue, handleLeaveIssue } from './handlers/issue.handler';
+import { handlePresenceAction } from './handlers/presence.handler';
 import { handleJoinProject, handleLeaveProject } from './handlers/project.handler';
+import { announceLeave } from './lib/presence';
 import { authenticateWS } from './middlewares/auth';
 import { roomManager } from './RoomManager';
 import { AuthenticatedWebSocket } from './types/socket.types';
 
 const PORT = process.env.PORT ?? 4001;
+const HEARTBEAT_MS = 30_000;
 
 const server = http.createServer((req, res) => {
   if (req.url === '/health') {
@@ -28,20 +37,45 @@ const server = http.createServer((req, res) => {
 // ─── WebSocket server ─────────────────────────────────────────────
 const wss = new WebSocketServer({ server });
 
+// ─── Heartbeat ────────────────────────────────────────────────────
+// Every 30 seconds we ping every client. A client that did not answer since the last round
+// is gone (sleeping laptop, dropped network), so we close it. That runs the normal
+// disconnect cleanup, which also removes the person from the "who is here" lists.
+const heartbeat = setInterval(() => {
+  wss.clients.forEach((client) => {
+    const socket = client as AuthenticatedWebSocket;
+    if (socket.isAlive === false) {
+      socket.terminate();
+      return;
+    }
+    socket.isAlive = false;
+    socket.ping();
+  });
+}, HEARTBEAT_MS);
+
+wss.on('close', () => clearInterval(heartbeat));
+
 wss.on('connection', async (ws, req) => {
   const authWs = ws as AuthenticatedWebSocket;
+
+  // the browser answers pings by itself with a pong. This listener must exist from the start.
+  authWs.isAlive = true;
+  ws.on('pong', () => {
+    authWs.isAlive = true;
+  });
+
   const authenticated = await authenticateWS(ws, req);
   if (!authenticated) return;
 
-  logger.info(`Client connected: ${authWs.userId}`);
+  logger.info({ userId: authWs.userId }, 'Client connected');
 
   // ─── Auto subscribe to personal notification channel ──────
   subscriber.subscribe(`user:${authWs.userId}`, (err) => {
     if (err) {
-      logger.error({ err }, 'Failed to subscribe to user channel');
+      logger.error({ err, userId: authWs.userId }, 'Failed to subscribe to user channel');
       return;
     }
-    logger.info(`User ${authWs.userId} subscribed to personal channel`);
+    logger.debug({ userId: authWs.userId }, 'Subscribed to personal channel');
   });
 
   // ─── Also join personal WS room ───────────────────────────
@@ -56,7 +90,8 @@ wss.on('connection', async (ws, req) => {
   ws.on('message', async (data) => {
     try {
       const event: ClientEvent = JSON.parse(data.toString());
-      logger.info({ type: event.type, userId: authWs.userId }, 'Event received');
+      // debug, not info: pointers and typing hints arrive many times a second
+      logger.debug({ type: event.type, userId: authWs.userId }, 'Event received');
 
       switch (event.type) {
         case 'JOIN_PROJECT': {
@@ -75,6 +110,26 @@ wss.on('connection', async (ws, req) => {
           handleLeaveIssue(authWs, event.payload as { issueId: string });
           break;
         }
+        case 'CURSOR_MOVE': {
+          handleCursorMove(authWs, event.payload);
+          break;
+        }
+        case 'CURSOR_LEAVE': {
+          handleCursorLeave(authWs, event.payload);
+          break;
+        }
+        case 'PRESENCE_ACTION': {
+          handlePresenceAction(authWs, event.payload);
+          break;
+        }
+        case 'DRAG_START': {
+          handleDragStart(authWs, event.payload);
+          break;
+        }
+        case 'DRAG_END': {
+          handleDragEnd(authWs, event.payload);
+          break;
+        }
         case 'PING': {
           ws.send(JSON.stringify({ type: 'PONG' }));
           break;
@@ -86,7 +141,7 @@ wss.on('connection', async (ws, req) => {
         }
       }
     } catch (error) {
-      logger.error({ error }, 'Failed to parse message');
+      logger.warn({ err: error }, 'Failed to handle message');
 
       ws.send(JSON.stringify({ type: 'ERROR', message: 'Failed to parse message' }));
     }
@@ -94,17 +149,21 @@ wss.on('connection', async (ws, req) => {
 
   // ─── Disconnect handler ───────────────────────────────────
   ws.on('close', () => {
-    roomManager.leaveAll(authWs);
-    logger.info('Client disconnected');
+    const leftRooms = roomManager.leaveAll(authWs);
+    leftRooms.forEach((roomId) => {
+      announceLeave(roomId, authWs); // issue rooms: "who is here"
+      announceProjectLeave(roomId, authWs); // project rooms: pointers
+    });
+    endActiveDrag(authWs); // a card held by this person is released
+    logger.info({ userId: authWs.userId }, 'Client disconnected');
   });
 
   // ─── Handle error ──────────────────────────────────────────
   ws.on('error', (error) => {
-    logger.error({ error }, 'WebSocket error');
+    logger.error({ err: error }, 'WebSocket error');
   });
 });
 
 server.listen(PORT, () => {
-  logger.info(`🚀 WS server running on http://localhost:${PORT}`);
-  logger.info(`🔌 WebSocket ready on ws://localhost:${PORT}`);
+  logger.info({ port: PORT }, 'WS server listening');
 });

@@ -16,21 +16,31 @@ import { arrayMove } from '@dnd-kit/sortable';
 
 import type { BoardColumns, BoardStatus, IIssueCard } from '@devflow/types';
 
+import { useCursorSender } from '../../hooks/events/use-board-cursors';
+import { useAnnounceDrag, useRemoteDrags } from '../../hooks/events/use-board-drags';
 import { useMoveIssue } from '../../hooks/use-board';
 import { BOARD_STATUSES, findColumn } from '../../lib/board-utils';
 import { getDropPosition } from '../../lib/fractional-position';
 import { IssueCardBody } from './issue-card';
 import { KanbanColumn } from './kanban-column';
+import { LiveCursors } from './live-cursors';
 
 const isStatus = (id: string): id is BoardStatus => BOARD_STATUSES.includes(id as BoardStatus);
 
+// each column is at least 240px wide, with 16px (gap-4) between them
+const MIN_BOARD_WIDTH = BOARD_STATUSES.length * 240 + (BOARD_STATUSES.length - 1) * 16;
+
 interface KanbanBoardProps {
+  projectId: string;
   columns: BoardColumns; // from the server (React Query)
   onIssueClick: (issueId: string) => void;
 }
 
-export function KanbanBoard({ columns: serverColumns, onIssueClick }: KanbanBoardProps) {
+export function KanbanBoard({ projectId, columns: serverColumns, onIssueClick }: KanbanBoardProps) {
   const { mutate: moveIssue } = useMoveIssue();
+  const { scrollRef, contentRef } = useCursorSender(projectId);
+  const remoteDrags = useRemoteDrags(projectId);
+  const announce = useAnnounceDrag(projectId);
 
   // While a card is being dragged, the columns are a temporary copy that follows the pointer.
   // After the drop it is cleared and the React Query data (already updated) is shown again.
@@ -45,6 +55,7 @@ export function KanbanBoard({ columns: serverColumns, onIssueClick }: KanbanBoar
     const from = findColumn(columns, issueId);
     if (!from) return;
     setActiveIssue(columns[from].find((i) => i.id === issueId) ?? null);
+    announce.start(issueId);
   };
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -93,6 +104,7 @@ export function KanbanBoard({ columns: serverColumns, onIssueClick }: KanbanBoar
 
     // dropped outside the board
     if (!event.over || !to || !from) {
+      announce.end(issueId, false);
       setDragColumns(null);
       return;
     }
@@ -102,6 +114,7 @@ export function KanbanBoard({ columns: serverColumns, onIssueClick }: KanbanBoar
 
     // dropped where it started: nothing to save
     if (to === from && index === startIndex) {
+      announce.end(issueId, false);
       setDragColumns(null);
       return;
     }
@@ -109,6 +122,7 @@ export function KanbanBoard({ columns: serverColumns, onIssueClick }: KanbanBoar
     const others = columns[to].filter((i) => i.id !== issueId);
     const position = getDropPosition(others, index);
 
+    announce.end(issueId, true); // the others wait for the card to jump
     moveIssue(
       { issueId, data: { status: to, position } },
       { onSettled: () => setDragColumns(null) },
@@ -117,6 +131,7 @@ export function KanbanBoard({ columns: serverColumns, onIssueClick }: KanbanBoar
 
   // Escape: the card goes back, nothing is saved
   const handleDragCancel = () => {
+    if (activeIssue) announce.end(activeIssue.id, false);
     setActiveIssue(null);
     setDragColumns(null);
   };
@@ -130,15 +145,24 @@ export function KanbanBoard({ columns: serverColumns, onIssueClick }: KanbanBoar
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="flex h-full gap-4 overflow-x-auto pb-4">
-        {BOARD_STATUSES.map((status) => (
-          <KanbanColumn
-            key={status}
-            status={status}
-            issues={columns[status]}
-            onIssueClick={onIssueClick}
-          />
-        ))}
+      <div ref={scrollRef} className="h-full overflow-x-auto pb-4">
+        {/* the inner box is as big as all the columns, so pointer positions stay right when scrolled */}
+        <div
+          ref={contentRef}
+          className="relative flex min-h-full gap-4"
+          style={{ minWidth: `max(100%, ${MIN_BOARD_WIDTH}px)` }}
+        >
+          {BOARD_STATUSES.map((status) => (
+            <KanbanColumn
+              key={status}
+              status={status}
+              issues={columns[status]}
+              onIssueClick={onIssueClick}
+              remoteDrags={remoteDrags}
+            />
+          ))}
+          <LiveCursors projectId={projectId} />
+        </div>
       </div>
       <DragOverlay>{activeIssue && <IssueCardBody issue={activeIssue} />}</DragOverlay>
     </DndContext>

@@ -5,67 +5,47 @@ import { roomManager } from '../RoomManager';
 subscriber.on('message', (channel, message) => {
   try {
     const event = JSON.parse(message);
-    logger.info({ channel, type: event.type }, 'Redis event received');
+    // one line per card move, comment and activity, so it stays at debug
+    logger.debug({ channel, type: event.type }, 'Redis event received');
     roomManager.broadcast(channel, event);
-  } catch (error) {
-    logger.error({ error }, 'Redis event error');
+  } catch (err) {
+    logger.error({ err, channel }, 'Could not handle a Redis event');
   }
 });
 
-export const subscribeToProjectChannel = (projectId: string) => {
-  const channel = `project:${projectId}`;
-  subscriber.subscribe(channel, (error) => {
-    if (error) {
-      logger.error({ error }, `Failed to subscribe to ${channel}`);
+const subscribeTo = (channel: string) => {
+  subscriber.subscribe(channel, (err) => {
+    if (err) {
+      logger.error({ err, channel }, 'Failed to subscribe to Redis channel');
       return;
     }
-    logger.info(`Subscribed to Redis channel: ${channel}`);
+    logger.debug({ channel }, 'Subscribed to Redis channel');
   });
 };
 
-export const unsubscribeFromProjectChannel = (projectId: string) => {
-  const channel = `project:${projectId}`;
-  // ─── Only unsubscribe from Redis if room is empty ─────────
+// only unsubscribe from Redis when nobody is in the room any more
+const unsubscribeIfEmpty = (channel: string) => {
   const roomSize = roomManager.getRoomSize(channel);
   if (roomSize > 0) {
-    logger.info(`Room ${channel} still has ${roomSize} clients — skipping Redis unsubscribe`);
+    logger.debug({ channel, roomSize }, 'Room still has clients, keeping the Redis subscription');
     return;
   }
 
-  subscriber.unsubscribe(channel, (error) => {
-    if (error) {
-      logger.error({ error }, `Failed to unsubscribe from ${channel}`);
+  subscriber.unsubscribe(channel, (err) => {
+    if (err) {
+      logger.error({ err, channel }, 'Failed to unsubscribe from Redis channel');
       return;
     }
-    logger.info(`Unsubscribed from Redis channel: ${channel}`);
+    logger.debug({ channel }, 'Unsubscribed from Redis channel');
   });
 };
 
-export const subscribeToIssueChannel = (issueId: string) => {
-  const channel = `issue:${issueId}`;
-  subscriber.subscribe(channel, (error) => {
-    if (error) {
-      logger.error({ error }, `Failed to subscribe to ${channel}`);
-      return;
-    }
-    logger.info(`Subscribed to Redis channel: ${channel}`);
-  });
-};
+export const subscribeToProjectChannel = (projectId: string) => subscribeTo(`project:${projectId}`);
 
-export const unsubscribeFromIssueChannel = (issueId: string) => {
-  const channel = `issue:${issueId}`;
-  // ─── Only unsubscribe from Redis if room is empty ─────────
-  const roomSize = roomManager.getRoomSize(channel);
-  if (roomSize > 0) {
-    logger.info(`Room ${channel} still has ${roomSize} clients — skipping Redis unsubscribe`);
-    return;
-  }
+export const unsubscribeFromProjectChannel = (projectId: string) =>
+  unsubscribeIfEmpty(`project:${projectId}`);
 
-  subscriber.unsubscribe(channel, (error) => {
-    if (error) {
-      logger.error({ error }, `Failed to unsubscribe from ${channel}`);
-      return;
-    }
-    logger.info(`Unsubscribed from Redis channel: ${channel}`);
-  });
-};
+export const subscribeToIssueChannel = (issueId: string) => subscribeTo(`issue:${issueId}`);
+
+export const unsubscribeFromIssueChannel = (issueId: string) =>
+  unsubscribeIfEmpty(`issue:${issueId}`);

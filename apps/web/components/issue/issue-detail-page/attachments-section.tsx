@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { IIssueDetail, PendingAttachment } from '@devflow/types';
 import { Button } from '@devflow/ui/components/button';
@@ -8,6 +8,7 @@ import { ConfirmModal } from '@devflow/ui/components/confirm-modal';
 import { FileUploadList } from '@devflow/ui/components/file-upload-list';
 import { Spinner } from '@devflow/ui/components/spinner';
 
+import { usePresenceAction } from '../../../hooks/events/use-presence-action';
 import { useIssueAttachments } from '../../../hooks/use-attachments';
 import { useIssueAccess } from '../../../hooks/use-issue-access';
 import { PanelTitle } from '../../shared/panel-title';
@@ -20,7 +21,20 @@ interface AttachmentsSectionProps {
 export function AttachmentsSection({ issue, projectContext }: AttachmentsSectionProps) {
   const { userId, isLead, canMove } = useIssueAccess(projectContext);
   const files = useIssueAttachments(issue.id, issue.project.id);
+  const presenceAction = usePresenceAction(issue.id);
   const [fileToDelete, setFileToDelete] = useState<PendingAttachment | null>(null);
+
+  // "is uploading a file" lasts exactly as long as an upload is running
+  const isUploading = files.items.some((item) => item.status === 'uploading');
+  useEffect(() => {
+    if (!isUploading) return;
+    presenceAction.report('uploading');
+    const interval = setInterval(() => presenceAction.report('uploading'), 3000);
+    return () => {
+      clearInterval(interval);
+      presenceAction.stop();
+    };
+  }, [isUploading, presenceAction]);
 
   // leads and admins add files to any issue, a developer only to an issue assigned to them
   const canAdd = canMove({ assigneeId: issue.assigneeId });

@@ -133,11 +133,12 @@ export function useIssueAttachments(issueId: string, projectId: string) {
         mimeType: file.type,
       });
 
+      const saved = res.data.data;
+
       // the saved file joins the list and the upload row goes away, in the same moment
-      qc.setQueryData<IAttachment[]>(attachmentKeys.list(issueId), (list) => [
-        ...(list ?? []),
-        res.data.data,
-      ]);
+      qc.setQueryData<IAttachment[]>(attachmentKeys.list(issueId), (list) =>
+        list?.some((attachment) => attachment.id === saved.id) ? list : [...(list ?? []), saved],
+      );
       setUploads((prev) => prev.filter((upload) => upload.id !== id));
       qc.invalidateQueries({ queryKey: issueKeys.activities(issueId) });
     } catch (err) {

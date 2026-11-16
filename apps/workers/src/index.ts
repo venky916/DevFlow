@@ -7,17 +7,18 @@ import { emailWorker } from './workers/email.worker';
 import { fileCleanupWorker } from './workers/file-cleanup.worker';
 import { notificationWorker } from './workers/notification.worker';
 
-logger.info('🚀 Workers starting...');
-logger.info('✅ Activity worker started');
-logger.info('✅ Notification worker started');
-logger.info('✅ Email worker started');
-logger.info('✅ File cleanup worker started');
+logger.info('Workers started: activity, notification, email, file cleanup');
 
-process.on('SIGTERM', async () => {
-  logger.info('Shutting down workers...');
-  await activityWorker.close();
-  await notificationWorker.close();
-  await emailWorker.close();
-  await fileCleanupWorker.close();
+async function shutdown(signal: string) {
+  logger.info({ signal }, 'Shutting down workers');
+  await Promise.all([
+    activityWorker.close(),
+    notificationWorker.close(),
+    emailWorker.close(),
+    fileCleanupWorker.close(),
+  ]);
   process.exit(0);
-});
+}
+
+process.on('SIGTERM', () => void shutdown('SIGTERM'));
+process.on('SIGINT', () => void shutdown('SIGINT'));
