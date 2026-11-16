@@ -17,7 +17,7 @@ Never put real secrets in this file. Secrets live in the `apps/*/.env` files, wh
 |---|---|---|
 | Web (Next.js) | Vercel | https://dev-flow-blush.vercel.app |
 | API | EC2, container `api` | https://devflow-api.duckdns.org (through Caddy) |
-| Websocket server | EC2, container `ws` | wss://devflow-ws.duckdns.org (the web app does not use it yet) |
+| Websocket server | EC2, container `ws` | wss://devflow-ws.duckdns.org. Live updates: notifications, board changes, pointers and drag markers, and presence, hints and comments on the issue page. |
 | Background workers | EC2, container `workers` | activity log, notifications, email, file cleanup |
 | Redis x3 | EC2, containers | cache, queue, pub/sub. No published ports. |
 | HTTPS | EC2, container `caddy` | Let's Encrypt certificates, renewed automatically |
@@ -26,6 +26,7 @@ Never put real secrets in this file. Secrets live in the `apps/*/.env` files, wh
 | Sign-in | Firebase | |
 | Email | Gmail through nodemailer, inside the workers | |
 | Names | DuckDNS | two names pointing at the server's Elastic IP |
+| Logs | Docker, JSON lines | written by pino, rotated at 10 MB x 3 files per container |
 
 The release flow:
 
@@ -87,6 +88,8 @@ sudo chmod 600 /swapfile
 sudo mkswap /swapfile
 sudo swapon /swapfile
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
+echo 'cd ~/devflow' >> ~/.bashrc          (optional: every login starts in the right folder)
 ```
 
 Log out and back in (so the Docker group applies), then check:
@@ -99,17 +102,19 @@ free -h            (Swap should show 2.0Gi)
 
 ### 3.4 Production env files
 
-Copy `apps/api/.env`, `apps/ws/.env` and `apps/workers/.env` to a folder outside the repo, for example `%USERPROFILE%\prod-env\` as `api.env`, `ws.env` and `workers.env`. Edit the **copies**. Variable names only:
+Copy `apps/api/.env`, `apps/ws/.env` and `apps/workers/.env` to a folder outside the repo, for example `%USERPROFILE%\prod-env\` as `api.env`, `ws.env` and `workers.env`. Edit the **copies**. They are the master: a file copied to the server replaces the one there, so a change made only on the server is lost the next time. Variable names only:
 
 | File | Variables |
 |---|---|
-| `api.env` | `PORT`, `NODE_ENV`, `BASE_WEB_URL`, `DATABASE_URL` (pooled), `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `REDIS_CACHE_URL`, `REDIS_QUEUE_URL`, `REDIS_PUBSUB_URL`, `STORAGE_*` |
-| `ws.env` | `PORT`, `NODE_ENV`, `DATABASE_URL`, `FIREBASE_*`, `REDIS_PUBSUB_URL` |
-| `workers.env` | `NODE_ENV`, `BASE_WEB_URL`, `EMAIL_LOGO_URL` (optional), `DATABASE_URL`, `REDIS_QUEUE_URL`, `REDIS_PUBSUB_URL`, `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `STORAGE_*` |
+| `api.env` | `SERVICE_NAME`, `PORT`, `NODE_ENV`, `BASE_WEB_URL`, `DATABASE_URL` (pooled), `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `REDIS_CACHE_URL`, `REDIS_QUEUE_URL`, `REDIS_PUBSUB_URL`, `STORAGE_*` |
+| `ws.env` | `SERVICE_NAME`, `PORT`, `NODE_ENV`, `DATABASE_URL`, `FIREBASE_*`, `REDIS_PUBSUB_URL` |
+| `workers.env` | `SERVICE_NAME`, `NODE_ENV`, `BASE_WEB_URL`, `EMAIL_LOGO_URL` (optional), `DATABASE_URL`, `REDIS_QUEUE_URL`, `REDIS_PUBSUB_URL`, `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `STORAGE_*` |
 
 Rules for the values:
 
-- `NODE_ENV=production`
+- `NODE_ENV=production`. It switches the logs to JSON.
+- `SERVICE_NAME` is `api`, `ws` or `workers`. Every log line carries it, so log tools can tell the apps apart. Without it, lines say `"service":"unknown"`.
+- `LOG_LEVEL` is optional (default `info`). Set `debug` only while troubleshooting.
 - `BASE_WEB_URL` is the exact Vercel address, with no trailing slash
 - Redis addresses use the Docker service names: `redis://redis-cache:6379`, `redis://redis-queue:6379`, `redis://redis-pubsub:6379`
 - `DIRECT_URL` is **not** needed on the server. It is only for running migrations from the laptop.
@@ -173,48 +178,103 @@ Environment variables (all `NEXT_PUBLIC_*`, so they are baked into the build and
 | `NEXT_PUBLIC_APP_URL` | the Vercel address |
 | `NEXT_PUBLIC_FIREBASE_*` | the six Firebase web values |
 
-Do not put backend secrets in Vercel.
+Do not put backend secrets in Vercel. A push to `main` builds the web by itself.
 
 ### 3.8 Connect the pieces
 
 1. Server: set `BASE_WEB_URL` to the Vercel address in `api.env` and `workers.env`, copy them again, then recreate the containers (section 4.2). Without it, CORS blocks the web app.
 2. Firebase Console, Authentication, Settings, **Authorized domains**: add the Vercel domain (domain only, no `https://`).
-3. R2: each bucket needs a CORS rule so the browser can upload and download. It is currently open to all origins (see section 9).
+3. R2: each bucket needs a CORS rule so the browser can upload and download. The rule lists the web address and `http://localhost:3000`.
 
 ### 3.9 Test
 
 Sign in, open a workspace and project, create an issue, drag a card, post a comment, upload a file, invite someone by email. On the server: `docker compose logs -f api`.
 
+For the live features, use two windows (a normal and a private one) signed in as two different users in the same project:
+
+| Test | Expected |
+|---|---|
+| Browser Network tab, filter by WS | A connection to `wss://devflow-ws.duckdns.org/?token=...` with a `CONNECTED` message |
+| @mention the other user in a comment | Their bell and unread count update without a reload |
+| Drag a card | It jumps in the other window. The mover's pointer arrow shows, and the card has a dashed marker until it lands. |
+| Open the same issue in both windows | Avatars appear. Typing, editing and uploading show as a hint in the header. Comments appear at once. |
+| Upload or delete a file | The other window's list updates |
+
 ## 4. Operating it
 
 ### 4.1 Release a new version
+
+Check before you start: the checks pass (`pnpm -r run lint`, `check-types`, `format:check`), `git status` is clean, and no database migration is part of the release. A release that changes the database cannot be rolled back by images alone.
+
+**Safety copy first.** An image has names (tags). `latest` moves to the new image when you pull, so the old release would lose its name. Give it a second name before the pull. This adds a name and copies nothing.
+
+```
+[server] cd ~/devflow
+[server] docker images | grep devflow        (CREATED should say days ago: this is the release to save)
+[server] docker tag venkateshmaliga/devflow-api:latest venkateshmaliga/devflow-api:v1
+[server] docker tag venkateshmaliga/devflow-ws:latest venkateshmaliga/devflow-ws:v1
+[server] docker tag venkateshmaliga/devflow-workers:latest venkateshmaliga/devflow-workers:v1
+```
+
+Never run the three tag lines again after the pull: they would move `v1` onto the new release. For the next release use `v2`, and remove an old name you no longer need with `docker rmi venkateshmaliga/devflow-api:v1` (and the other two).
+
+**Build, push, pull, start:**
 
 ```
 [laptop] docker compose build api ws workers
 [laptop] docker compose push api ws workers
 [server] docker compose pull
-[server] docker compose up -d
-[server] docker image prune -f              (removes old images, frees disk)
+[server] docker compose up -d                (only containers whose image changed are recreated)
+[server] docker compose ps                   (all seven Up)
+[server] docker compose logs --tail 5 api ws workers
 ```
 
-Tag releases so you can go back. On the laptop: `set TAG=v2`, then build and push. On the server: `TAG=v2 docker compose up -d`. Roll back with an older tag, for example `TAG=v1 docker compose up -d`.
+`docker images | grep devflow` now shows `latest` and `v1` with **different** IDs. If they are still the same, the pull found nothing new and the push did not include the latest build.
+
+**Then the web.** Merge to `main` after the server is updated. Vercel builds it by itself. The new web needs the new server, and the old web works with the new server, so this order never shows users a broken moment.
+
+```
+[laptop] git push
+[laptop] git checkout main
+[laptop] git merge <branch>
+[laptop] git push
+```
+
+**Clean up** once the live site is confirmed good:
+
+```
+[server] docker image prune -f
+```
+
+It removes images that have no name. The `v1` copy is protected. Never use `docker image prune -a`, which would delete the rollback copy.
+
+**Roll back:**
+
+```
+[server] TAG=v1 docker compose up -d
+[server] docker compose ps                   (the IMAGE column shows :v1)
+```
+
+A plain `docker compose up -d` afterward returns to `latest`, because the variable only applied to that command. A rollback restores images, not the database. The web rolls back separately: in Vercel, open the previous successful deployment and choose Promote to Production.
 
 ### 4.2 Change an env value
 
-A running container keeps the env it was created with. `docker compose restart` does **not** reload it. Edit the laptop copy, copy it again with `scp`, then:
+A running container keeps the env it was created with. `docker compose restart` does **not** reload it. Edit the laptop copy in `prod-env`, copy it again with `scp`, then:
 
 ```
 [server] chmod 600 apps/*/.env
 [server] docker compose up -d --force-recreate api workers      (name the services that read the value)
 ```
 
-To see which variable **names** a container has (no values):
+To check which variable **names** a container has (no values):
 
 ```
 [server] docker compose exec api sh -c 'printenv | cut -d= -f1 | sort'
 ```
 
 ### 4.3 Logs and health
+
+Production logs are JSON: one object per line, with `level`, `time`, `service`, `msg` and the fields of the event. Levels: `info` for normal events, `warn` for client errors (4xx) and recoverable problems, `error` for server errors (5xx) and failures. Every API request writes one `request completed` line with `method`, `url`, `statusCode`, `durationMs` and `userId`. `/health` is not logged.
 
 ```
 docker compose ps
@@ -225,6 +285,14 @@ docker stats --no-stream
 free -h
 df -h /
 ```
+
+Read the logs in a friendlier form from the laptop:
+
+```
+[laptop] ssh -i devflow.pem ubuntu@<ELASTIC_IP> "cd ~/devflow && docker compose logs --no-log-prefix --tail 50 api" | npx pino-pretty
+```
+
+For more detail while troubleshooting, set `LOG_LEVEL=debug` in that app's env file, recreate the container (section 4.2), and remove the line afterward.
 
 At idle the seven containers use about 560 MiB of RAM, and the server shows about 1.0 GiB used out of 1.9 GiB, with swap almost untouched.
 
@@ -263,6 +331,23 @@ Stopping the instance saves the server hours. The disk and the Elastic IP still 
 [server] sudo apt-get update && sudo apt-get upgrade -y
 ```
 
+### 4.8 Local development
+
+```
+[laptop] docker compose -f docker-compose.dev.yml up -d                  start in the background (no logs are printed)
+[laptop] docker compose -f docker-compose.dev.yml logs -f --tail 20 api ws workers
+[laptop] pnpm --filter web dev
+```
+
+| Situation | Command |
+|---|---|
+| Server code changed and nothing happened (Windows does not always pass file changes into containers) | `docker compose -f docker-compose.dev.yml restart api ws workers` |
+| An `.env` file changed | `docker compose -f docker-compose.dev.yml up -d --force-recreate <service>` |
+| A `package.json`, lockfile or Dockerfile changed | `docker compose -f docker-compose.dev.yml up -d --build` |
+| Check the JSON logging the server will use | `docker compose up -d --build`, read the logs, then `docker compose down` |
+
+Without `-d`, logs stream into the terminal, and Ctrl+C stops the containers.
+
 ## 5. Troubleshooting
 
 | Symptom | Likely cause | What to do |
@@ -278,7 +363,10 @@ Stopping the instance saves the server hours. The disk and the Elastic IP still 
 | A container keeps restarting | A variable is missing | `docker compose logs <name>`, the error names it |
 | "no configuration file provided" | You are not in `~/devflow` | `cd ~/devflow` |
 | SSH says the key is unprotected | Windows permissions on the `.pem` file | Run the two `icacls` lines from section 3.3 |
-| `ws` and `workers` print nothing | The logger probably hides info lines in production | Check with `docker compose ps` and `docker inspect -f "{{.Name}} restarts={{.RestartCount}}" $(docker ps -q)` |
+| Log lines say `"service":"unknown"` | `SERVICE_NAME` is missing from that app's env file | Add it to the laptop copy, `scp` it, recreate the container |
+| Logs are colored text, not JSON | `NODE_ENV` is not `production` in that env file | Fix it and recreate the container |
+| The websocket does not connect | `NEXT_PUBLIC_WS_URL` is not `wss://...`, or Caddy or `ws` is down | Network tab, WS filter. On the server: `docker compose logs --tail 50 ws caddy` |
+| The page works but nothing updates live | The socket is connected, but the room join failed | Look for an `ERROR` frame in the Network tab, WS, Messages. The `ws` logs say why. |
 
 ## 6. Costs and the AWS free plan
 
@@ -292,18 +380,27 @@ Stopping the instance saves the server hours. The disk and the Elastic IP still 
 
 ## 8. What is not done yet
 
-- Websocket integration in the web app (the `ws` container runs, but nothing connects to it)
+- `SERVICE_NAME` is not in the server's env files yet, so production log lines say `"service":"unknown"`. It is added with the next env update (the Neon split and credential rotation), by adding the line to the three `prod-env` copies and copying them over.
+- Monitoring: an uptime check on `/health`, Sentry for errors, and a log search tool. The logs are already JSON and ready for it.
 - CI/CD and automated tests
-- Monitoring (uptime check, Sentry, log search)
 - Separate dev and production databases
 - Credential rotation
+- Decision on forgot-password: Firebase's own email (the API endpoint and email template are unused), or switch to the API's
+- README with screenshots, and AGENTS.md files
 
 ## 9. Known limitations and security notes
 
 - **SSH is open to the internet** and protected only by the key file. To be tightened with CI/CD.
 - **Dev and production share one database** (Neon, Singapore). The plan is two separate projects: dev stays in Singapore, a new empty production project in the same region as the server.
 - **Credentials need rotating** (Neon, the Firebase private key, Redis Cloud, R2, Gmail, Resend), because they were exposed during development.
-- **R2 CORS allows all origins.** Tighten it to the web address and localhost.
-- The web app logs the Firebase token to the browser console (`lib/axios.ts`). Remove it before recording a demo or adding error tracking.
 - Redis has no password and no published ports. It is reachable only inside the Docker network.
 - The images run the TypeScript source with `tsx`. A bundled build would be smaller.
+
+**Websocket limits:**
+
+- A member who is removed from a project keeps receiving its events until their connection drops.
+- Presence, typing hints, pointers and drag markers live in the memory of one ws server, so they work for a single instance only.
+- The issue slideover is not in the issue room. It refreshes its fields with the board, but live comments, files and activity are on the full issue page.
+- A missed event (a dropped connection) is repaired by a refetch after the reconnect. Events are not replayed.
+- The websocket has no origin check and only light rate limits.
+- The Firebase token travels in the websocket URL. It is short-lived, and the ws server never logs URLs.
