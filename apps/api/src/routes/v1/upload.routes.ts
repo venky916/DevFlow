@@ -5,7 +5,7 @@ import {
   getAttachmentDownloadUrl,
   getAttachments,
   saveAttachment,
-} from '../../controllers/attachement.controller';
+} from '../../controllers/attachment.controller';
 import { requestUploadUrl } from '../../controllers/upload.controller';
 import { updateAvatar } from '../../controllers/user.controller';
 import { updateWorkspaceLogo } from '../../controllers/workspace.controller';

@@ -1,6 +1,6 @@
 # DevFlow: deployment runbook
 
-How DevFlow is deployed and how to operate it, written from the real deploy (November 2026).
+How DevFlow is deployed and how to operate it, written from the real deploy (November 2026). A CI/CD pipeline is designed in section 10, and it is not built yet.
 
 Commands are labelled with where they run:
 
@@ -21,12 +21,21 @@ Never put real secrets in this file. Secrets live in the `apps/*/.env` files, wh
 | Background workers | EC2, container `workers` | activity log, notifications, email, file cleanup |
 | Redis x3 | EC2, containers | cache, queue, pub/sub. No published ports. |
 | HTTPS | EC2, container `caddy` | Let's Encrypt certificates, renewed automatically |
-| Database | Neon (Singapore) | currently shared by dev and production (see section 9) |
+| Database | Neon | production: project `devflow-prod` (Sydney). development: project `devflow-dev` (Singapore). |
 | Files | Cloudflare R2 | one private and one public bucket |
 | Sign-in | Firebase | |
 | Email | Gmail through nodemailer, inside the workers | |
 | Names | DuckDNS | two names pointing at the server's Elastic IP |
 | Logs | Docker, JSON lines | written by pino, rotated at 10 MB x 3 files per container |
+
+The two environments:
+
+| | Development | Production |
+|---|---|---|
+| Runs on | The laptop: `docker-compose.dev.yml` and `pnpm --filter web dev` | EC2 for the backend, Vercel for the web |
+| Database | `devflow-dev` | `devflow-prod` |
+| Env files | `apps/*/.env`, `packages/db/.env` | the `prod-env` copies, copied to the server |
+| Logs | colored lines | JSON lines |
 
 The release flow:
 
@@ -56,6 +65,7 @@ Image names: `venkateshmaliga/devflow-api`, `venkateshmaliga/devflow-ws`, `venka
 3. Security group, inbound: SSH (22), HTTP (80), HTTPS (443). Nothing else. SSH is currently open to everyone and protected only by the key (see section 9).
 4. Allocate an **Elastic IP** and associate it with the instance, so the address survives a stop and start. Release it if the instance is ever deleted, because an idle address still costs money.
 5. Optional: enable termination protection on the instance.
+6. Create a monthly budget alert (Billing, Budgets).
 
 ### 3.2 DuckDNS
 
@@ -113,6 +123,7 @@ Copy `apps/api/.env`, `apps/ws/.env` and `apps/workers/.env` to a folder outside
 Rules for the values:
 
 - `NODE_ENV=production`. It switches the logs to JSON.
+- `DATABASE_URL` is the **pooled** connection string of `devflow-prod` (the host contains `-pooler` and `ap-southeast-2`).
 - `SERVICE_NAME` is `api`, `ws` or `workers`. Every log line carries it, so log tools can tell the apps apart. Without it, lines say `"service":"unknown"`.
 - `LOG_LEVEL` is optional (default `info`). Set `debug` only while troubleshooting.
 - `BASE_WEB_URL` is the exact Vercel address, with no trailing slash
@@ -190,6 +201,8 @@ Do not put backend secrets in Vercel. A push to `main` builds the web by itself.
 
 Sign in, open a workspace and project, create an issue, drag a card, post a comment, upload a file, invite someone by email. On the server: `docker compose logs -f api`.
 
+The production database is empty, so data from development is not there. Sign up with a new account.
+
 For the live features, use two windows (a normal and a private one) signed in as two different users in the same project:
 
 | Test | Expected |
@@ -204,7 +217,11 @@ For the live features, use two windows (a normal and a private one) signed in as
 
 ### 4.1 Release a new version
 
-Check before you start: the checks pass (`pnpm -r run lint`, `check-types`, `format:check`), `git status` is clean, and no database migration is part of the release. A release that changes the database cannot be rolled back by images alone.
+Check before you start:
+
+- The checks pass: `pnpm -r run lint`, `check-types` and `format:check`.
+- `git status` is clean.
+- **If the release changes the database,** apply the migration to production first (section 4.5), and only then release the code. A release that changes the database cannot be rolled back by images alone.
 
 **Safety copy first.** An image has names (tags). `latest` moves to the new image when you pull, so the old release would lose its name. Give it a second name before the pull. This adds a name and copies nothing.
 
@@ -311,15 +328,36 @@ Proves that the containers come back by themselves after a restart (`restart: un
 
 ### 4.5 Database migrations
 
-From the laptop, against the database you want to change. The quotes are needed because the URL contains `&`:
+Prisma keeps a table, `_prisma_migrations`, with one row for every migration that has run. `migrate deploy` compares the folder `packages/db/prisma/migrations` with that table and runs only the ones that are missing, in order. It never starts from scratch.
+
+**In development,** after you edit `schema.prisma`:
 
 ```
-[laptop] set "DIRECT_URL=<direct connection string>"
-[laptop] pnpm --filter @devflow/db exec prisma migrate status
-[laptop] pnpm --filter @devflow/db exec prisma migrate deploy
+[laptop] cd packages\db
+[laptop] pnpm exec prisma migrate dev --name <what_changed>
 ```
 
-Close the cmd window afterward so the variable disappears.
+It creates a new migration folder and applies it to `devflow-dev`. Test it, then commit the schema **and** the new migration folder.
+
+**In production,** from the laptop, with the production **direct** connection string. The quotes are needed because the URL contains `&`:
+
+```
+[laptop] cd packages\db
+[laptop] set "DIRECT_URL=<direct connection string of devflow-prod>"
+[laptop] pnpm exec prisma migrate status
+[laptop] pnpm exec prisma migrate deploy
+[laptop] pnpm exec prisma migrate status
+```
+
+Read the `Datasource` line of the first `status`: the host must contain **`ap-southeast-2`**. If it says `ap-southeast-1`, you are about to change the development database. The last `status` must say the database schema is up to date. Close the cmd window afterward so the variable disappears.
+
+Rules:
+
+- Never edit a migration that has already run. Make a new one.
+- Never run `migrate dev` or `db push` against production.
+- Never change the production schema by hand in the Neon console.
+- Apply the migration to production **before** the release that needs it. To remove or rename a column, use two releases: first code that no longer uses it, then the migration.
+- Before a risky migration, create a Neon branch of `devflow-prod` (instant, copy-on-write) as a backup, and delete it afterward.
 
 ### 4.6 Save credits
 
@@ -348,6 +386,20 @@ Stopping the instance saves the server hours. The disk and the Elastic IP still 
 
 Without `-d`, logs stream into the terminal, and Ctrl+C stops the containers.
 
+### 4.9 Check that production is set up correctly
+
+Three checks, from the laptop. None of them prints a secret:
+
+```
+[laptop] ssh -i devflow.pem ubuntu@<ELASTIC_IP> "grep -o 'ap-southeast-[0-9]' ~/devflow/apps/*/.env"
+[laptop] ssh -i devflow.pem ubuntu@<ELASTIC_IP> "grep SERVICE_NAME ~/devflow/apps/*/.env"
+[laptop] ssh -i devflow.pem ubuntu@<ELASTIC_IP> "cd ~/devflow && docker compose logs --tail 3 api ws workers"
+```
+
+- The first must print `ap-southeast-2` for the api, ws and workers files. `ap-southeast-1` means a server still points at the development database.
+- The second must show `api`, `ws` and `workers`.
+- In the third, each line carries `"service":"api"`, `"ws"` or `"workers"`, and `"level"` is a word.
+
 ## 5. Troubleshooting
 
 | Symptom | Likely cause | What to do |
@@ -356,6 +408,7 @@ Without `-d`, logs stream into the terminal, and Ctrl+C stops the containers.
 | Sign-in popup says "unauthorized domain" | The domain is not in Firebase's authorized list | Add it |
 | API calls return 500 and the logs say a table does not exist | The database has no tables | Run `prisma migrate deploy` (section 4.5) |
 | API calls return 401 | The Firebase project differs between the web and the server | Compare the project ids |
+| A person or data from development is missing in production | The production database is separate and started empty | Sign up with a new account |
 | Upload fails with a CORS error | The R2 bucket has no matching CORS rule | Add one |
 | Certificate error | DNS does not point at the server yet, or ports 80 and 443 are closed | `docker compose logs caddy` |
 | 502 Bad Gateway | The container behind Caddy is not running | `docker compose ps` |
@@ -370,9 +423,10 @@ Without `-d`, logs stream into the terminal, and Ctrl+C stops the containers.
 
 ## 6. Costs and the AWS free plan
 
-- The account is on the AWS Free plan with credits and a 6-month window. When the credits or the window end, the account can close, so check Billing, Credits regularly.
+- The account is on the AWS Free plan with credits and a 6-month window. When the credits or the window end, the account can close, so check Billing, Credits regularly. A monthly budget alert exists.
 - Rough monthly cost (my estimate): t3.small about $19, public IPv4 about $3.65, 20 GiB disk a few dollars, about $25 in total. The server is billed by the hour whatever its load.
 - A t3.micro (1 GiB) would not fit the stack comfortably, because the system already uses about 1.0 GiB.
+- Record the demo video and keep the README screenshots current before the credits end.
 
 ## 7. Files that must never be committed
 
@@ -380,21 +434,22 @@ Without `-d`, logs stream into the terminal, and Ctrl+C stops the containers.
 
 ## 8. What is not done yet
 
-- `SERVICE_NAME` is not in the server's env files yet, so production log lines say `"service":"unknown"`. It is added with the next env update (the Neon split and credential rotation), by adding the line to the three `prod-env` copies and copying them over.
+- Confirm that `SERVICE_NAME` and the production `DATABASE_URL` are in the server's env files (section 4.9).
 - Monitoring: an uptime check on `/health`, Sentry for errors, and a log search tool. The logs are already JSON and ready for it.
-- CI/CD and automated tests
-- Separate dev and production databases
-- Credential rotation
-- Decision on forgot-password: Firebase's own email (the API endpoint and email template are unused), or switch to the API's
-- README with screenshots, and AGENTS.md files
+- CI/CD and automated tests (designed in section 10).
+- Decision on forgot-password: Firebase's own email (the API endpoint and email template are unused), or switch to the API's.
+- Deleting a single issue does not queue its attachment files for deletion. Deleting an attachment, a project or a workspace does.
+- Leftover cleanup: `console.*` calls in the backend and emojis in log messages.
+- README with screenshots and a short demo video.
 
 ## 9. Known limitations and security notes
 
 - **SSH is open to the internet** and protected only by the key file. To be tightened with CI/CD.
-- **Dev and production share one database** (Neon, Singapore). The plan is two separate projects: dev stays in Singapore, a new empty production project in the same region as the server.
-- **Credentials need rotating** (Neon, the Firebase private key, Redis Cloud, R2, Gmail, Resend), because they were exposed during development.
+- Credentials were rotated after they were exposed during development, and the old ones were deleted. Redis Cloud and Resend are no longer used.
+- Development and production use the same R2 buckets and the same Firebase project. This is acceptable for a demo.
 - Redis has no password and no published ports. It is reachable only inside the Docker network.
 - The images run the TypeScript source with `tsx`. A bundled build would be smaller.
+- A single server: there is no failover.
 
 **Websocket limits:**
 
@@ -404,3 +459,33 @@ Without `-d`, logs stream into the terminal, and Ctrl+C stops the containers.
 - A missed event (a dropped connection) is repaired by a refetch after the reconnect. Events are not replayed.
 - The websocket has no origin check and only light rate limits.
 - The Firebase token travels in the websocket URL. It is short-lived, and the ws server never logs URLs.
+
+## 10. CI/CD (planned, not built yet)
+
+**Goal:** a push to `main` checks the code, builds the images, releases them to the server and verifies the result, without typing the release steps by hand. The manual steps in section 4.1 are what the pipeline will automate, so they are the script.
+
+**Trigger:** every push to `main` runs all jobs. A pull request runs only the checks.
+
+| Job | Steps |
+|---|---|
+| **checks** | Check out the code. Set up Node 22 and pnpm 9.0.0. `pnpm install --frozen-lockfile`. Run lint, `check-types`, `format:check`, the tests, and `pnpm --filter web build`. |
+| **images** (after checks) | Log in to Docker Hub. Build the three images, tag each with the commit hash and with `latest`, and push them. GitHub's build machines are x86, like the server. |
+| **deploy** (after images) | SSH to the server. Write `TAG=<commit hash>` into `~/devflow/.env` (Compose reads it for the image tag). `docker compose pull`, then `docker compose up -d`. Wait until both `/health` addresses answer. If they do not, put the previous tag back and `up -d` again. |
+
+The web is built by Vercel when `main` changes, so no job deploys it.
+
+**Why the commit hash:** every release then has its own tag, so a rollback means choosing an older hash, and the rollback copy (`v1`) no longer has to be made by hand.
+
+**GitHub secrets needed:** `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` (Read and Write), `SSH_HOST`, `SSH_USER`, and `SSH_PRIVATE_KEY` (a key made only for the pipeline, never the personal one).
+
+**SSH access.** GitHub's machines connect from changing addresses, so a rule that allows only your own IP would block a deploy. Choose one when building:
+
+1. Keep port 22 open with key-only login, and add `fail2ban` to block repeated failures.
+2. Use AWS Systems Manager, which needs no open port.
+3. Let the pipeline open port 22 for its own address for the length of the deploy.
+
+**Migrations:** manual for now (section 4.5), before the release. Later, an optional job that needs a manual approval and uses the production direct URL as a secret.
+
+**Tests to write first:** the issue permission rules and the parent status rule, the comment schema, `renderEmail` with a nasty title (the output must not contain a clickable link from user text), and the board move helper. A few per package is enough to start.
+
+**Done when:** a push to `main` with a small change reaches production by itself, a deliberately broken push stops at the checks, and a failed health check rolls back.

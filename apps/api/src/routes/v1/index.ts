@@ -4,7 +4,7 @@ import {
   getAllProjectActivities,
   getProjectActivities,
 } from '../../controllers/activity.controller';
-import { getProjectAnalytics, getWorkspaceAnalytics } from '../../controllers/analytics.contoller';
+import { getProjectAnalytics, getWorkspaceAnalytics } from '../../controllers/analytics.controller';
 import { acceptInvite } from '../../controllers/invite.controller';
 import { authenticate } from '../../middlewares/auth.middleware';
 import {
