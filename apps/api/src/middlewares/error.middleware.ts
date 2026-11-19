@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
 
-import { logger } from '@devflow/backend-common';
+import { captureError, logger } from '@devflow/backend-common';
 
 import { ApiError } from '../lib/ApiError';
 
@@ -31,13 +31,21 @@ export const errorMiddleware = (
   res: Response,
   _next: NextFunction,
 ) => {
+  // the id of this request: a user can quote it, and it finds every log line
+  const requestId: string | undefined = res.locals.requestId;
+
   // Zod validation errors
   if (rawError instanceof ZodError) {
-    logger.warn({
-      message: 'Validation failed',
-      url: req.originalUrl,
-      errors: rawError.issues,
-    });
+    logger.warn(
+      {
+        method: req.method,
+        url: req.originalUrl,
+        statusCode: 422,
+        // field names and messages only, never the values the user typed
+        issues: rawError.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`),
+      },
+      'Validation failed',
+    );
     return res.status(422).json({
       success: false,
       message: 'Validation failed',
@@ -46,6 +54,7 @@ export const errorMiddleware = (
         message: e.message,
       })),
       data: null,
+      requestId,
     });
   }
 
@@ -53,19 +62,14 @@ export const errorMiddleware = (
 
   // 4xx — warn, 5xx — error
   if (err instanceof ApiError && err.statusCode < 500) {
-    logger.warn({
-      message: err.message,
-      method: req.method,
-      url: req.originalUrl,
-      statusCode: err.statusCode,
-    });
+    logger.warn(
+      { method: req.method, url: req.originalUrl, statusCode: err.statusCode, code: err.code },
+      err.message,
+    );
   } else {
-    logger.error({
-      message: err.message,
-      method: req.method,
-      url: req.originalUrl,
-      stack: err.stack,
-    });
+    logger.error({ err, method: req.method, url: req.originalUrl }, 'Request failed');
+    // an unexpected error: tell Sentry (expected 4xx errors are not sent)
+    captureError(err, { method: req.method, route: req.route?.path });
   }
 
   if (err instanceof ApiError) {
@@ -74,6 +78,7 @@ export const errorMiddleware = (
       message: err.message,
       code: err.code,
       data: null,
+      requestId,
     });
   }
 
@@ -81,5 +86,6 @@ export const errorMiddleware = (
     success: false,
     message: 'Internal server error',
     data: null,
+    requestId,
   });
 };

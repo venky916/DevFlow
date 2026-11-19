@@ -1,12 +1,11 @@
-import { Queue } from 'bullmq';
-
 import { createRedisConnection } from './connection';
+import { createTracedQueue, type WithRequestId } from './traced-queue';
 
-export interface FileCleanupJobData {
+export interface FileCleanupJobData extends WithRequestId {
   fileKey: string;
 }
 
-export const fileCleanupQueue = new Queue<FileCleanupJobData>('file-cleanup-queue', {
+export const fileCleanupQueue = createTracedQueue<FileCleanupJobData>('file-cleanup-queue', {
   connection: createRedisConnection(),
   defaultJobOptions: {
     attempts: 5,

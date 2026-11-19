@@ -1,8 +1,7 @@
-import { Queue } from 'bullmq';
-
 import { NotificationTypes } from '@devflow/types';
 
 import { createRedisConnection } from './connection';
+import { createTracedQueue, type WithRequestId } from './traced-queue';
 
 // What each email needs. A missing or misspelled field is a compile error.
 export interface InviteEmailData {
@@ -25,15 +24,15 @@ export interface PasswordResetEmailData {
 
 // Email is only for things the person can't see in the app: invites, password resets, and assignments.
 // Everything else (comments, mentions, sprints, projects) is an in-app notification only.
-export type EmailJobData = { to: string } & (
-  | { type: typeof NotificationTypes.WORKSPACE_INVITED; data: InviteEmailData }
-  | { type: typeof NotificationTypes.ISSUE_ASSIGNED; data: IssueAssignedEmailData }
-  | { type: typeof NotificationTypes.PASSWORD_RESET; data: PasswordResetEmailData }
-);
+export type EmailJobData = WithRequestId & { to: string } & (
+    | { type: typeof NotificationTypes.WORKSPACE_INVITED; data: InviteEmailData }
+    | { type: typeof NotificationTypes.ISSUE_ASSIGNED; data: IssueAssignedEmailData }
+    | { type: typeof NotificationTypes.PASSWORD_RESET; data: PasswordResetEmailData }
+  );
 
 export type EmailType = EmailJobData['type'];
 
-export const emailQueue = new Queue<EmailJobData>('email-queue', {
+export const emailQueue = createTracedQueue<EmailJobData>('email-queue', {
   connection: createRedisConnection(),
   defaultJobOptions: {
     attempts: 3,

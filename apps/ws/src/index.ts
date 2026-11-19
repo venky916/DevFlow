@@ -3,7 +3,7 @@ import 'dotenv/config';
 import http from 'http';
 import { WebSocketServer } from 'ws';
 
-import { logger, subscriber } from '@devflow/backend-common';
+import { logger, registerGracefulShutdown, subscriber } from '@devflow/backend-common';
 import { ClientEvent } from '@devflow/types';
 
 import {
@@ -166,4 +166,12 @@ wss.on('connection', async (ws, req) => {
 
 server.listen(PORT, () => {
   logger.info({ port: PORT }, 'WS server listening');
+});
+
+// on a deploy: tell the browsers to reconnect, stop the server, send the last logs
+registerGracefulShutdown(() => {
+  clearInterval(heartbeat);
+  wss.clients.forEach((client) => client.close(1001, 'Server restarting'));
+  wss.close();
+  server.close();
 });

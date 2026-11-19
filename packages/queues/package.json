@@ -19,8 +19,6 @@
   },
   "devDependencies": {
     "@devflow/config": "workspace:*",
-    "@devflow/backend-common": "workspace:*",
-    "@devflow/config": "workspace:*",
     "@types/node": "^25.7.0",
     "typescript": "5.9.2"
   }

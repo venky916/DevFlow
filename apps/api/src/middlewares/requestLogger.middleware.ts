@@ -6,7 +6,7 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
   const start = Date.now();
 
   res.on('finish', () => {
-    // an uptime check calls /health every minute, and would drown the logs
+    // an uptime check calls /health every few minutes, and would drown the logs
     if (req.originalUrl === '/health') return;
 
     const statusCode = res.statusCode;
@@ -19,6 +19,8 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
         statusCode,
         durationMs: Date.now() - start,
         userId: req.user?.id ?? 'unauthenticated',
+        // this callback runs outside the request context, so the id is passed explicitly
+        requestId: res.locals.requestId,
       },
       'request completed',
     );

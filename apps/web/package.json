@@ -20,6 +20,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^5.4.0",
+    "@sentry/nextjs": "^11.14.0",
     "@tailwindcss/postcss": "^4.3.0",
     "@tanstack/react-query": "^5.101.0",
     "@tanstack/react-table": "^9.2.4",
@@ -45,8 +46,8 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
     "@devflow/config": "workspace:*",
+    "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
     "@types/node": "^22.15.3",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",

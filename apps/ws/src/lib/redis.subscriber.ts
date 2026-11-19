@@ -1,4 +1,4 @@
-import { logger, subscriber } from '@devflow/backend-common';
+import { captureError, logger, subscriber } from '@devflow/backend-common';
 
 import { roomManager } from '../RoomManager';
 
@@ -10,6 +10,7 @@ subscriber.on('message', (channel, message) => {
     roomManager.broadcast(channel, event);
   } catch (err) {
     logger.error({ err, channel }, 'Could not handle a Redis event');
+    captureError(err, { channel });
   }
 });
 

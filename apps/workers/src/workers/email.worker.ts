@@ -1,8 +1,8 @@
 import { Job, Worker } from 'bullmq';
 import nodemailer from 'nodemailer';
 
-import { logger } from '@devflow/backend-common';
-import { createRedisConnection, EmailJobData } from '@devflow/queues';
+import { captureError, logger } from '@devflow/backend-common';
+import { createRedisConnection, EmailJobData, isFinalFailure, runJob } from '@devflow/queues';
 
 import { renderEmail } from '../emails/templates';
 
@@ -50,10 +50,11 @@ async function emailFunction(job: Job<EmailJobData>) {
   }
 }
 
-export const emailWorker = new Worker<EmailJobData>('email-queue', emailFunction, {
-  connection: createRedisConnection(),
-  concurrency: 2,
-});
+export const emailWorker = new Worker<EmailJobData>(
+  'email-queue',
+  (job) => runJob(job, () => emailFunction(job)),
+  { connection: createRedisConnection(), concurrency: 2 },
+);
 
 (async () => {
   try {
@@ -66,10 +67,13 @@ export const emailWorker = new Worker<EmailJobData>('email-queue', emailFunction
 })();
 
 emailWorker.on('completed', (job) => {
-  logger.debug({ jobId: job.id }, 'Email job completed');
+  runJob(job, () => logger.debug({ jobId: job.id }, 'Email job completed'));
 });
 
 // the reason was already logged where it failed. This line shows how many tries were used.
-emailWorker.on('failed', (job) => {
-  logger.error({ jobId: job?.id, attempts: job?.attemptsMade }, 'Email job failed');
+emailWorker.on('failed', (job, err) => {
+  runJob(job, () => {
+    logger.error({ jobId: job?.id, attempts: job?.attemptsMade }, 'Email job failed');
+    if (isFinalFailure(job)) captureError(err, { queue: 'email', jobId: job?.id });
+  });
 });

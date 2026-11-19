@@ -1,7 +1,7 @@
 import { Job, Worker } from 'bullmq';
 
-import { logger } from '@devflow/backend-common';
-import { createRedisConnection, FileCleanupJobData } from '@devflow/queues';
+import { captureError, logger } from '@devflow/backend-common';
+import { createRedisConnection, FileCleanupJobData, isFinalFailure, runJob } from '@devflow/queues';
 import { deleteFile } from '@devflow/storage';
 
 async function fileCleanupFunction(job: Job<FileCleanupJobData>) {
@@ -13,7 +13,7 @@ async function fileCleanupFunction(job: Job<FileCleanupJobData>) {
 
 export const fileCleanupWorker = new Worker<FileCleanupJobData>(
   'file-cleanup-queue',
-  fileCleanupFunction,
+  (job) => runJob(job, () => fileCleanupFunction(job)),
   { connection: createRedisConnection(), concurrency: 2 },
 );
 
@@ -28,5 +28,8 @@ export const fileCleanupWorker = new Worker<FileCleanupJobData>(
 })();
 
 fileCleanupWorker.on('failed', (job, err) => {
-  logger.error({ jobId: job?.id, err }, 'File cleanup job failed');
+  runJob(job, () => {
+    logger.error({ jobId: job?.id, err }, 'File cleanup job failed');
+    if (isFinalFailure(job)) captureError(err, { queue: 'file-cleanup', jobId: job?.id });
+  });
 });

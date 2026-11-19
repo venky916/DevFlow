@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import * as Sentry from '@sentry/nextjs';
 
 export default function Error({
   error,
@@ -11,8 +12,8 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // log to your error reporting service (Sentry, etc.) once wired up
-    console.error(error);
+    // a page failed to render: tell Sentry (it is a no-op when no DSN is set)
+    Sentry.captureException(error);
   }, [error]);
 
   return (
@@ -23,6 +24,7 @@ export default function Error({
       </p>
       <div className="mt-2 flex gap-3">
         <button
+          type="button"
           onClick={reset}
           className="text-sm text-accent transition-colors hover:text-accent-hover"
         >

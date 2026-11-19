@@ -1,8 +1,13 @@
 import { Job, Worker } from 'bullmq';
 
-import { logger, publisher } from '@devflow/backend-common';
+import { captureError, logger, publisher } from '@devflow/backend-common';
 import { prisma } from '@devflow/db';
-import { createRedisConnection, NotificationJobData } from '@devflow/queues';
+import {
+  createRedisConnection,
+  isFinalFailure,
+  NotificationJobData,
+  runJob,
+} from '@devflow/queues';
 import { UserEvents } from '@devflow/types';
 
 async function notificationFunction(job: Job<NotificationJobData>) {
@@ -41,7 +46,7 @@ async function notificationFunction(job: Job<NotificationJobData>) {
 
 export const notificationWorker = new Worker<NotificationJobData>(
   'notification-queue',
-  notificationFunction,
+  (job) => runJob(job, () => notificationFunction(job)),
   { connection: createRedisConnection(), concurrency: 2 },
 );
 
@@ -56,9 +61,14 @@ export const notificationWorker = new Worker<NotificationJobData>(
 })();
 
 notificationWorker.on('completed', (job) => {
-  logger.info({ jobId: job.id, type: job.data.type }, 'Notification job completed');
+  runJob(job, () =>
+    logger.info({ jobId: job.id, type: job.data.type }, 'Notification job completed'),
+  );
 });
 
 notificationWorker.on('failed', (job, err) => {
-  logger.error({ jobId: job?.id, err }, 'Notification job failed');
+  runJob(job, () => {
+    logger.error({ jobId: job?.id, err }, 'Notification job failed');
+    if (isFinalFailure(job)) captureError(err, { queue: 'notification', jobId: job?.id });
+  });
 });

@@ -35,11 +35,11 @@ pnpm --filter ws-server run format
 
 ### Which events take which path
 
-| Path | Events | Who starts it |
-| --- | --- | --- |
-| **Through Redis** (works with several ws servers) | `ISSUE_CREATED`, `ISSUE_UPDATED`, `ISSUE_MOVED`, `ISSUE_DELETED`, `SPRINT_STARTED`, `SPRINT_COMPLETED` to `project:<id>`. `COMMENT_ADDED`, `COMMENT_UPDATED`, `COMMENT_DELETED`, `ATTACHMENT_ADDED`, `ATTACHMENT_DELETED`, `ACTIVITY_ADDED` to `issue:<id>`. `NOTIFICATION` to `user:<id>`. | The API, or a worker |
-| **Direct** (browser to this server to the room, in memory only) | `PRESENCE_ACTION`, `CURSOR_MOVE`, `CURSOR_LEAVE`, `DRAG_START`, `DRAG_END` | A browser |
-| **Made by this server** | `CONNECTED`, `PONG`, `ERROR`, `JOINED_PROJECT`, `JOINED_ISSUE`, `PRESENCE_STATE`, `PRESENCE_JOINED`, `PRESENCE_LEFT`, and the `CURSOR_LEAVE` and `DRAG_END` it sends when a socket leaves or disconnects | This server |
+| Path                                                            | Events                                                                                                                                                                                                                                                                                      | Who starts it        |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| **Through Redis** (works with several ws servers)               | `ISSUE_CREATED`, `ISSUE_UPDATED`, `ISSUE_MOVED`, `ISSUE_DELETED`, `SPRINT_STARTED`, `SPRINT_COMPLETED` to `project:<id>`. `COMMENT_ADDED`, `COMMENT_UPDATED`, `COMMENT_DELETED`, `ATTACHMENT_ADDED`, `ATTACHMENT_DELETED`, `ACTIVITY_ADDED` to `issue:<id>`. `NOTIFICATION` to `user:<id>`. | The API, or a worker |
+| **Direct** (browser to this server to the room, in memory only) | `PRESENCE_ACTION`, `CURSOR_MOVE`, `CURSOR_LEAVE`, `DRAG_START`, `DRAG_END`                                                                                                                                                                                                                  | A browser            |
+| **Made by this server**                                         | `CONNECTED`, `PONG`, `ERROR`, `JOINED_PROJECT`, `JOINED_ISSUE`, `PRESENCE_STATE`, `PRESENCE_JOINED`, `PRESENCE_LEFT`, and the `CURSOR_LEAVE` and `DRAG_END` it sends when a socket leaves or disconnects                                                                                    | This server          |
 
 Rule of thumb: if the data is saved in the database, the process that saved it publishes it through Redis. If it only matters while people are looking, it goes direct. A second ws instance would break only the direct ones.
 

@@ -1,8 +1,8 @@
 import { Job, Worker } from 'bullmq';
 
-import { logger, publisher } from '@devflow/backend-common';
+import { captureError, logger, publisher } from '@devflow/backend-common';
 import { prisma } from '@devflow/db';
-import { ActivityJobData, createRedisConnection } from '@devflow/queues';
+import { ActivityJobData, createRedisConnection, isFinalFailure, runJob } from '@devflow/queues';
 import { IssueEvents } from '@devflow/types';
 
 async function activityFunction(job: Job<ActivityJobData>) {
@@ -35,10 +35,12 @@ async function activityFunction(job: Job<ActivityJobData>) {
   }
 }
 
-export const activityWorker = new Worker<ActivityJobData>('activity-queue', activityFunction, {
-  connection: createRedisConnection(),
-  concurrency: 2,
-});
+// runJob puts the job's request id in the log context, so every line of this job carries it
+export const activityWorker = new Worker<ActivityJobData>(
+  'activity-queue',
+  (job) => runJob(job, () => activityFunction(job)),
+  { connection: createRedisConnection(), concurrency: 2 },
+);
 
 (async () => {
   try {
@@ -51,9 +53,15 @@ export const activityWorker = new Worker<ActivityJobData>('activity-queue', acti
 })();
 
 activityWorker.on('completed', (job) => {
-  logger.info({ jobId: job.id, action: job.data.action }, 'Activity job completed');
+  runJob(job, () =>
+    logger.info({ jobId: job.id, action: job.data.action }, 'Activity job completed'),
+  );
 });
 
 activityWorker.on('failed', (job, err) => {
-  logger.error({ jobId: job?.id, err }, 'Activity job failed');
+  runJob(job, () => {
+    logger.error({ jobId: job?.id, err }, 'Activity job failed');
+    // BullMQ reports every failed attempt: tell Sentry only about the last one
+    if (isFinalFailure(job)) captureError(err, { queue: 'activity', jobId: job?.id });
+  });
 });
