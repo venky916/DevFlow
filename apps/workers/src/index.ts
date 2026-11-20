@@ -2,11 +2,11 @@ import 'dotenv/config';
 
 import { logger, registerGracefulShutdown } from '@devflow/backend-common';
 
+import { startHeartbeat } from './heartbeat';
 import { activityWorker } from './workers/activity.worker';
 import { emailWorker } from './workers/email.worker';
 import { fileCleanupWorker } from './workers/file-cleanup.worker';
 import { notificationWorker } from './workers/notification.worker';
-import { startHeartbeat } from './heartbeat';
 
 logger.info('Workers started: activity, notification, email, file cleanup');
 
@@ -17,7 +17,6 @@ const stopHeartbeat = startHeartbeat([
   emailWorker,
   fileCleanupWorker,
 ]);
-
 
 registerGracefulShutdown(async () => {
   stopHeartbeat();
