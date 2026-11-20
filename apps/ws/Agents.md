@@ -17,13 +17,13 @@ pnpm --filter ws-server run format
 
 ## Folder map
 
-- `src/index.ts`: the HTTP server (`/health`) and the websocket server. It checks the token on connect, routes each message to a handler, and runs the heartbeat.
+- `src/index.ts`: the HTTP server (`/health`) and the websocket server. It checks the token on connect, routes each message to a handler, and runs the heartbeat (the socket ping, not the Better Stack one). It registers a clean shutdown: it tells the browsers to reconnect, then flushes the last logs and errors.
 - `src/middlewares/auth.ts`: `authenticateWS` reads `?token=` from the URL, verifies the Firebase token, and loads the user.
 - `src/RoomManager.ts`: which sockets are in which room, and broadcasting to a room.
 - `src/handlers/`: `project`, `issue`, `presence`, `cursor` and `drag` handlers.
 - `src/lib/access.ts`: `canAccessProject` (a project member, or an admin of its workspace).
 - `src/lib/presence.ts`: announces who joined and left an issue.
-- `src/lib/redis.subscriber.ts`: listens on Redis channels and forwards the events to the matching room.
+- `src/lib/redis.subscriber.ts`: listens on Redis channels and forwards the events to the matching room. A Redis event it cannot handle is logged and sent to Sentry.
 - `src/types/socket.types.ts`: the authenticated socket type.
 
 ## How it works
@@ -35,11 +35,11 @@ pnpm --filter ws-server run format
 
 ### Which events take which path
 
-| Path                                                            | Events                                                                                                                                                                                                                                                                                      | Who starts it        |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| **Through Redis** (works with several ws servers)               | `ISSUE_CREATED`, `ISSUE_UPDATED`, `ISSUE_MOVED`, `ISSUE_DELETED`, `SPRINT_STARTED`, `SPRINT_COMPLETED` to `project:<id>`. `COMMENT_ADDED`, `COMMENT_UPDATED`, `COMMENT_DELETED`, `ATTACHMENT_ADDED`, `ATTACHMENT_DELETED`, `ACTIVITY_ADDED` to `issue:<id>`. `NOTIFICATION` to `user:<id>`. | The API, or a worker |
-| **Direct** (browser to this server to the room, in memory only) | `PRESENCE_ACTION`, `CURSOR_MOVE`, `CURSOR_LEAVE`, `DRAG_START`, `DRAG_END`                                                                                                                                                                                                                  | A browser            |
-| **Made by this server**                                         | `CONNECTED`, `PONG`, `ERROR`, `JOINED_PROJECT`, `JOINED_ISSUE`, `PRESENCE_STATE`, `PRESENCE_JOINED`, `PRESENCE_LEFT`, and the `CURSOR_LEAVE` and `DRAG_END` it sends when a socket leaves or disconnects                                                                                    | This server          |
+| Path | Events | Who starts it |
+| --- | --- | --- |
+| **Through Redis** (works with several ws servers) | `ISSUE_CREATED`, `ISSUE_UPDATED`, `ISSUE_MOVED`, `ISSUE_DELETED`, `SPRINT_STARTED`, `SPRINT_COMPLETED` to `project:<id>`. `COMMENT_ADDED`, `COMMENT_UPDATED`, `COMMENT_DELETED`, `ATTACHMENT_ADDED`, `ATTACHMENT_DELETED`, `ACTIVITY_ADDED` to `issue:<id>`. `NOTIFICATION` to `user:<id>`. | The API, or a worker |
+| **Direct** (browser to this server to the room, in memory only) | `PRESENCE_ACTION`, `CURSOR_MOVE`, `CURSOR_LEAVE`, `DRAG_START`, `DRAG_END` | A browser |
+| **Made by this server** | `CONNECTED`, `PONG`, `ERROR`, `JOINED_PROJECT`, `JOINED_ISSUE`, `PRESENCE_STATE`, `PRESENCE_JOINED`, `PRESENCE_LEFT`, and the `CURSOR_LEAVE` and `DRAG_END` it sends when a socket leaves or disconnects | This server |
 
 Rule of thumb: if the data is saved in the database, the process that saved it publishes it through Redis. If it only matters while people are looking, it goes direct. A second ws instance would break only the direct ones.
 
@@ -55,7 +55,7 @@ Rule of thumb: if the data is saved in the database, the process that saved it p
 
 ## Env variables it reads
 
-`PORT`, `NODE_ENV`, `SERVICE_NAME`, `LOG_LEVEL`, `DATABASE_URL`, `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `REDIS_PUBSUB_URL`.
+`PORT`, `NODE_ENV`, `SERVICE_NAME`, `LOG_LEVEL`, `DATABASE_URL`, `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `REDIS_PUBSUB_URL`, `AXIOM_TOKEN` and `AXIOM_DATASET` (logs), `SENTRY_DSN` (errors; empty in development).
 
 ## Known limits
 

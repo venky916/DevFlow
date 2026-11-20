@@ -15,9 +15,9 @@ pnpm --filter api run format
 
 ## Folder map
 
-- `src/index.ts`: starts Express. `dotenv/config` is the first import. Order: cors, json, request logger, `/health`, `/api/v1`, error middleware.
+- `src/index.ts`: starts Express. `dotenv/config` is the first import. Order: cors (it exposes `X-Request-Id`), request id, json, request logger, `/health`, `/api/v1`, error middleware. It registers a clean shutdown, which flushes the last logs and errors.
 - `src/routes/v1/`: one router per area, mounted in `index.ts`. A route lists its middleware, then the controller.
-- `src/middlewares/`: `auth.middleware.ts` (checks the Firebase token, sets `req.user`), `permission.middleware.ts` (workspace and project role checks, `resolveProjectAccess`), `error.middleware.ts`, `requestLogger.middleware.ts`.
+- `src/middlewares/`: `auth.middleware.ts` (checks the Firebase token, sets `req.user`), `permission.middleware.ts` (workspace and project role checks, `resolveProjectAccess`), `requestId.middleware.ts` (makes or accepts the request id and puts it in the log context), `error.middleware.ts` (logs the error under `err`, sends unexpected 5xx errors to Sentry, and puts `requestId` in the response), `requestLogger.middleware.ts`.
 - `src/controllers/`: read the request, validate it with a Zod schema, call a service, send the response. No business rules.
 - `src/services/`: the business rules, and the side effects around them (activity log, notifications, events, cache).
 - `src/repositories/`: Prisma queries only. No permission or business logic.
@@ -46,7 +46,7 @@ route ─▶ authenticate ─▶ permission middleware ─▶ controller ─▶ 
 
 ## Env variables it reads
 
-`PORT`, `NODE_ENV`, `SERVICE_NAME`, `LOG_LEVEL`, `BASE_WEB_URL` (the CORS origin and the base of notification links), `DATABASE_URL`, `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `REDIS_CACHE_URL`, `REDIS_QUEUE_URL`, `REDIS_PUBSUB_URL`, `STORAGE_*`.
+`PORT`, `NODE_ENV`, `SERVICE_NAME`, `LOG_LEVEL`, `BASE_WEB_URL` (the CORS origin and the base of notification links), `DATABASE_URL`, `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `REDIS_CACHE_URL`, `REDIS_QUEUE_URL`, `REDIS_PUBSUB_URL`, `STORAGE_*`, `AXIOM_TOKEN` and `AXIOM_DATASET` (logs), `SENTRY_DSN` (errors; empty in development).
 
 ## Known gaps
 

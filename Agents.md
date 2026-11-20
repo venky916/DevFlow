@@ -140,10 +140,10 @@ Every app has a `.env.example` that lists the variable names. The real `.env` fi
 
 | App | Reads |
 | --- | --- |
-| `web` | `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_WS_URL`, `NEXT_PUBLIC_APP_URL`, six `NEXT_PUBLIC_FIREBASE_*`. They are public and baked into the build. |
-| `api` | `SERVICE_NAME`, `PORT`, `NODE_ENV`, `BASE_WEB_URL`, `DATABASE_URL`, `FIREBASE_*`, `REDIS_CACHE_URL`, `REDIS_QUEUE_URL`, `REDIS_PUBSUB_URL`, `STORAGE_*` |
-| `ws` | `SERVICE_NAME`, `PORT`, `NODE_ENV`, `DATABASE_URL`, `FIREBASE_*`, `REDIS_PUBSUB_URL` |
-| `workers` | `SERVICE_NAME`, `NODE_ENV`, `BASE_WEB_URL`, `DATABASE_URL`, `REDIS_QUEUE_URL`, `REDIS_PUBSUB_URL`, `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `STORAGE_*` |
+| `web` | `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_WS_URL`, `NEXT_PUBLIC_APP_URL`, six `NEXT_PUBLIC_FIREBASE_*`, `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_ENVIRONMENT`. They are public and baked into the build. |
+| `api` | `SERVICE_NAME`, `PORT`, `NODE_ENV`, `BASE_WEB_URL`, `DATABASE_URL`, `FIREBASE_*`, `REDIS_CACHE_URL`, `REDIS_QUEUE_URL`, `REDIS_PUBSUB_URL`, `STORAGE_*`, `AXIOM_TOKEN`, `AXIOM_DATASET`, `SENTRY_DSN` |
+| `ws` | `SERVICE_NAME`, `PORT`, `NODE_ENV`, `DATABASE_URL`, `FIREBASE_*`, `REDIS_PUBSUB_URL`, `AXIOM_TOKEN`, `AXIOM_DATASET`, `SENTRY_DSN` |
+| `workers` | `SERVICE_NAME`, `NODE_ENV`, `BASE_WEB_URL`, `DATABASE_URL`, `REDIS_QUEUE_URL`, `REDIS_PUBSUB_URL`, `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `STORAGE_*`, `AXIOM_TOKEN`, `AXIOM_DATASET`, `SENTRY_DSN`, `HEARTBEAT_URL` |
 | `packages/db` | `DIRECT_URL`, used only for migrations from a laptop |
 
 ## Never do
@@ -152,6 +152,8 @@ Every app has a `.env.example` that lists the variable names. The real `.env` fi
 - Never commit a `.env` file, a `.pem` key or a token. Never put a secret under a `NEXT_PUBLIC_` name.
 - Never use `console.*` in the backend. Use the logger, and never log tokens, emails or request bodies.
 - Never run `docker image prune -a` on the server. It would delete the rollback copy.
+- Never put a Sentry DSN, an Axiom token or the heartbeat URL in git. In development, `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN` and `HEARTBEAT_URL` stay empty (a laptop must not ping the production heartbeat or use the Sentry quota).
+- Never make an uptime check touch the database, and never send personal data to Sentry or Axiom.
 - Never skip the permission check in the API because the web already hides the button.
 - Never put business rules in `packages/ui`, `packages/types` or `packages/validators`.
 - Never add a second copy of server data in a store. React Query is the single copy.
@@ -160,4 +162,5 @@ Every app has a `.env.example` that lists the variable names. The real `.env` fi
 
 - A new developer: this file, then `docs/ARCHITECTURE.md`, then the `AGENTS.md` of the app you will change.
 - Releasing, rolling back, changing an env value: `DEPLOY.md`.
+- What watches production, and what each alert means: `docs/MONITORING.md`. What to do when an alert arrives: `docs/RUNBOOK.md`.
 - Open items and known gaps: `LEDGER.md`.

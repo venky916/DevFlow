@@ -116,9 +116,9 @@ Copy `apps/api/.env`, `apps/ws/.env` and `apps/workers/.env` to a folder outside
 
 | File | Variables |
 |---|---|
-| `api.env` | `SERVICE_NAME`, `PORT`, `NODE_ENV`, `BASE_WEB_URL`, `DATABASE_URL` (pooled), `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `REDIS_CACHE_URL`, `REDIS_QUEUE_URL`, `REDIS_PUBSUB_URL`, `STORAGE_*` |
-| `ws.env` | `SERVICE_NAME`, `PORT`, `NODE_ENV`, `DATABASE_URL`, `FIREBASE_*`, `REDIS_PUBSUB_URL` |
-| `workers.env` | `SERVICE_NAME`, `NODE_ENV`, `BASE_WEB_URL`, `EMAIL_LOGO_URL` (optional), `DATABASE_URL`, `REDIS_QUEUE_URL`, `REDIS_PUBSUB_URL`, `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `STORAGE_*` |
+| `api.env` | `SERVICE_NAME`, `PORT`, `NODE_ENV`, `BASE_WEB_URL`, `DATABASE_URL` (pooled), `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `REDIS_CACHE_URL`, `REDIS_QUEUE_URL`, `REDIS_PUBSUB_URL`, `STORAGE_*`, `AXIOM_TOKEN`, `AXIOM_DATASET`, `SENTRY_DSN` |
+| `ws.env` | `SERVICE_NAME`, `PORT`, `NODE_ENV`, `DATABASE_URL`, `FIREBASE_*`, `REDIS_PUBSUB_URL`, `AXIOM_TOKEN`, `AXIOM_DATASET`, `SENTRY_DSN` |
+| `workers.env` | `SERVICE_NAME`, `NODE_ENV`, `BASE_WEB_URL`, `EMAIL_LOGO_URL` (optional), `DATABASE_URL`, `REDIS_QUEUE_URL`, `REDIS_PUBSUB_URL`, `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `STORAGE_*`, `AXIOM_TOKEN`, `AXIOM_DATASET`, `SENTRY_DSN`, `HEARTBEAT_URL` |
 
 Rules for the values:
 
@@ -129,6 +129,9 @@ Rules for the values:
 - `BASE_WEB_URL` is the exact Vercel address, with no trailing slash
 - Redis addresses use the Docker service names: `redis://redis-cache:6379`, `redis://redis-queue:6379`, `redis://redis-pubsub:6379`
 - `DIRECT_URL` is **not** needed on the server. It is only for running migrations from the laptop.
+- `AXIOM_TOKEN` is one ingest token for the dataset `devflow-prod`, the same in the three files. `AXIOM_DATASET` is `devflow-prod`. `SENTRY_DSN` is **different** in each file (one Sentry project per app). `HEARTBEAT_URL` is a secret and belongs only in `workers.env`.
+- Do **not** add `LOG_FORMAT` or `SENTRY_ENVIRONMENT=development`. Before a release, run `node scripts/check-prod-env.mjs`: it checks the files and prints no values.
+- The server also holds `~/devflow/host-metrics.sh` and `~/devflow/host-metrics.env` (its own Axiom token for the dataset `devflow-host`), run by cron every 2 minutes. See `docs/MONITORING.md`.
 
 ### 3.5 Images
 
@@ -309,6 +312,8 @@ Read the logs in a friendlier form from the laptop:
 [laptop] ssh -i devflow.pem ubuntu@<ELASTIC_IP> "cd ~/devflow && docker compose logs --no-log-prefix --tail 50 api" | npx pino-pretty
 ```
 
+Logs are also sent to Axiom (`devflow-prod`) and unexpected errors to Sentry, so you can search them for 30 days. Every request has an id: the `X-Request-Id` header and the `requestId` field in logs and error responses. What each tool does, what alerts you, and what to do about it are in `docs/MONITORING.md` and `docs/RUNBOOK.md`.
+
 For more detail while troubleshooting, set `LOG_LEVEL=debug` in that app's env file, recreate the container (section 4.2), and remove the line afterward.
 
 At idle the seven containers use about 560 MiB of RAM, and the server shows about 1.0 GiB used out of 1.9 GiB, with swap almost untouched.
@@ -435,7 +440,7 @@ Three checks, from the laptop. None of them prints a secret:
 ## 8. What is not done yet
 
 - Confirm that `SERVICE_NAME` and the production `DATABASE_URL` are in the server's env files (section 4.9).
-- Monitoring: an uptime check on `/health`, Sentry for errors, and a log search tool. The logs are already JSON and ready for it.
+- Monitoring is built (`docs/MONITORING.md`). Still open: test every alert, set the Sentry `production` environment on the alerts, upload source maps for the web, and fix the malformed-body error (500 instead of 400).
 - CI/CD and automated tests (designed in section 10).
 - Decision on forgot-password: Firebase's own email (the API endpoint and email template are unused), or switch to the API's.
 - Deleting a single issue does not queue its attachment files for deletion. Deleting an attachment, a project or a workspace does.

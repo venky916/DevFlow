@@ -18,26 +18,26 @@ pnpm --filter web run format
 
 ## Env variables it reads
 
-`NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_WS_URL`, `NEXT_PUBLIC_APP_URL` and six `NEXT_PUBLIC_FIREBASE_*`. All are public by design and are baked into the build, so a change needs a redeploy. Never put a secret under a `NEXT_PUBLIC_` name.
+`NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_WS_URL`, `NEXT_PUBLIC_APP_URL`, six `NEXT_PUBLIC_FIREBASE_*`, and `NEXT_PUBLIC_SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_ENVIRONMENT` (empty in development, so nothing is sent; set only for Production in Vercel). All are public by design and are baked into the build, so a change needs a redeploy. Never put a secret under a `NEXT_PUBLIC_` name.
 
 ---
 
 ## 1. Where code lives
 
-| Folder                                  | What goes here                                                                                                                                                                                                                 | Must NOT contain                                                                 |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| `app/`                                  | `page.tsx`, layouts, metadata                                                                                                                                                                                                  | logic, hooks, API calls                                                          |
-| `components/{domain}/`                  | JSX and styling for one feature: `auth`, `workspace`, `projects`, `inbox`, `layout`, `sprints`, `backlog`, `board`, `issue` (the full page is in `issue/issue-detail-page/`, and the My Issues pieces are here too), `profile` | `toast`, `router`, API calls, `try/catch`, `useQuery`, `useMutation`, the socket |
-| `components/shared/`                    | Pieces used by 2 or more features: `PageContainer`, `PageHeading`, `EmptyState`, `PageLoading`, `PageError`, `ListView`, `FilterBar`, `ViewSwitch`, `SubIssueList`, `IssueActionsMenu`                                         | feature-specific code                                                            |
-| `components/providers/`                 | `SocketProvider`, the only component that connects the socket                                                                                                                                                                  |                                                                                  |
-| `hooks/`                                | One file per domain (`use-issues`, `use-comments`, `use-attachments`, `use-sprints`, `use-board`, `use-backlog`, `use-workspaces`, `use-projects`, ...) and small helpers (`use-issue-access`, `use-issue-filters`)            | JSX                                                                              |
-| `hooks/pages/`                          | One hook per page that combines other hooks: `use-board-page`, `use-backlog-page`, `use-my-issues-page`, `use-issue-detail-page`, `use-issue-form`, ...                                                                        | JSX                                                                              |
-| `hooks/events/`                         | Everything that listens to or sends websocket messages: `use-project-events`, `use-issue-events`, `use-issue-presence`, `use-presence-action`, `use-board-cursors`, `use-board-drags`                                          | JSX that is not a tiny overlay                                                   |
-| `lib/`                                  | Plain functions and classes: Firebase, axios, `socket-client`, `board-utils`, `backlog-utils`, `issue-rules`, `issue-filters`, `format-date`, `permissions`, `redirect`, `show-error`, `user-color`, `presence-text`           | React, hooks                                                                     |
-| `stores/`                               | Zustand stores (`auth.store`, `ui.store`)                                                                                                                                                                                      | server data (that lives in React Query)                                          |
-| `constants/`                            | Static values, such as `routes.ts`                                                                                                                                                                                             |                                                                                  |
-| `packages/ui`                           | Generic UI. No DevFlow logic                                                                                                                                                                                                   | routes, auth, hooks                                                              |
-| `packages/validators`, `packages/types` | Schemas and types shared with the API                                                                                                                                                                                          | React                                                                            |
+| Folder | What goes here | Must NOT contain |
+| --- | --- | --- |
+| `app/` | `page.tsx`, layouts, metadata | logic, hooks, API calls |
+| `components/{domain}/` | JSX and styling for one feature: `auth`, `workspace`, `projects`, `inbox`, `layout`, `sprints`, `backlog`, `board`, `issue` (the full page is in `issue/issue-detail-page/`, and the My Issues pieces are here too), `profile` | `toast`, `router`, API calls, `try/catch`, `useQuery`, `useMutation`, the socket |
+| `components/shared/` | Pieces used by 2 or more features: `PageContainer`, `PageHeading`, `EmptyState`, `PageLoading`, `PageError`, `ListView`, `FilterBar`, `ViewSwitch`, `SubIssueList`, `IssueActionsMenu` | feature-specific code |
+| `components/providers/` | `SocketProvider`, the only component that connects the socket | |
+| `hooks/` | One file per domain (`use-issues`, `use-comments`, `use-attachments`, `use-sprints`, `use-board`, `use-backlog`, `use-workspaces`, `use-projects`, ...) and small helpers (`use-issue-access`, `use-issue-filters`) | JSX |
+| `hooks/pages/` | One hook per page that combines other hooks: `use-board-page`, `use-backlog-page`, `use-my-issues-page`, `use-issue-detail-page`, `use-issue-form`, ... | JSX |
+| `hooks/events/` | Everything that listens to or sends websocket messages: `use-project-events`, `use-issue-events`, `use-issue-presence`, `use-presence-action`, `use-board-cursors`, `use-board-drags` | JSX that is not a tiny overlay |
+| `lib/` | Plain functions and classes: Firebase, axios, `socket-client`, `board-utils`, `backlog-utils`, `issue-rules`, `issue-filters`, `format-date`, `permissions`, `redirect`, `show-error`, `user-color`, `presence-text` | React, hooks |
+| `stores/` | Zustand stores (`auth.store`, `ui.store`) | server data (that lives in React Query) |
+| `constants/` | Static values, such as `routes.ts` | |
+| `packages/ui` | Generic UI. No DevFlow logic | routes, auth, hooks |
+| `packages/validators`, `packages/types` | Schemas and types shared with the API | React |
 
 Dependencies point down: `app` to `components` to `hooks` to `lib` to `constants` and `packages`. A `lib/` file never imports a hook or a component.
 
@@ -106,6 +106,7 @@ Name by intent, never by storage vendor. The flow: `useRequestUploadUrl` asks th
 ## 7. Errors, redirects, routes, links
 
 - Error text for users goes through `getAuthErrorMessage(err, fallback)`. Never show `err.message`.
+- Errors are reported to Sentry from `app/error.tsx` and `app/global-error.tsx` (a page failed to render) and by the browser SDK started in `instrumentation-client.ts`. The shared privacy rules (no user, no query strings, no breadcrumbs, a limit of 20 events a minute) are in `lib/sentry-shared.ts`. Never add a user's data to an event.
 - Any `?redirect=` value and any URL that came from the server goes through `getSafeRedirect` before it is followed.
 - Routes come from `constants/routes.ts`. No hard-coded paths. Add a route when you add a page. Routes with parameters take **slugs**.
 - **Link vs router:** the user clicks and goes elsewhere, so use `<Link>`. Code decides, such as after a mutation or in a guard, so use `router.push` inside a hook. Never put a `<button>` inside a `<Link>`.

@@ -2,7 +2,7 @@
 
 A lightweight issue tracker for small engineering teams. Plan sprints, run a kanban board, track issues with sub-issues, comments and files, and watch your teammates work live.
 
-[**Live demo**](https://dev-flow-blush.vercel.app) · [Architecture](docs/ARCHITECTURE.md) · [Deployment](DEPLOY.md)
+[**Live demo**](https://dev-flow-blush.vercel.app) · [Status](https://devflow.betteruptime.com) · [Architecture](docs/ARCHITECTURE.md) · [Deployment](DEPLOY.md) · [Monitoring](docs/MONITORING.md)
 
 <!-- TODO(add): after you record the video, add:  · [Demo video](YOUR_YOUTUBE_LINK) -->
 
@@ -151,7 +151,7 @@ The web app is built by Vercel on every push to `main`. The backend runs on one 
 ## Known limitations and what's next
 
 - **No automated tests or CI/CD yet.** Next: Vitest tests for the rules and schemas, and a GitHub Actions pipeline that checks, builds and deploys.
-- **No monitoring yet.** Next: an uptime check, Sentry for errors, and searchable logs.
+- **Monitoring is in place, and its alerts are still being tested.** Uptime checks and a worker heartbeat (Better Stack), errors (Sentry) and searchable logs and server numbers (Axiom), all on free plans. See `docs/MONITORING.md`. A public [status page](https://devflow.betteruptime.com) shows whether the API and the web app are up. Not yet: readable web stack traces (source maps).
 - **Pointers, presence and typing hints live in the memory of one websocket server,** so they work for a single instance. Scaling them would need a shared store.
 - A member who is removed from a project keeps receiving its live events until their connection drops.
 - Dates are stored as timestamps, so a due date can appear a day off for someone in another timezone.
