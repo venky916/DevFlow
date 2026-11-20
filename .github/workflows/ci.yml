@@ -1,0 +1,84 @@
+name: CI
+
+# Runs on every push to every branch. It checks the code and builds it,
+# but it never touches the server. (Deploying comes later and runs only from main.)
+# the key is quoted on purpose: some editors turn a bare on into true
+"on":
+  push:
+    branches: ['**']
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+  workflow_dispatch:
+
+# A newer push to the same branch cancels the run that is still going.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Format, lint, types and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: 'true'
+      TURBO_TELEMETRY_DISABLED: '1'
+      NEXT_TELEMETRY_DISABLED: '1'
+      # The web build needs these names to exist. The values are placeholders, not real settings.
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+      NEXT_PUBLIC_WS_URL: ws://localhost:4001
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_FIREBASE_API_KEY: ci-placeholder
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ci-placeholder.firebaseapp.com
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: ci-placeholder
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ci-placeholder.appspot.com
+      NEXT_PUBLIC_FIREBASE_MESSAGING_ID: '000000000000'
+      NEXT_PUBLIC_FIREBASE_APP_ID: '1:000000000000:web:0000000000000000'
+      # Prisma needs a database address to generate its client. Nothing connects to it.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      DIRECT_URL: postgresql://ci:ci@localhost:5432/ci
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v6
+
+      - name: Make sure no secret file is committed
+        run: |
+          bad="$(git ls-files | grep -E '(^|/)\.env(\..+)?$|\.pem$' | grep -v '\.env\.example$' || true)"
+          if [ -n "$bad" ]; then
+            echo "These files must not be committed:"
+            echo "$bad"
+            exit 1
+          fi
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The same placeholders as a file, for the case that Prisma reads packages/db/.env
+      - name: Placeholder database settings file
+        run: |
+          printf 'DATABASE_URL=postgresql://ci:ci@localhost:5432/ci\nDIRECT_URL=postgresql://ci:ci@localhost:5432/ci\n' > packages/db/.env
+
+      # --env-mode=loose lets the placeholder variables above reach every task
+      - name: Format, lint and types
+        run: pnpm turbo run format:check lint check-types --env-mode=loose
+
+      - name: Build
+        run: pnpm turbo run build --env-mode=loose
+
+      # Add this step when the Vitest tests exist:
+      # - name: Tests
+      #   run: pnpm test
